@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/server/">
+    <Project Path="server/Contract/Contract.csproj" />
+    <Project Path="server/GatewayService/GatewayService.csproj" />
+    <Project Path="server/IdentityService/IdentityService.csproj" />
+    <Project Path="server/PhotoService/PhotoService.csproj" />
+    <Project Path="server/ProductService/ProductService.csproj" />
+    <Project Path="server/SearchService/SearchService.csproj" />
+  </Folder>
+  <Folder Name="/server/BuildingBlocks/">
+    <Project Path="server/BuildingBlocks/Infrastructure.EF/Infrastructure.EF.csproj" />
+    <Project Path="server/BuildingBlocks/Infrastructure.Mongo/Infrastructure.Mongo.csproj" />
+    <Project Path="server/BuildingBlocks/Shared.Core.Mongo/Shared.Core.Mongo.csproj" />
+    <Project Path="server/BuildingBlocks/Shared.Web/Shared.Web.csproj" />
+    <Project Path="server/BuildingBlocks/Shared.Core.EF/Shared.Core.EF.csproj" />
+  </Folder>
+</Solution>

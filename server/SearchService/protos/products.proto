@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "ProductService";
+
+service GrpcProduct {
+    rpc GetProduct (GetProductRequest) returns (GrpcProductResponse);
+}
+
+message GetProductRequest {
+    google.protobuf.Timestamp lastUpdated = 1;
+}
+
+message GetAllProductRequest {
+
+} 
+
+message GrpcProductResponse {
+    repeated GrpcProductModel product = 1;
+}
+
+message GrpcProductModel {
+    string id = 1;
+
+    string name = 2;
+    string description = 3;
+
+    int64 price = 4;
+    int64 old_price = 5;
+    float discount_percentage = 6;
+
+    string main_image_url = 7;
+
+    bool is_active = 8;
+    bool is_featured = 9;
+    bool is_new_arrival = 10;
+    bool is_on_sale = 11;
+
+    repeated string display_tags = 12;
+
+    double average_rating = 13;
+    int32 rating_count = 14;
+    int32 total_rating_star = 15;
+
+    repeated GrpcProductAttributeDto attributes = 16;
+    repeated GrpcProductFilterTagValueDto product_filter_tag_values = 17;
+
+    int32 unit_sold = 18;
+
+    google.protobuf.Timestamp created_at = 19;
+    google.protobuf.Timestamp updated_at = 20;
+
+    string created_by = 21;
+    string updated_by = 22;
+
+    bool is_deleted = 23;
+
+    int32 category_id = 24;
+    string category_name = 25;
+    string category_display_name = 26;
+
+    int32 brand_id = 27;
+    string brand_name = 28;
+
+    string url_slung = 29;
+}
+
+message GrpcProductFilterTagValueDto {
+  int32 id = 1;
+  int32 filter_tag_id = 2;
+  int32 filter_tag_value_id = 3;
+  string product_id = 4;
+}
+
+message GrpcProductAttributeDto {
+  string name = 1;
+  string value = 2;
+  string attribute_type = 3;
+  int64 display_order = 4;
+}

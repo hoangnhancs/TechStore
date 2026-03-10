@@ -1,0 +1,12 @@
+================================================================================
+KIỂM TRA URL CELLPHONES TRONG CÁC FILE JSON
+================================================================================
+
+Tổng số sản phẩm: 828
+Tổng số ảnh chi tiết: 4659
+Số URL cellphones tìm thấy: 0
+Số imgs là string: 0
+
+
+✅ KHÔNG TÌM THẤY URL CELLPHONES NÀO!
+Tất cả ảnh đã được upload lên Cloudinary.

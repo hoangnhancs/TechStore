@@ -1,0 +1,438 @@
+[
+    {
+        "category": "camera",
+        "categoryId": 1,
+        "brands" : [
+            {
+                "name": "EZVIZ",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754015286/ezviz_logo_dmsgon.jpg"
+            },
+            {
+                "name": "IMOU",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754015464/imou-logo_ql2k40.png"
+            },
+            {
+                "name": "TP-Link",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754015791/tplink-logo_wcszf6.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_61.png"
+            },
+            {
+                "name": "Tiandy",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754015951/tiandy-logo_sr9cv4.png"
+            },
+            {
+                "name": "Dahua",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754016045/dahua-logo_dqjgh7.png"
+            },
+            {
+                "name": "GoPro",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754016175/gopro-logo_imbfpe.png"
+            },
+            {
+                "name": "365 Selection",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754016234/365selection-logo_gft1gc.png"
+            },
+            {
+                "name": "Insta360",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754016318/insta-360_qdkfvq.png"
+            },
+            {
+                "name": "Reoqoo",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754016388/reoqoo-logo_dwfhpw.jpg"
+            }
+        ]
+    },
+    {
+        "category": "laptop",
+        "categoryId": 2,
+        "brands" : [
+            {
+                "name": "Apple",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/macbook.png"
+            },
+            {
+                "name": "ASUS",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Asus.png"
+            },
+            {
+                "name": "Lenovo",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Lenovo.png"
+            },
+            {
+                "name": "Acer",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/acer.png"
+            },
+            {
+                "name": "HP",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/HP.png"
+            },
+            {
+                "name": "Dell",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Dell.png"
+            },
+            {
+                "name": "MSI",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/MSI.png"
+            },
+            {
+                "name": "LG",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/LG.png"
+            },
+            {
+                "name": "Gigabyte",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/MSI-1.png"
+            },
+            {
+                "name": "Masstel",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/masstel-mobile-logo022.png"
+            }
+        ]
+    },
+    {
+        "category": "microphone",
+        "categoryId": 3,
+        "brands" : [
+            {
+                "name": "Saramonic",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-saramonic.png"
+            },
+            {
+                "name": "BOYA",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-boya.png"
+            },
+            {
+                "name": "DJI",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/t/_/t_i_xu_ng_57__9.png"
+            },
+            {
+                "name": "Shure",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Shure-new.png"
+            },
+            {
+                "name": "Audio Technica",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/audio-technica.png"
+            },
+            {
+                "name": "JBL",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/JBL.png"
+            }
+        ]
+    },
+    {
+        "category": "monitor",
+        "categoryId": 4,
+        "brands" : [
+            {
+                "name": "ASUS",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-asus.png"
+            },
+            {
+                "name": "Samsung",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-samsung_2.png"
+            },
+            {
+                "name": "ViewSonic",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-viewsonic.png"
+            },
+            {
+                "name": "MSI",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-msi.png"
+            },
+            {
+                "name": "LG",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-lg_2.png"
+            },
+            {
+                "name": "E-Dra",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/l/o/logo-brand-edra.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-xiaomi.png"
+            },
+            {
+                "name": "Giá treo màn hình",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754017415/giatreomanhinh-logo_ipum1v.jpg"
+            },
+            {
+                "name": "Dahua",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/Frame_293.png"
+            },
+            {
+                "name": "Lenovo",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-lenovo.png"
+            },
+            {
+                "name": "Dell",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-dell.png"
+            },
+            {
+                "name": "AOC",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-aoc.png"
+            },
+            {
+                "name": "Philips",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-philips.png"
+            },
+            {
+                "name": "Acer",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-acer.png"
+            }
+        ]
+    },
+    {
+        "category": "pc",
+        "categoryId": 5,
+        "brands": [
+            {
+                "name": "ASUS",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-asus.png"
+            },
+            {
+                "name": "Other",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020297/other-logo_unvxkl.png"
+            },
+            {
+                "name": "MSI",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-msi.png"
+            },
+            {
+                "name": "Intel",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754017803/Intel-logo_qr3nvf.png"
+            },
+            {
+                "name": "AMD",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754017863/amd-logo_oct8tg.png"
+            },
+            {
+                "name": "G01",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020232/g01-logo_e3m4ew.png"
+            },
+            {
+                "name": "G03",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020240/g03-logo_hwmzrs.png"
+            }
+        ]
+    },
+    {
+        "category": "phone",
+        "categoryId": 6,
+        "brands": [
+            {
+                "name": "Apple",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_59.png"
+            },
+            {
+                "name": "Samsung",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_60.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_61.png"
+            },
+            {
+                "name": "OPPO",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_62.png"
+            },
+            {
+                "name": "ZTE|Nubia",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/nubia_1.png"
+            },
+            {
+                "name": "Tecno",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_69_1_.png"
+            },
+            {
+                "name": "Nothing",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/nothing-phone.png"
+            },
+            {
+                "name": "Sony",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-sony_2.png"
+            },
+            {
+                "name": "Itel",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/logo-itel-11.png"
+            },
+            {
+                "name": "Vivo",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/t/_/t_i_xu_ng_67_.png"
+            },
+            {
+                "name": "Infinix",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/i/n/infinixlogo.png"
+            },
+            {
+                "name": "Meizu",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754018545/meizu-logo_rouwga.png"
+            }
+        ]
+    },
+    {
+        "category": "printer",
+        "categoryId": 7,
+        "brands": [
+            {
+                "name": "HP",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/i/c/icon-brand-hp.png"
+            },
+            {
+                "name": "Brother",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/b/r/brand-icon-brother.png"
+            }
+        ]
+    },
+    {
+        "category": "tablet",
+        "categoryId": 8,
+        "brands": [
+            {
+                "name": "Apple",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/i/p/ipad-logo-newww.png"
+            },
+            {
+                "name": "Samsung",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_60.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_61.png"
+            },
+            {
+                "name": "Lenovo",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Lenovo.png"
+            },
+            {
+                "name": "Boox",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754018964/boox-logo_lcfrff.jpg"
+            },
+            {
+                "name": "Teclast",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Frame_93.png"
+            },
+            {
+                "name": "Huawei",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/h/u/huaewwei-tablet-logo.png"
+            },
+            {
+                "name": "Kindle",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754019547/kimdle-logo_wntskl.png"
+            },
+            {
+                "name": "Masstel",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/masstel-mobile-logo022.png"
+            }
+        ]
+    },
+    {
+        "category": "tv",
+        "categoryId": 9,
+        "brands": [
+            {
+                "name": "LG",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_84_1_.png"
+            },
+            {
+                "name": "Samsung",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_60.png"
+            },
+            {
+                "name": "Coocaa",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/f/r/frame_85.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/f/r/frame_61.png"
+            },
+            {
+                "name": "TCL",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/tmp/catalog/product/t/i/tivi-logo-cate.png"
+            },
+            {
+                "name": "Sony",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/catalog/product/f/r/frame_87.png"
+            },
+            {
+                "name": "Aqua",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/aqua.png"
+            },
+            {
+                "name": "Bayou",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020139/bayou-logo_dkxc0q.jpg"
+            },
+            {
+                "name": "Other",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020297/other-logo_unvxkl.png"
+            },
+            {
+                "name": "Camel",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020031/camel-logo_srbejl.png"
+            }
+        ]
+    },
+    {
+        "category": "watch",
+        "categoryId": 10,
+        "brands": [
+            {
+                "name": "Huawei",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Huawei.png"
+            },
+            {
+                "name": "Apple",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Apple_watch.png"
+            },
+            {
+                "name": "Garmin",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/garmin.png"
+            },
+            {
+                "name": "Xiaomi",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Xiaomi.png"
+            },
+            {
+                "name": "Samsung",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Samsung.png"
+            },
+            {
+                "name": "Kieslect",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/Kieslect.png"
+            },
+            {
+                "name": "Other",
+                "imageUrl": "https://res.cloudinary.com/dukhvtyr7/image/upload/v1754020297/other-logo_unvxkl.png"
+            },
+            {
+                "name": "Amazfit",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/amazfit.png"
+            },
+            {
+                "name": "Coros",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/Icon/brand_logo/coros.png"
+            },
+            {
+                "name": "Black Shark",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/abc_4_.png"
+            },
+            {
+                "name": "Riversong",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/logo-brand-HPRT_1.png"
+            },
+            {
+                "name": "Kavvo",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/abc_1.png"
+            },
+            {
+                "name": "Masstel",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/abc_9_.png"
+            },
+            {
+                "name": "Viettel",
+                "imageUrl": "https://cdn2.cellphones.com.vn/insecure/rs:fill:0:50/q:30/plain/https://cellphones.com.vn/media/wysiwyg/viettel.png"
+            }
+        ]
+    }
+]

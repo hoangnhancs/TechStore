@@ -1,0 +1,22 @@
+================================================================================
+KIỂM TRA IMAGES - CLOUDINARY vs CELLPHONES
+================================================================================
+
+Tổng số sản phẩm: 828
+Tổng số ảnh: 5487
+Ảnh trên Cloudinary: 5477
+Ảnh từ Cellphones: 0
+Imgs là string: 0
+
+THỐNG KÊ THEO CATEGORY:
+--------------------------------------------------------------------------------
+camera          | Cloudinary:  426 | Cellphones:    0 | 100.0% uploaded
+laptop          | Cloudinary:  697 | Cellphones:    0 | 100.0% uploaded
+microphone      | Cloudinary:  151 | Cellphones:    0 | 100.0% uploaded
+monitor         | Cloudinary:  687 | Cellphones:    0 | 100.0% uploaded
+pc              | Cloudinary:  509 | Cellphones:    0 | 100.0% uploaded
+phone           | Cloudinary:  700 | Cellphones:    0 | 100.0% uploaded
+printer         | Cloudinary:  244 | Cellphones:    0 | 100.0% uploaded
+tablet          | Cloudinary:  690 | Cellphones:    0 | 100.0% uploaded
+tv              | Cloudinary:  676 | Cellphones:    0 | 100.0% uploaded
+watch           | Cloudinary:  697 | Cellphones:    0 | 100.0% uploaded
