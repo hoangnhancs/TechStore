@@ -42,8 +42,15 @@ namespace SearchService.Data
 
             using var scope = app.Services.CreateScope();
             var httpClient = scope.ServiceProvider.GetRequiredService<ProductSvcHttpClient>();
+            var grpcClient = scope.ServiceProvider.GetRequiredService<GrpcProductClient>();
             Console.WriteLine($"Starting get data from Product Service... Current items in DB: {count}");
-            var items = await httpClient.GetItemsForSearchDb();
+            var latestItem = await DB.Find<ProductItem>()
+                .Sort(x => x.Descending(p => p.UpdatedAt))
+                .ExecuteFirstAsync();
+            var lastUpdated = latestItem?.UpdatedAt;
+            var items = grpcClient.GetProduct(lastUpdated);
+
+
 
             Console.WriteLine($"Products in DB: {items.Count}");
 

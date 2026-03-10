@@ -68,7 +68,10 @@ namespace SearchService.Services
                         Value = a.Value,
                         AttributeType = a.AttributeType,
                         DisplayOrder = a.DisplayOrder,
-                    }).ToList()
+                    }).ToList(),
+                    UnitSold = p.UnitSold,
+                    CreatedAt = p.CreatedAt.ToDateTime(),
+                    UpdatedAt = p.UpdatedAt.ToDateTime()
                 }).ToList();
             }
             catch (Exception ex)

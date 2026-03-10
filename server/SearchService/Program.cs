@@ -38,6 +38,7 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddScoped<GrpcProductClient>();
 builder.Services.AddTransient<ExceptionMiddleware>();
 
 var app = builder.Build();
