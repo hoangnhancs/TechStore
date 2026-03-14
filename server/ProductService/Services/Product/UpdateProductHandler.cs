@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Contract;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using PhotoService;
@@ -19,12 +21,14 @@ namespace ProductService.Services.Product
         private readonly IProductUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly IPhotoService _photoService;
+        private readonly IPublishEndpoint _publishEndpoint;
 
-        public UpdateProductHandler(IProductUnitOfWork unitOfWork, IMapper mapper, IPhotoService photoService)
+        public UpdateProductHandler(IProductUnitOfWork unitOfWork, IMapper mapper, IPhotoService photoService, IPublishEndpoint publishEndpoint)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _photoService = photoService;
+            _publishEndpoint = publishEndpoint;
         }
 
         public async Task<AppResult<ProductDto>> Handle(UpdateProductCommand request, CancellationToken cancellationToken)
@@ -190,7 +194,8 @@ namespace ProductService.Services.Product
                         }
                     }
                 }
-                
+                var productUpdated = _mapper.Map<ProductUpdated>(existingProduct);
+                await _publishEndpoint.Publish(productUpdated, cancellationToken);
                 return AppResult<ProductDto>.Success(_mapper.Map<ProductDto>(existingProduct));
             }
             catch (Exception ex)

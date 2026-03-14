@@ -78,8 +78,10 @@ namespace ProductService.Services.Product
             }
 
             var productCreated = _mapper.Map<ProductCreated>(product);
-            await _publishEndpoint.Publish(productCreated, cancellationToken);
+
             await _unitOfWork.ProductRepository.AddAsync(product, cancellationToken);
+            await _publishEndpoint.Publish(productCreated, cancellationToken);
+            
             var result = await _unitOfWork.CommitAsync();
             if (result)
             {

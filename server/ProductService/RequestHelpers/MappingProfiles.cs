@@ -97,6 +97,7 @@ namespace ProductService.RequestHelpers
                 // ));
 #region Product and Contract
             CreateMap<Product, ProductCreated>();
+            CreateMap<Product, ProductUpdated>();
             CreateMap<ProductAttribute, ProductAttr>(); //product to contract
             CreateMap<ProductFilterTagValue, ProductFTV>(); //product to contract
 #endregion

@@ -13,6 +13,7 @@ namespace SearchService.RequestHelpers
         public MappingProfile()
         {
             CreateMap<ProductCreated, ProductItem>();
+            CreateMap<ProductUpdated, ProductItem>();
             CreateMap<ProductAttr, ProductAttributeDto>();
             CreateMap<ProductFTV, ProductFilterTagValueDto>();
                 // .ForMember(dest => dest.Attributes, opt => opt.MapFrom(src =>

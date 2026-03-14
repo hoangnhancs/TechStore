@@ -32,7 +32,7 @@ namespace SearchService.Services
                 var reply = client.GetProduct(request);
                 _logger.LogInformation("Received {ProductCount} products from gRPC service", reply.Product
                     .Count);
-                return reply.Product.Select(p => new ProductItem
+                var products = reply.Product.Select(p => new ProductItem
                 {
                     ID = p.Id,
                     Name = p.Name,
@@ -69,10 +69,16 @@ namespace SearchService.Services
                         AttributeType = a.AttributeType,
                         DisplayOrder = a.DisplayOrder,
                     }).ToList(),
+
                     UnitSold = p.UnitSold,
                     CreatedAt = p.CreatedAt.ToDateTime(),
                     UpdatedAt = p.UpdatedAt.ToDateTime()
                 }).ToList();
+                foreach(ProductItem p in products)
+                {
+                    p.UpdateAttributeText();
+                }
+                return products;
             }
             catch (Exception ex)
             {
