@@ -20,7 +20,7 @@ namespace ProductService.Services
             _logger = logger;
         }
 
-        public override async Task<GrpcProductResponse> GetProduct(GetProductRequest request, ServerCallContext context)
+        public override async Task<GrpcUpdatedProductResponse> GetUpdatedProduct(GetUpdatedProductRequest request, ServerCallContext context)
         {
             _logger.LogInformation("Received GetProducts request for last updated: {LastUpdated}", request.LastUpdated);
 
@@ -35,10 +35,10 @@ namespace ProductService.Services
             if (products == null)
             {
                 _logger.LogInformation("No products found updated after {LastUpdated}", lastUpdatedDateTime);
-                return new GrpcProductResponse();
+                return new GrpcUpdatedProductResponse();
             }
 
-            var response = new GrpcProductResponse();
+            var response = new GrpcUpdatedProductResponse();
             
             for (int i = 0; i < products.Count; i++)
             {
@@ -103,5 +103,84 @@ namespace ProductService.Services
             }
             return response;
         }
+
+        public override async Task<GrpcProductResponse> GetProduct(GetProductRequest request, ServerCallContext context)
+        {
+            _logger.LogInformation("Received GetProduct request for product ID: {ProductId}", request.Id);
+
+            var p = await _dbContext.Products.Where(p => p.Id == request.Id)
+                .Include(p => p.ProductFilterTagValues)
+                .ThenInclude(pftv => pftv.FilterTagValue)
+                .Include(p => p.Attributes)
+                .Include(p => p.DisplayTags)
+                .FirstOrDefaultAsync();
+
+            if (p == null)
+            {
+                _logger.LogInformation("Product with ID {ProductId} not found", request.Id);
+                return new GrpcProductResponse();
+            }
+
+            var grpcProduct = new GrpcProductModel
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Description = p.Description,
+                Price = (long)p.Price,
+                OldPrice = (long)p.OldPrice,
+                DiscountPercentage = (float)p.DiscountPercentage,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category?.Name ?? string.Empty,
+                CategoryDisplayName = p.Category?.DisplayName ?? string.Empty,
+                BrandId = p.BrandId,
+                BrandName = p.Brand?.Name ?? string.Empty,
+                MainImageUrl = p.MainImageUrl,
+                UrlSlung = p.UrlSlug,
+                IsActive = p.IsActive,
+                IsFeatured = p.IsFeatured,
+                IsNewArrival = p.IsNewArrival,
+                IsOnSale = p.IsOnSale,
+                AverageRating = (double)p.AverageRating,
+                RatingCount = p.RatingCount,
+                TotalRatingStar = p.TotalRatingStar,
+                UnitSold = p.UnitSold,
+                CreatedAt = Timestamp.FromDateTime(p.CreatedAt.ToUniversalTime()),
+                UpdatedAt = Timestamp.FromDateTime(p.UpdatedAt.ToUniversalTime())
+            };
+
+            // Add Attributes (read-only collection)
+            if (p.Attributes != null)
+            {
+                grpcProduct.Attributes.AddRange(p.Attributes.Select(a => new GrpcProductAttributeDto
+                {
+                    Name = a.Name,
+                    Value = a.Value,
+                    AttributeType = a.AttributeType,
+                    DisplayOrder = a.DisplayOrder
+                }));
+            }
+
+            // Add DisplayTags (read-only collection)
+            if (p.DisplayTags != null)
+            {
+                grpcProduct.DisplayTags.AddRange(p.DisplayTags.Select(dt => dt.DisplayTag));
+            }
+
+            if (p.ProductFilterTagValues != null)
+            {
+                grpcProduct.ProductFilterTagValues.AddRange(p.ProductFilterTagValues.Select(pftv => new GrpcProductFilterTagValueDto
+                {
+                    Id = pftv.Id,
+                    FilterTagValueId = pftv.FilterTagValueId,
+                    FilterTagId = pftv.FilterTagValue == null ? 0 : pftv.FilterTagValue.FilterTagId,
+                    ProductId = pftv.ProductId
+                }));
+            }
+            return new GrpcProductResponse
+            {
+                Product = grpcProduct
+            };
+        }
+
     }
 }

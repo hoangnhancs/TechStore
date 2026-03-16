@@ -1,7 +1,7 @@
 using System;
 using Shared.Core.EF.Domain.Entities;
 
-namespace Domain.Entities;
+namespace CartService.Entities;
 
 public class Basket : BaseEntity<string>
 {

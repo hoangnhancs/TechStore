@@ -17,19 +17,19 @@ namespace SearchService.Services
             _logger = logger;
             _config = config;
         }
-        public List<ProductItem> GetProduct(DateTime? lastUpdated)
+        public List<ProductItem> GetUpdatedProduct(DateTime? lastUpdated)
         {
             _logger.LogInformation("Getting products from gRPC service with last updated: {LastUpdated}", lastUpdated);
             var channel = GrpcChannel.ForAddress(_config["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
             var client = new GrpcProduct.GrpcProductClient(channel);
-            var request = new GetProductRequest
+            var request = new GetUpdatedProductRequest
             {
                 LastUpdated = lastUpdated.HasValue ? Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(lastUpdated.Value.ToUniversalTime()) : null
             };
 
             try
             {
-                var reply = client.GetProduct(request);
+                var reply = client.GetUpdatedProduct(request);
                 _logger.LogInformation("Received {ProductCount} products from gRPC service", reply.Product
                     .Count);
                 var products = reply.Product.Select(p => new ProductItem

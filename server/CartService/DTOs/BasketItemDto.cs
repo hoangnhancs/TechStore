@@ -1,15 +1,13 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using System;
 
-namespace CartService.Entities;
+namespace CartService.DTOs;
 
-
-
-public class BasketItem
+public class BasketItemDto
 {
     public int Id { get; set; } 
     public int Quantity { get; set; }
     //navigation properties
     public required string ProductId { get; set; }
     public required string BasketId { get; set; }
-    public Basket Basket { get; set; } = null!;
+    public BasketDto Basket { get; set; } = null!;
 }

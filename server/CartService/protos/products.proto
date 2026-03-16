@@ -5,20 +5,11 @@ import "google/protobuf/timestamp.proto";
 option csharp_namespace = "ProductService";
 
 service GrpcProduct {
-    rpc GetUpdatedProduct (GetUpdatedProductRequest) returns (GrpcUpdatedProductResponse);
     rpc GetProduct (GetProductRequest) returns (GrpcProductResponse);
-}
-
-message GetUpdatedProductRequest {
-    google.protobuf.Timestamp lastUpdated = 1;
 }
 
 message GetProductRequest {
     string id = 1;
-} 
-
-message GrpcUpdatedProductResponse {
-    repeated GrpcProductModel product = 1;
 }
 
 message GrpcProductResponse {
@@ -26,7 +17,7 @@ message GrpcProductResponse {
 }
 
 message GrpcProductModel {
-    string id = 1;
+        string id = 1;
 
     string name = 2;
     optional string description = 3;

@@ -48,7 +48,7 @@ namespace SearchService.Data
                 .Sort(x => x.Descending(p => p.UpdatedAt))
                 .ExecuteFirstAsync();
             var lastUpdated = latestItem?.UpdatedAt;
-            var items = grpcClient.GetProduct(lastUpdated);
+            var items = grpcClient.GetUpdatedProduct(lastUpdated);
 
 
 
