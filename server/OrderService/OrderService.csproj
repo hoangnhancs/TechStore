@@ -8,6 +8,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BuildingBlocks\Infrastructure.EF\Infrastructure.EF.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\Shared.Core.EF\Shared.Core.EF.csproj" />
+    <ProjectReference Include="..\BuildingBlocks\Shared.Web\Shared.Web.csproj" />
   </ItemGroup>
 
 </Project>

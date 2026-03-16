@@ -1,10 +1,10 @@
 using System;
+using Shared.Core.EF.Domain.Entities;
 
 namespace OrderService.Entities;
 
-public class OrderItem
+public class OrderItem : BaseEntity<int>
 {
-    public int Id { get; set; }
     public int Quantity { get; set; }
     public long UnitPrice { get; set; }
     public required string ProductId { get; set; }

@@ -1,12 +1,12 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using Shared.Core.EF.Domain.Entities;
 
 namespace CartService.Entities;
 
 
 
-public class BasketItem
+public class BasketItem : BaseEntity<int>
 {
-    public int Id { get; set; } 
     public int Quantity { get; set; }
     //navigation properties
     public required string ProductId { get; set; }
