@@ -27,7 +27,11 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
 
         if (basket == null)
         {
-            return AppResult<BasketDto>.Failure("Basket not found", 404);
+            basket = new Entities.Basket
+            {
+                UserId = request.UserId,
+                Items = new List<Entities.BasketItem>()
+            };
         }
 
         return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(basket));

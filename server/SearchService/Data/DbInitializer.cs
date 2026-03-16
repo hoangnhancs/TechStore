@@ -42,13 +42,15 @@ namespace SearchService.Data
 
             using var scope = app.Services.CreateScope();
             var httpClient = scope.ServiceProvider.GetRequiredService<ProductSvcHttpClient>();
-            var grpcClient = scope.ServiceProvider.GetRequiredService<GrpcProductClient>();
+            //không dùng Grpc vì sẽ phụ thuộc vào productsvc
+            // var grpcClient = scope.ServiceProvider.GetRequiredService<GrpcProductClient>();
             Console.WriteLine($"Starting get data from Product Service... Current items in DB: {count}");
             var latestItem = await DB.Find<ProductItem>()
                 .Sort(x => x.Descending(p => p.UpdatedAt))
                 .ExecuteFirstAsync();
             var lastUpdated = latestItem?.UpdatedAt;
-            var items = grpcClient.GetUpdatedProduct(lastUpdated);
+            var items = await httpClient.GetItemsForSearchDb();
+            // var items = grpcClient.GetUpdatedProduct(lastUpdated);
 
 
 

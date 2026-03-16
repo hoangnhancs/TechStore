@@ -48,10 +48,10 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             }
 
             // Optional: Validate product stock if needed
-            // if (product.Stock < request.Quantity)
-            // {
-            //     return AppResult<BasketDto>.Failure("Insufficient stock", 400);
-            // }
+            if (product.QuantityInStock < request.Quantity)
+            {
+                return AppResult<BasketDto>.Failure("Insufficient stock", 400);
+            }
         }
         catch (TimeoutException ex)
         {

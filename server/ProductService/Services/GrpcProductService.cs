@@ -67,7 +67,8 @@ namespace ProductService.Services
                     TotalRatingStar = p.TotalRatingStar,
                     UnitSold = p.UnitSold,
                     CreatedAt = Timestamp.FromDateTime(p.CreatedAt.ToUniversalTime()),
-                    UpdatedAt = Timestamp.FromDateTime(p.UpdatedAt.ToUniversalTime())
+                    UpdatedAt = Timestamp.FromDateTime(p.UpdatedAt.ToUniversalTime()),
+                    QuantityInStock = p.QuantityInStock
                 };
 
                 // Add Attributes (read-only collection)

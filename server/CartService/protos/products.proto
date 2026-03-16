@@ -17,7 +17,7 @@ message GrpcProductResponse {
 }
 
 message GrpcProductModel {
-        string id = 1;
+    string id = 1;
 
     string name = 2;
     optional string description = 3;
@@ -60,6 +60,8 @@ message GrpcProductModel {
     optional string brand_name = 28;
 
     optional string url_slung = 29;
+
+    int32 quantity_in_stock = 30;
 }
 
 message GrpcProductFilterTagValueDto {
