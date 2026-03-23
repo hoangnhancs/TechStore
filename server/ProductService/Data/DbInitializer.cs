@@ -248,6 +248,7 @@ namespace ProductService.Data
                             MainImageUrl = item.image_url,
                             MainImagePublicId = item.image_publicid,
                             QuantityInStock = 1000,
+                            ReservedQuantity = 0,
                             UrlSlug = item.urlslug,
                             MetaTitle = item.metatitle,
                             MetaDescription = item.metadescription,

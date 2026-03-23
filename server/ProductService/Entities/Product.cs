@@ -22,6 +22,7 @@ public class Product : BaseEntity<string>
     public required string MainImageUrl { get; set; }
     public required string MainImagePublicId { get; set; }
     public required int QuantityInStock { get; set; }
+    public required int ReservedQuantity { get; set; } = 0;
     public string? UrlSlug { get; set; }
     public string? MetaTitle { get; set; }
     public string? MetaDescription { get; set; }

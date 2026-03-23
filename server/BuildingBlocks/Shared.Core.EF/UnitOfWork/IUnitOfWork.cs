@@ -20,7 +20,7 @@ namespace Shared.Core.EF.UnitOfWork
         /// <summary>
         /// Begin a transaction
         /// </summary>
-            Task BeginTransactionAsync(CancellationToken cancellationToken = default);
+        Task BeginTransactionAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Commit the current transaction

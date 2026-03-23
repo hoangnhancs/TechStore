@@ -7,15 +7,31 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="14.0.0" />
+    <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.76.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.7" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BuildingBlocks\Infrastructure.EF\Infrastructure.EF.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Core.EF\Shared.Core.EF.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Web\Shared.Web.csproj" />
+    <ProjectReference Include="..\Contract\Contract.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="protos\products.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

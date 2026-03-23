@@ -183,5 +183,111 @@ namespace ProductService.Services
             };
         }
 
+        /// <summary>
+        /// Reserve stock for order items with atomic check-and-update
+        /// This will decrease the QuantityInStock for each product atomically
+        /// </summary>
+        public override async Task<ReserveStockResponse> ReserveStock(ReserveStockRequest request, ServerCallContext context)
+        {
+            _logger.LogInformation("Received ReserveStock request for {ItemCount} items", request.Items.Count);
+
+            var response = new ReserveStockResponse
+            {
+                Success = true
+            };
+
+            // Start a transaction to ensure atomicity across multiple products
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+            try
+            {
+                foreach (var item in request.Items)
+                {
+                    var result = new StockReservationResult
+                    {
+                        ProductId = item.ProductId,
+                        RequestedQuantity = item.Quantity
+                    };
+
+                    // First, get product details for error messages
+                    var product = await _dbContext.Products
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(p => p.Id == item.ProductId);
+
+                    if (product == null)
+                    {
+                        result.Success = false;
+                        result.ErrorMessage = "Product not found";
+                        result.AvailableQuantity = 0;
+                        result.ProductName = "Unknown";
+                        response.Success = false;
+                        _logger.LogWarning("Product {ProductId} not found during stock reservation", item.ProductId);
+                        response.Results.Add(result);
+                        continue;
+                    }
+
+                    // Atomic check-and-update: Only update if stock is sufficient
+                    // This prevents race conditions
+                    var rowsAffected = await _dbContext.Database.ExecuteSqlInterpolatedAsync(
+                        $@"UPDATE ""Products"" 
+                           SET ""QuantityInStock"" = ""QuantityInStock"" - {item.Quantity}
+                           WHERE ""Id"" = {item.ProductId} 
+                           AND ""QuantityInStock"" >= {item.Quantity}");
+
+                    if (rowsAffected == 0)
+                    {
+                        // Either product not found or insufficient stock
+                        // Re-fetch to get current stock for error message
+                        var currentProduct = await _dbContext.Products
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(p => p.Id == item.ProductId);
+
+                        result.Success = false;
+                        result.ProductName = product.Name;
+                        result.AvailableQuantity = currentProduct?.QuantityInStock ?? 0;
+                        result.ErrorMessage = $"Insufficient stock. Available: {result.AvailableQuantity}, Requested: {item.Quantity}";
+                        response.Success = false;
+                        _logger.LogWarning("Insufficient stock for product {ProductId}. Available: {Available}, Requested: {Requested}", 
+                            item.ProductId, result.AvailableQuantity, item.Quantity);
+                    }
+                    else
+                    {
+                        // Successfully reserved
+                        result.Success = true;
+                        result.ProductName = product.Name;
+                        result.AvailableQuantity = product.QuantityInStock - item.Quantity;
+                        result.ErrorMessage = string.Empty;
+                        _logger.LogInformation("Atomically reserved {Quantity} units of product {ProductId} ({ProductName})", 
+                            item.Quantity, item.ProductId, product.Name);
+                    }
+
+                    response.Results.Add(result);
+                }
+
+                if (response.Success)
+                {
+                    // Commit transaction if all reservations were successful
+                    await transaction.CommitAsync();
+                    _logger.LogInformation("Stock reservation completed successfully for {ItemCount} items", request.Items.Count);
+                }
+                else
+                {
+                    // Rollback if any reservation failed
+                    await transaction.RollbackAsync();
+                    response.ErrorMessage = "Stock reservation failed for one or more items";
+                    _logger.LogWarning("Stock reservation failed, transaction rolled back");
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                response.Success = false;
+                response.ErrorMessage = $"Error during stock reservation: {ex.Message}";
+                _logger.LogError(ex, "Error during stock reservation");
+            }
+
+            return response;
+        }
+
     }
 }

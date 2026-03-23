@@ -69,6 +69,10 @@ builder.Services.AddMassTransit(x =>
         o.UseBusOutbox(); // Dùng bus outbox => publish trong transaction của EF thay vì gửi ngay
     });
 
+    // Register Saga Command Consumers
+    x.AddConsumer<ProductService.Consumers.ReserveStockConsumer>();
+    x.AddConsumer<ProductService.Consumers.ReleaseStockConsumer>();
+
     // x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("product", false));

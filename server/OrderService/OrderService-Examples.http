@@ -1,0 +1,39 @@
+### Create a new order (Production-ready flow)
+### This will:
+### 1. Call ProductService gRPC to reserve stock
+### 2. Create order in database
+### 3. Publish OrderCreated event to RabbitMQ
+POST http://localhost:5003/api/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "shippingAddress": "123 Nguyen Hue, District 1, HCMC",
+  "billingAddress": "123 Nguyen Hue, District 1, HCMC",
+  "items": [
+    {
+      "productId": "product-guid-1",
+      "quantity": 2,
+      "unitPrice": 150000
+    },
+    {
+      "productId": "product-guid-2",
+      "quantity": 1,
+      "unitPrice": 500000
+    }
+  ],
+  "shippingCost": 30000,
+  "discount": 50000
+}
+
+### Get orders by user ID
+GET http://localhost:5003/api/orders/user/{{userId}}
+Authorization: Bearer {{token}}
+
+### Get order details by order ID
+GET http://localhost:5003/api/orders/{{orderId}}
+Authorization: Bearer {{token}}
+
+### Get orders in date range (Admin only)
+GET http://localhost:5003/api/orders/range?startDate=2026-01-01&endDate=2026-12-31
+Authorization: Bearer {{token}}

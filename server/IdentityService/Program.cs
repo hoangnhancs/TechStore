@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Web.Helper;
 using Shared.Web.Helper.Interface;
 using SharedWeb.Middleware;
+using static IdentityService.Services.Address.CreateVirtualAddresses;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +26,13 @@ builder.Services.AddDbContext<IdentitySvcDbContext>(options =>
 {
     var connStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
     options.UseNpgsql(connStr);
+});
+
+builder.Services.AddMediatR(cfg => 
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    // Hoặc assembly chứa các Handler
+    cfg.RegisterServicesFromAssembly(typeof(CreateVirtualAddressesCommand).Assembly);
 });
 
 builder.Services.AddTransient<ExceptionMiddleware>();
