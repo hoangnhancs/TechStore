@@ -123,6 +123,30 @@ public class Order : BaseEntity<string>
         Status = OrderStatus.Cancelled;
         UpdatedAt = DateTime.UtcNow;
     }
+
+    public void UpdateStatus(OrderStatus newStatus)
+    {
+        switch (newStatus)
+        {
+            case OrderStatus.Processing:
+                Process();
+                break;
+            case OrderStatus.Shipped:
+                Ship();
+                break;
+            case OrderStatus.Delivered:
+                Deliver();
+                break;
+            case OrderStatus.Completed:
+                Complete();
+                break;
+            case OrderStatus.Cancelled:
+                Cancel();
+                break;
+            default:
+                throw new InvalidOperationException("Invalid order status");
+        }
+    }
     public enum OrderStatus
     {
         Created,
