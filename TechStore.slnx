@@ -2,6 +2,7 @@
   <Folder Name="/server/">
     <Project Path="server/CartService/CartService.csproj" />
     <Project Path="server/Contract/Contract.csproj" />
+    <Project Path="server/EmailService/EmailService.csproj" />
     <Project Path="server/GatewayService/GatewayService.csproj" />
     <Project Path="server/IdentityService/IdentityService.csproj" />
     <Project Path="server/OrderService/OrderService.csproj" />

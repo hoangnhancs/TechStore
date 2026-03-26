@@ -24,6 +24,13 @@ services:
     ports:
       - 5672:5672
       - 15672:15672 
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # UI
+    restart: unless-stopped
   # product-svc:
   #   image: thaihoangnhantk/product-svc:latest
   #   build:
