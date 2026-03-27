@@ -24,7 +24,26 @@ namespace OrderService.Services.Order
             }
             try
             {
-                order.UpdateStatus(request.NewStatus);
+                switch (request.NewStatus)
+                {
+                    case Entities.Order.OrderStatus.Processing:
+                        order.Process();
+                        break;
+                    // case Entities.Order.OrderStatus.Processing:
+                    //     order.Process();
+                    //     break;
+                    // case Entities.Order.OrderStatus.Shipped:
+                    //     order.MarkAsShipped();
+                    //     break;
+                    // case Entities.Order.OrderStatus.Delivered:
+                    //     order.MarkAsDelivered();
+                    //     break;
+                    // case Entities.Order.OrderStatus.Cancelled:
+                    //     order.Cancel();
+                    //     break;
+                    default:
+                        return AppResult<Unit>.Failure("Invalid order status", 400);
+                }
             }
             catch (InvalidOperationException ex)
             {

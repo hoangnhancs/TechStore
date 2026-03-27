@@ -24,6 +24,7 @@ namespace IdentityService
                         DisplayName = userName,
                         UserName = $"{userName.ToLower()}@gmail.com",
                         Email = $"{userName.ToLower()}@gmail.com",
+                        PhoneNumber = GenerateVietnamPhoneNumber(),
                         EmailConfirmed = true
                     };
                     await userManager.CreateAsync(user, "Pa$$w0rd");
@@ -35,6 +36,7 @@ namespace IdentityService
                     DisplayName = "Admin",
                     UserName = "admin@gmail.com",
                     Email = "admin@gmail.com",
+                    PhoneNumber = GenerateVietnamPhoneNumber(),
                     EmailConfirmed = true,
                     IsAdmin = true
                 };
@@ -47,12 +49,31 @@ namespace IdentityService
                     DisplayName = "Hoàng Nhân",
                     UserName = "thaihoangnhantk17lqd@gmail.com",
                     Email = "thaihoangnhantk17lqd@gmail.com",
-                    IsAdmin = true
+                    PhoneNumber = GenerateVietnamPhoneNumber(),
+                    EmailConfirmed = true,
+                    IsAdmin = true  
                 };
 
                 await userManager.CreateAsync(admin2, "Pa$$w0rd");
                 await userManager.AddToRolesAsync(admin2, ["Member", "Admin"]);
             }
+        }
+        public static string GenerateVietnamPhoneNumber()
+        {
+            var random = new Random();
+
+            // Các đầu số phổ biến VN
+            string[] prefixes = { "032", "033", "034", "035", "036", "037", "038", "039",
+                                "070", "076", "077", "078", "079",
+                                "081", "082", "083", "084", "085",
+                                "056", "058",
+                                "091", "094", "088" };
+
+            string prefix = prefixes[random.Next(prefixes.Length)];
+
+            string remaining = random.Next(0, 9999999).ToString("D7");
+
+            return prefix + remaining;
         }
     }
 }

@@ -29,56 +29,56 @@ public class OrdersController : BaseApiController
         return HandleAppResult(await Mediator.Send(command));
     }
 
-    [HttpPut("{id}/process")]
-    public async Task<IActionResult> Process(string id)
-    {
-        return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
-        {
-            OrderId = id.ToString(),
-            NewStatus = Entities.Order.OrderStatus.Processing
-        }));
-    }
+    // [HttpPut("{id}/process")]
+    // public async Task<IActionResult> Process(string id)
+    // {
+    //     return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
+    //     {
+    //         OrderId = id.ToString(),
+    //         NewStatus = Entities.Order.OrderStatus.Processing
+    //     }));
+    // }
 
-    [HttpPut("{id}/ship")]
-    public async Task<IActionResult> Ship(string id)
-    {
-        return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
-        {
-            OrderId = id.ToString(),
-            NewStatus = Entities.Order.OrderStatus.Shipped
-        }));
-    }
+    // [HttpPut("{id}/ship")]
+    // public async Task<IActionResult> Ship(string id)
+    // {
+    //     return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
+    //     {
+    //         OrderId = id.ToString(),
+    //         NewStatus = Entities.Order.OrderStatus.HandedOverToCarrier
+    //     }));
+    // }
 
-    [HttpPut("{id}/deliver")]
-    public async Task<IActionResult> Deliver(string id)
-    {
-        return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
-        {
-            OrderId = id.ToString(),
-            NewStatus = Entities.Order.OrderStatus.Delivered
-        }));
-    }
+    // [HttpPut("{id}/deliver")]
+    // public async Task<IActionResult> Deliver(string id)
+    // {
+    //     return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
+    //     {
+    //         OrderId = id.ToString(),
+    //         NewStatus = Entities.Order.OrderStatus.Delivered
+    //     }));
+    // }
 
-    [HttpPut("{id}/complete")]
-    public async Task<IActionResult> Complete(string id)
-    {
-        return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
-        {
-            OrderId = id.ToString(),
-            NewStatus = Entities.Order.OrderStatus.Completed
-        }));
-    }
+    // [HttpPut("{id}/complete")]
+    // public async Task<IActionResult> Complete(string id)
+    // {
+    //     return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
+    //     {
+    //         OrderId = id.ToString(),
+    //         NewStatus = Entities.Order.OrderStatus.Completed
+    //     }));
+    // }
 
 
-    [HttpPut("{id}/cancel")]
-    public async Task<IActionResult> Cancel(string id)
-    {
-        return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
-        {
-            OrderId = id.ToString(),
-            NewStatus = Entities.Order.OrderStatus.Cancelled
-        }));
-    }
+    // [HttpPut("{id}/cancel")]
+    // public async Task<IActionResult> Cancel(string id)
+    // {
+    //     return HandleAppResult(await Mediator.Send(new UpdateOrderStatusCommand
+    //     {
+    //         OrderId = id.ToString(),
+    //         NewStatus = Entities.Order.OrderStatus.Cancelled
+    //     }));
+    // }
 
     [HttpGet]
     [Authorize]

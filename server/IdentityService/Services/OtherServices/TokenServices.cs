@@ -33,6 +33,7 @@ namespace IdentityService.Services.OtherServices
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
                 new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.MobilePhone, user.PhoneNumber ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim("security_stamp", await _userManager.GetSecurityStampAsync(user)),
                 //lay security stamp trong identity user(db user), 

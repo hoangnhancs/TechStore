@@ -17,6 +17,8 @@ namespace OrderService.Data
         }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<Shipment> Shipments { get; set; }
+        public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
         
         // Saga State Machine persistence
         public DbSet<OrderSagaState> OrderSagaStates { get; set; }
@@ -25,7 +27,10 @@ namespace OrderService.Data
         {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(typeof(OrderSvcDbContext).Assembly);
-            
+            // builder.Entity<Order>()
+            //     .HasOne(o => o.Shipment)
+            //     .WithOne(s => s.Order)
+            //     .HasForeignKey<Shipment>(s => s.OrderId); // 👈 FIX ở đây
             // MassTransit Saga State Map
             builder.Entity<OrderSagaState>(entity =>
             {

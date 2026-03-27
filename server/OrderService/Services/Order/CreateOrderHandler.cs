@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using AutoMapper;
 using Contract;
 using EmailService.Interfaces;
@@ -18,6 +19,7 @@ namespace OrderService.Services.Order;
 /// </summary>
 public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<OrderDto>>
 {
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IOrderUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
     // private readonly GrpcProduct.GrpcProductClient _productGrpcClient; // Commented: Using Saga 
@@ -27,6 +29,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
     private readonly ILogger<CreateOrderHandler> _logger;
 
     public CreateOrderHandler(
+        IHttpContextAccessor httpContextAccessor,
         IOrderUnitOfWork unitOfWork, 
         IMapper mapper,
         // GrpcProduct.GrpcProductClient productGrpcClient, // Commented: Using Saga
@@ -35,6 +38,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
         IEmailTemplateBuilder templateBuilder,
         ILogger<CreateOrderHandler> logger)
     {
+        _httpContextAccessor = httpContextAccessor;
         _unitOfWork = unitOfWork;
         _mapper = mapper;
         // _productGrpcClient = productGrpcClient; // Commented: Using Saga
@@ -102,6 +106,11 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             // Saga will handle stock reservation asynchronously
             // Step 2: Create order entity in "Pending" status
             // Saga will handle stock reservation asynchronously
+            var userId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var username = _httpContextAccessor.HttpContext?.User.Identity?.Name;
+            var phone = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.MobilePhone)?.Value;
+            var email = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value;
+
             var orderItems = dto.Items.Select(item => new OrderItem
             {
                 ProductId = item.ProductId,
@@ -111,7 +120,10 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             }).ToList();
 
             var order = Entities.Order.CreateOrder(
-                userId: request.UserId,
+                userId: userId ?? throw new ArgumentException("User ID not found in token"),
+                userName: username ?? throw new ArgumentException("Username not found in token"),
+                userEmail: email,
+                userPhone: phone ?? throw new ArgumentException("User phone not found in token"),
                 items: orderItems,
                 shippingAddress: dto.ShippingAddress,
                 billingAddress: dto.BillingAddress,
@@ -153,7 +165,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 }).ToList(),
                 ShippingAddress = order.ShippingAddress ?? "",
                 BillingAddress = order.BillingAddress ?? "",
-                SubTotal = order.SubToTal,
+                SubTotal = order.SubTotal,
                 ShippingCost = order.ShippingCost,
                 Discount = order.Discount,
                 Total = order.Total,

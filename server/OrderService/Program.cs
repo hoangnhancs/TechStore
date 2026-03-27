@@ -56,6 +56,8 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(GetListOrdersInRangeDateQuery).Assembly);
@@ -86,7 +88,7 @@ builder.Services.AddMassTransit(x =>
     // Register consumers for Saga commands
     x.AddConsumer<OrderService.Consumers.ConfirmOrderConsumer>();
     x.AddConsumer<OrderService.Consumers.CancelOrderConsumer>();
-
+    // x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>

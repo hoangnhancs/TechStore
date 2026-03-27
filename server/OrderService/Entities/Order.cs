@@ -6,7 +6,9 @@ namespace OrderService.Entities;
 public class Order : BaseEntity<string>
 {
     public required string UserId { get; set; }
-
+    public required string UserName { get; set; }
+    public string? UserEmail { get; set; }
+    public required string UserPhone { get; set; }
     public List<OrderItem> Items { get; set; } = [];
 
     public OrderStatus Status { get; private set; } = OrderStatus.Created;
@@ -14,10 +16,12 @@ public class Order : BaseEntity<string>
     public string? ShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
 
-    public long SubToTal { get; set; }
+    public long SubTotal { get; set; }
     public long ShippingCost { get; set; }
     public long Discount { get; set; } = 0;
     public long Total { get; set; }
+    public Shipment? Shipment { get; set; }
+    public List<OrderStatusHistory> StatusHistories { get; set; } = [];
 
     public Order() : base(Guid.NewGuid().ToString())
     {
@@ -28,6 +32,9 @@ public class Order : BaseEntity<string>
     /// </summary>
     public static Order CreateOrder(
         string userId, 
+        string userName,
+        string? userEmail,
+        string userPhone,
         List<OrderItem> items, 
         string shippingAddress, 
         string? billingAddress, 
@@ -46,6 +53,9 @@ public class Order : BaseEntity<string>
         var order = new Order
         {
             UserId = userId,
+            UserName = userName,
+            UserEmail = userEmail,
+            UserPhone = userPhone,
             Items = items,
             ShippingAddress = shippingAddress,
             BillingAddress = billingAddress,
@@ -61,8 +71,8 @@ public class Order : BaseEntity<string>
 
     private void CalculateTotals()
     {
-        SubToTal = Items.Sum(x => x.UnitPrice * x.Quantity);
-        Total = SubToTal + ShippingCost - Discount;
+        SubTotal = Items.Sum(x => x.UnitPrice * x.Quantity);
+        Total = SubTotal + ShippingCost - Discount;
     }
 
     public void UpdateOrder(List<OrderItem> items, string shippingAddress, string? billingAddress, long shippingCost, long discount)
@@ -88,22 +98,59 @@ public class Order : BaseEntity<string>
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void Ship()
+    public void UpdateFromShipment(ShipmentStatus shipmentStatus)
     {
-        if (Status != OrderStatus.Processing)
-            throw new InvalidOperationException($"Cannot ship order with status {Status}");
+        // switch (shipmentStatus)
+        // {
+        //     case ShipmentStatus.Preparing:
+        //         if (Status == OrderStatus.Created)
+        //             Process();
+        //         break;
 
-        Status = OrderStatus.Shipped;
+        //     case ShipmentStatus.Picked:
+        //     case ShipmentStatus.InTransit:
+        //         if (Status == OrderStatus.Processing)
+        //         {
+        //             Status = OrderStatus.HandedOverToCarrier;
+        //             UpdatedAt = DateTime.UtcNow;
+        //         }
+        //         break;
+
+        //     case ShipmentStatus.Delivered:
+        //         if (Status == OrderStatus.HandedOverToCarrier)
+        //         {
+        //             Status = OrderStatus.Delivered;
+        //             UpdatedAt = DateTime.UtcNow;
+        //         }
+        //         break;
+
+        //     case ShipmentStatus.Failed:
+        //         // tùy business
+        //         // có thể rollback về Processing
+        //         break;
+        // }
+        var newStatus = shipmentStatus switch
+        {
+            ShipmentStatus.Preparing => OrderStatus.Processing,
+            ShipmentStatus.Picked or ShipmentStatus.InTransit => OrderStatus.HandedOverToCarrier,
+            ShipmentStatus.Delivered => OrderStatus.Delivered,
+            _ => Status
+        };
+
+        if (Status == newStatus) return;
+
+        StatusHistories.Add(new OrderStatusHistory
+        {
+            OrderId = Id,
+            FromStatus = Status,
+            ToStatus = newStatus,
+            ChangedAt = DateTime.UtcNow
+        });
+
+        Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
-    }
 
-    public void Deliver()
-    {
-        if (Status != OrderStatus.Shipped)
-            throw new InvalidOperationException($"Cannot deliver order with status {Status}");
-
-        Status = OrderStatus.Delivered;
-        UpdatedAt = DateTime.UtcNow;
+        Shipment.UpdateStatus(shipmentStatus);
     }
 
     public void Complete()
@@ -124,34 +171,34 @@ public class Order : BaseEntity<string>
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void UpdateStatus(OrderStatus newStatus)
-    {
-        switch (newStatus)
-        {
-            case OrderStatus.Processing:
-                Process();
-                break;
-            case OrderStatus.Shipped:
-                Ship();
-                break;
-            case OrderStatus.Delivered:
-                Deliver();
-                break;
-            case OrderStatus.Completed:
-                Complete();
-                break;
-            case OrderStatus.Cancelled:
-                Cancel();
-                break;
-            default:
-                throw new InvalidOperationException("Invalid order status");
-        }
-    }
+    // public void UpdateStatus(OrderStatus newStatus)
+    // {
+    //     switch (newStatus)
+    //     {
+    //         case OrderStatus.Processing:
+    //             Process();
+    //             break;
+    //         case OrderStatus.HandedOverToCarrier:
+    //             Ship();
+    //             break;
+    //         case OrderStatus.Delivered:
+    //             Deliver();
+    //             break;
+    //         case OrderStatus.Completed:
+    //             Complete();
+    //             break;
+    //         case OrderStatus.Cancelled:
+    //             Cancel();
+    //             break;
+    //         default:
+    //             throw new InvalidOperationException("Invalid order status");
+    //     }
+    // }
     public enum OrderStatus
     {
         Created,
         Processing,
-        Shipped,
+        HandedOverToCarrier,
         Delivered,
         Completed,
         Cancelled
