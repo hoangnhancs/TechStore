@@ -24,6 +24,10 @@ namespace OrderService.RequestHelpers
 
             // CreateOrderDto mappings
             CreateMap<CreateOrderItemDto, OrderItem>();
+
+            CreateMap<Shipment, ShipmentDto>().ReverseMap();
+
+            CreateMap<OrderStatusHistory, OrderStatusHistoryDto>().ReverseMap();
         }
     }
 }
