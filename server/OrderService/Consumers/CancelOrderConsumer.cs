@@ -43,7 +43,7 @@ namespace OrderService.Consumers
                 }
 
                 // Update order status to Cancelled
-                order.Cancel();
+                order.Cancel(context.Message.Reason);
                 
                 await _context.SaveChangesAsync();
 

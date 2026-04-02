@@ -96,6 +96,14 @@ public class Order : BaseEntity<string>
 
         Status = OrderStatus.Processing;
         UpdatedAt = DateTime.UtcNow;
+        StatusHistories.Add(new OrderStatusHistory
+        {
+            OrderId = Id,
+            FromStatus = OrderStatus.Created,
+            ToStatus = OrderStatus.Cancelled,
+            ChangedBy = "system",
+            ChangedAt = DateTime.UtcNow
+        });
     }
 
     public void UpdateFromShipment(ShipmentStatus shipmentStatus)
@@ -149,8 +157,14 @@ public class Order : BaseEntity<string>
 
         Status = newStatus;
         UpdatedAt = DateTime.UtcNow;
-
-        Shipment.UpdateStatus(shipmentStatus);
+        if (Shipment != null)
+        {
+            Shipment.UpdateStatus(shipmentStatus);
+        }
+        else
+        {
+            // Log warning: shipment is null when updating from shipment status
+        }
     }
 
     public void Complete()
@@ -162,13 +176,22 @@ public class Order : BaseEntity<string>
         UpdatedAt = DateTime.UtcNow;
     }
 
-    public void Cancel()
+    public void Cancel(string reason)
     {
         if (Status == OrderStatus.Completed)
             throw new InvalidOperationException("Cannot cancel completed order");
 
         Status = OrderStatus.Cancelled;
         UpdatedAt = DateTime.UtcNow;
+        StatusHistories.Add(new OrderStatusHistory
+        {
+            OrderId = Id,
+            FromStatus = Status,
+            ToStatus = OrderStatus.Cancelled,
+            Note = reason,           // lý do từ Saga (hết stock, payment fail...)
+            ChangedBy = "system",
+            ChangedAt = DateTime.UtcNow
+        });
     }
 
     // public void UpdateStatus(OrderStatus newStatus)

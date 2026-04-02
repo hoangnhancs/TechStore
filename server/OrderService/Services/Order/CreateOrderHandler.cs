@@ -137,22 +137,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 item.OrderId = order.Id;
             }
 
-            // Step 3: Save to database (with Outbox pattern enabled)
-            await _unitOfWork.OrderRepository.AddAsync(order, cancellationToken);
-            var saveResult = await _unitOfWork.CommitAsync(cancellationToken);
-
-            if (!saveResult)
-            {
-                _logger.LogError("Failed to save order to database for user {UserId}", request.UserId);
-                return AppResult<OrderDto>.Failure("Failed to create order", 500);
-            }
-
-            _logger.LogInformation("Order {OrderId} created successfully in database", order.Id);
-
-            // Step 4: Publish OrderCreated event - Saga will orchestrate from here
-            // Outbox pattern ensures event is delivered even if broker is down
-            // Step 4: Publish OrderCreated event - Saga will orchestrate from here
-            // Outbox pattern ensures event is delivered even if broker is down
+            // Step 3: Prepare OrderCreated event BEFORE committing
+            // UseBusOutbox() requires Publish to be called before SaveChangesAsync
+            // so the outbox message is written in the same transaction as the order
             var orderCreatedEvent = new OrderCreated
             {
                 OrderId = order.Id,
@@ -173,9 +160,20 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 CreatedAt = order.CreatedAt
             };
 
-            // Publish event - OrderSaga will pick this up and orchestrate stock reservation
+            // Publish BEFORE CommitAsync so outbox message is saved in the same transaction
+            await _unitOfWork.OrderRepository.AddAsync(order, cancellationToken);
             await _publishEndpoint.Publish(orderCreatedEvent, cancellationToken);
-            _logger.LogInformation("Published OrderCreated event for order {OrderId}, Saga will handle orchestration", order.Id);
+
+            // Step 4: Commit — saves Order + OutboxMessage atomically
+            var saveResult = await _unitOfWork.CommitAsync(cancellationToken);
+
+            if (!saveResult)
+            {
+                _logger.LogError("Failed to save order to database for user {UserId}", request.UserId);
+                return AppResult<OrderDto>.Failure("Failed to create order", 500);
+            }
+
+            _logger.LogInformation("Order {OrderId} saved and OrderCreated event queued in outbox, Saga will handle orchestration", order.Id);
 
             // Step 5: Map to DTO and return
             var orderDto = _mapper.Map<OrderDto>(order);

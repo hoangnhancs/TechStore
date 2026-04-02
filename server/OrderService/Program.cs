@@ -77,6 +77,14 @@ builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 // Configure MassTransit with RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
+    // Add Entity Framework Outbox FIRST for reliable event delivery
+    x.AddEntityFrameworkOutbox<OrderSvcDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10); // Polling interval for outbox messages
+        o.UsePostgres();
+        o.UseBusOutbox(); // Use outbox within EF transaction
+    });
+
     // Register Saga State Machine
     x.AddSagaStateMachine<OrderSagaStateMachine, OrderSagaState>()
         .EntityFrameworkRepository(r =>
@@ -88,7 +96,10 @@ builder.Services.AddMassTransit(x =>
     // Register consumers for Saga commands
     x.AddConsumer<OrderService.Consumers.ConfirmOrderConsumer>();
     x.AddConsumer<OrderService.Consumers.CancelOrderConsumer>();
-    // x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
+    
+    // Set endpoint naming to match other services
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
+    
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
@@ -97,15 +108,8 @@ builder.Services.AddMassTransit(x =>
             h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
         });
 
-        // Configure endpoints for consumers
+        // ConfigureEndpoints handles both saga and consumers with consistent naming
         cfg.ConfigureEndpoints(context);
-    });
-
-    // Add Entity Framework Outbox for reliable event delivery
-    x.AddEntityFrameworkOutbox<OrderSvcDbContext>(o =>
-    {
-        o.UsePostgres();
-        o.UseBusOutbox();
     });
 });
 
