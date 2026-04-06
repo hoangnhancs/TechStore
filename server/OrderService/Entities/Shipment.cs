@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using Shared.Core.EF.Domain.Entities;
@@ -11,6 +12,7 @@ namespace OrderService.Entities
         public required string CarrierName { get; set; }
         public required string TrackingNumber { get; set; }
         public decimal ShippingCost { get; set; }
+        [Column(TypeName = "varchar(20)")]
         public ShipmentStatus Status { get; private set; } = ShipmentStatus.Preparing; 
         public DateTime? EstimatedDelivery { get; set; }
         public DateTime? ActualDelivery { get; set; }

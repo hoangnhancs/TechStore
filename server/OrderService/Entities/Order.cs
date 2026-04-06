@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using Shared.Core.EF.Domain.Entities;
 
 namespace OrderService.Entities;
@@ -10,7 +11,7 @@ public class Order : BaseEntity<string>
     public string? UserEmail { get; set; }
     public required string UserPhone { get; set; }
     public List<OrderItem> Items { get; set; } = [];
-
+    [Column(TypeName = "varchar(20)")]
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
 
     public string? ShippingAddress { get; set; }
@@ -21,6 +22,8 @@ public class Order : BaseEntity<string>
     public long Discount { get; set; } = 0;
     public long Total { get; set; }
     public Shipment? Shipment { get; set; }
+    [Column(TypeName = "varchar(20)")]
+    public required PaymentMethod PmtMethod { get; set; }
     public List<OrderStatusHistory> StatusHistories { get; set; } = [];
 
     public Order() : base(Guid.NewGuid().ToString())
@@ -39,7 +42,8 @@ public class Order : BaseEntity<string>
         string shippingAddress, 
         string? billingAddress, 
         long shippingCost, 
-        long discount)
+        long discount,
+        PaymentMethod paymentMethod)
     {
         if (items == null || items.Count == 0)
             throw new ArgumentException("Order must have at least one item");
@@ -61,6 +65,7 @@ public class Order : BaseEntity<string>
             BillingAddress = billingAddress,
             ShippingCost = shippingCost,
             Discount = discount,
+            PmtMethod = paymentMethod
         };
         order.StatusHistories.Add(new OrderStatusHistory
         {
@@ -234,5 +239,14 @@ public class Order : BaseEntity<string>
         Delivered,
         Completed,
         Cancelled
+    }
+
+    public enum PaymentMethod
+    {
+        CashOnDelivery,
+        Card,
+        Momo,
+        VNPay,
+        BankTransfer
     }
 }

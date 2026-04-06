@@ -17,5 +17,6 @@ public class OrderDto
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public ShipmentDto? Shipment { get; set; }
+    public string PaymentMethod { get; set; } = null!;
     public List<OrderStatusHistoryDto> StatusHistories { get; set; } = [];
 }

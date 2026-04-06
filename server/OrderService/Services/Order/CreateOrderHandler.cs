@@ -10,6 +10,7 @@ using OrderService.Entities;
 using OrderService.Persistence;
 // using ProductService; // Commented: Using Saga pattern instead of direct gRPC
 using Shared.Core.EF.Application;
+using static OrderService.Entities.Order;
 
 namespace OrderService.Services.Order;
 
@@ -105,6 +106,11 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             var phone = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.MobilePhone)?.Value;
             var email = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value;
 
+            if (!Enum.TryParse<PaymentMethod>(dto.PaymentMethod, ignoreCase: true, out var paymentMethod))
+            {
+                return AppResult<OrderDto>.Failure("Invalid payment method", 400);
+            }
+
             var orderItems = dto.Items.Select(item => new OrderItem
             {
                 ProductId = item.ProductId,
@@ -122,7 +128,8 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 shippingAddress: dto.ShippingAddress,
                 billingAddress: dto.BillingAddress,
                 shippingCost: dto.ShippingCost,
-                discount: dto.Discount
+                discount: dto.Discount,
+                paymentMethod: paymentMethod
             );
 
             // Set order reference for items

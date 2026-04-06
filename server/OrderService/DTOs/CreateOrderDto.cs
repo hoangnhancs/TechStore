@@ -1,3 +1,5 @@
+using static OrderService.Entities.Order;
+
 namespace OrderService.DTOs;
 
 /// <summary>
@@ -10,6 +12,7 @@ public class CreateOrderDto
     public required List<CreateOrderItemDto> Items { get; set; }
     public long ShippingCost { get; set; } = 0;
     public long Discount { get; set; } = 0;
+    public required string PaymentMethod { get; set; }
 }
 
 /// <summary>
