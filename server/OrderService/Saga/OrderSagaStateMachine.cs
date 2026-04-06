@@ -17,6 +17,7 @@ namespace OrderService.Saga
         // States
         public State? WaitingForStockReservation { get; set; }
         public State? StockReserved { get; set; }
+        public State? Processing { get; set; }
         public State? Completed { get; set; }
         public State? Cancelled { get; set; }
 
@@ -24,6 +25,7 @@ namespace OrderService.Saga
         public Event<OrderCreated>? OrderCreated { get; set; }
         public Event<StockReserved>? StockReservedEvent { get; set; }
         public Event<StockReservationFailed>? StockReservationFailedEvent { get; set; }
+        public Event<ConfirmOrder>? ConfirmOrderEvent { get; set; }
 
         public OrderSagaStateMachine()
         {
@@ -38,6 +40,9 @@ namespace OrderService.Saga
                 (state, context) => state.OrderId == context.Message.OrderId));
             
             Event(() => StockReservationFailedEvent, x => x.CorrelateBy(
+                (state, context) => state.OrderId == context.Message.OrderId));
+
+            Event(() => ConfirmOrderEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
 
             // Initial state: Receive OrderCreated event
@@ -72,7 +77,7 @@ namespace OrderService.Saga
                     {
                         OrderId = ctx.Saga.OrderId
                     }))
-                    .TransitionTo(Completed),
+                    .TransitionTo(Processing),
 
                 // Sad path: Stock reservation failed
                 When(StockReservationFailedEvent)
@@ -87,6 +92,20 @@ namespace OrderService.Saga
                         Reason = ctx.Saga.FailureReason
                     }))
                     .TransitionTo(Cancelled)
+            );
+
+            During(Processing,
+                When(ConfirmOrderEvent)
+                    .Then(ctx =>
+                    {
+                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                    })
+                    .PublishAsync(ctx => ctx.Init<CommitStock>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        Items = ctx.Saga.Items
+                    }))
+                    .TransitionTo(Completed)
             );
 
             // Mark saga as finalized when completed or cancelled

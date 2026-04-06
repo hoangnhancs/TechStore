@@ -11,7 +11,7 @@ using Shared.Core.EF.Application;
 
 namespace OrderService.Services.OrderHistory
 {
-    public class GetOrderStatusHistoryHandler : IRequestHandler<GetOrderStatusHistoryCommand, AppResult<OrderStatusHistoryWithShipmentDto>>
+    public class GetOrderStatusHistoryHandler : IRequestHandler<GetOrderStatusHistoryQuery, AppResult<OrderStatusHistoryWithShipmentDto>>
     {
         private readonly IOrderUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
@@ -20,7 +20,7 @@ namespace OrderService.Services.OrderHistory
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
-        public async Task<AppResult<OrderStatusHistoryWithShipmentDto>> Handle(GetOrderStatusHistoryCommand request, CancellationToken cancellationToken)
+        public async Task<AppResult<OrderStatusHistoryWithShipmentDto>> Handle(GetOrderStatusHistoryQuery request, CancellationToken cancellationToken)
         {
             var res = new OrderStatusHistoryWithShipmentDto();
             var order = (await _unitOfWork.OrderRepository.GetListAsync(

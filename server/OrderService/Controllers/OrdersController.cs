@@ -100,6 +100,17 @@ public class OrdersController : BaseApiController
         return HandleAppResult(await Mediator.Send(query));
     }
 
+    [HttpGet("{orderId}/with-history")]
+    [Authorize]
+    public async Task<IActionResult> GetOrderDetailsWithHistory(string orderId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        var query = new GetOrderWithStatusHistoryAndShipmentQuery { UserId = userId, OrderId = orderId };
+        return HandleAppResult(await Mediator.Send(query));
+    }
+
     [HttpGet("range")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetOrdersInRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)

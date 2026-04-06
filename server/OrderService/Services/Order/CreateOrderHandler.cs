@@ -24,8 +24,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
     private readonly IMapper _mapper;
     // private readonly GrpcProduct.GrpcProductClient _productGrpcClient; // Commented: Using Saga 
     private readonly IPublishEndpoint _publishEndpoint;
-    private readonly IEmailService _emailService;
-    private readonly IEmailTemplateBuilder _templateBuilder;
     private readonly ILogger<CreateOrderHandler> _logger;
 
     public CreateOrderHandler(
@@ -34,8 +32,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
         IMapper mapper,
         // GrpcProduct.GrpcProductClient productGrpcClient, // Commented: Using Saga
         IPublishEndpoint publishEndpoint,
-        IEmailService emailService,
-        IEmailTemplateBuilder templateBuilder,
         ILogger<CreateOrderHandler> logger)
     {
         _httpContextAccessor = httpContextAccessor;
@@ -43,8 +39,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
         _mapper = mapper;
         // _productGrpcClient = productGrpcClient; // Commented: Using Saga
         _publishEndpoint = publishEndpoint;
-        _emailService = emailService;
-        _templateBuilder = templateBuilder;
         _logger = logger;
     }
 
@@ -179,16 +173,6 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             var orderDto = _mapper.Map<OrderDto>(order);
             _logger.LogInformation("Order {OrderId} created successfully for user {UserId}, waiting for Saga processing", 
                 order.Id, request.UserId);
-            var body = await _templateBuilder.BuildAsync("OrderConfirmation", new()
-            {
-                ["OrderId"] = order.Id.ToString(),
-                ["CustomerName"] = order.UserId.ToString(), // Ideally should fetch user details for name
-                ["TotalPrice"] = order.Total.ToString("C"),
-                ["Address"] = order.BillingAddress ?? "N/A",
-                ["OrderDate"] = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
-            });
-
-            await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
             return AppResult<OrderDto>.Success(orderDto);
         }
         catch (ArgumentException ex)

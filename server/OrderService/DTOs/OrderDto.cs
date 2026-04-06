@@ -16,4 +16,6 @@ public class OrderDto
     public string Status { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public ShipmentDto? Shipment { get; set; }
+    public List<OrderStatusHistoryDto> StatusHistories { get; set; } = [];
 }

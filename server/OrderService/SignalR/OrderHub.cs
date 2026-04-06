@@ -27,7 +27,7 @@ namespace OrderService.SignalR
                 await Clients.Caller.SendAsync("OrderHistoryError", "User not authenticated");
                 return;
             }
-            var res = await _mediator.Send(new GetOrderStatusHistoryCommand { UserId = userId, OrderId = orderId });
+            var res = await _mediator.Send(new GetOrderStatusHistoryQuery { UserId = userId, OrderId = orderId });
             if (res.IsSuccess && res.Value != null)          
             {
 

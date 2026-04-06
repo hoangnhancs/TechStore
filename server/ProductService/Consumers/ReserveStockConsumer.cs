@@ -73,16 +73,46 @@ namespace ProductService.Consumers
                     }
                 }
 
-                // All validations passed - reserve stock atomically
-                foreach (var item in message.Items)
+                // Precheck passed - try to reserve stock automatically with SQL update to prevent race conditions
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    await _context.Database.ExecuteSqlInterpolatedAsync($@"
-                        UPDATE ""Products""
-                        SET ""QuantityInStock"" = ""QuantityInStock"" - {item.Quantity}
-                        WHERE ""Id"" = {item.ProductId}
-                        AND ""QuantityInStock"" >= {item.Quantity}
-                    ");
+                    foreach (var item in message.Items)
+                    {
+                        var rowsAffected = await _context.Database.ExecuteSqlInterpolatedAsync($"""
+                            UPDATE "Products"
+                            SET "ReservedQuantity" = "ReservedQuantity" + {item.Quantity}
+                            WHERE "Id" = {item.ProductId}
+                            AND "QuantityInStock" - "ReservedQuantity" >= {item.Quantity}
+                        """);
+                        if (rowsAffected == 0)
+                        {
+                            await transaction.RollbackAsync();
+                            
+                            var product = products.First(p => p.Id == item.ProductId);
+                            await context.Publish(new StockReservationFailed
+                            {
+                                OrderId = message.OrderId,
+                                Reason = $"Insufficient stock for product {product.Name} (concurrent reservation conflict)",
+                                Items = message.Items
+                            });
+                            return;
+                        }
+                    }
+                    await transaction.CommitAsync();
                 }
+                catch(Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    await context.Publish(new StockReservationFailed
+                    {
+                        OrderId = message.OrderId,
+                        Reason = $"Error reserving stock for OrderId: {message.OrderId}",
+                        Items = message.Items
+                    });
+                    _logger.LogError(ex, "Error reserving stock for OrderId: {OrderId}", message.OrderId);
+                }
+
 
                 await _context.SaveChangesAsync();
 

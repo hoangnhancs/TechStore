@@ -11,7 +11,7 @@ public class Order : BaseEntity<string>
     public required string UserPhone { get; set; }
     public List<OrderItem> Items { get; set; } = [];
 
-    public OrderStatus Status { get; private set; } = OrderStatus.Created;
+    public OrderStatus Status { get; private set; } = OrderStatus.Pending;
 
     public string? ShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
@@ -60,9 +60,16 @@ public class Order : BaseEntity<string>
             ShippingAddress = shippingAddress,
             BillingAddress = billingAddress,
             ShippingCost = shippingCost,
-            Discount = discount
+            Discount = discount,
         };
-
+        order.StatusHistories.Add(new OrderStatusHistory
+        {
+            OrderId = order.Id,
+            FromStatus = OrderStatus.Pending,
+            ToStatus = OrderStatus.Pending,
+            ChangedBy = "system",
+            ChangedAt = DateTime.UtcNow
+        });
         // Calculate totals
         order.CalculateTotals();
 
@@ -91,7 +98,7 @@ public class Order : BaseEntity<string>
     }
     public void Process()
     {
-        if (Status != OrderStatus.Created)
+        if (Status != OrderStatus.Pending)
             throw new InvalidOperationException($"Cannot process order with status {Status}");
 
         Status = OrderStatus.Processing;
@@ -99,8 +106,8 @@ public class Order : BaseEntity<string>
         StatusHistories.Add(new OrderStatusHistory
         {
             OrderId = Id,
-            FromStatus = OrderStatus.Created,
-            ToStatus = OrderStatus.Cancelled,
+            FromStatus = OrderStatus.Pending,
+            ToStatus = OrderStatus.Processing,
             ChangedBy = "system",
             ChangedAt = DateTime.UtcNow
         });
@@ -219,8 +226,10 @@ public class Order : BaseEntity<string>
     // }
     public enum OrderStatus
     {
+        Pending,
         Created,
         Processing,
+        WaitingForPayment,
         HandedOverToCarrier,
         Delivered,
         Completed,

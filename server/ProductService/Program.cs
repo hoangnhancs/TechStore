@@ -72,6 +72,7 @@ builder.Services.AddMassTransit(x =>
     // Register Saga Command Consumers
     x.AddConsumer<ProductService.Consumers.ReserveStockConsumer>();
     x.AddConsumer<ProductService.Consumers.ReleaseStockConsumer>();
+    x.AddConsumer<ProductService.Consumers.CommitStockConsumer>();
 
     // x.AddConsumersFromNamespaceContaining<AuctionCreatedFaultConsumer>();
 
