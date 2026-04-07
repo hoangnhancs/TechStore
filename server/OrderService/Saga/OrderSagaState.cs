@@ -56,5 +56,15 @@ namespace OrderService.Saga
         /// Reason for failure (if any)
         /// </summary>
         public string? FailureReason { get; set; }
+
+        /// <summary>
+        /// Currency code (e.g. "VND")
+        /// </summary>
+        public required string Currency { get; set; }
+
+        /// <summary>
+        /// Payment method (e.g. "CashOnDelivery", "CreditCard")
+        /// </summary>
+        public required string PaymentMethod { get; set; }
     }
 }

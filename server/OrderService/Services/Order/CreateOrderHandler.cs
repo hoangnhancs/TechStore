@@ -158,7 +158,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 Discount = order.Discount,
                 Total = order.Total,
                 Status = order.Status.ToString(),
-                CreatedAt = order.CreatedAt
+                CreatedAt = order.CreatedAt,
+                PaymentMethod = order.PmtMethod.ToString(),
+                Currency = "VND"
             };
 
             // Publish BEFORE CommitAsync so outbox message is saved in the same transaction

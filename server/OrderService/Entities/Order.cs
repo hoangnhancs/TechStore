@@ -244,7 +244,7 @@ public class Order : BaseEntity<string>
     public enum PaymentMethod
     {
         CashOnDelivery,
-        Card,
+        CreditCard,
         Momo,
         VNPay,
         BankTransfer

@@ -16,4 +16,6 @@ public class OrderCreated
     public long Total { get; set; }
     public string Status { get; set; } = "Created";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public required string Currency { get; set; } 
+    public required string PaymentMethod { get; set; } 
 }
