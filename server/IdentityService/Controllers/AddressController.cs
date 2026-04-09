@@ -13,25 +13,25 @@ namespace IdentityService.Controllers;
 [ApiController]
 public class AddressController(IConfiguration configuration) : BaseApiController
 {
-    // [HttpPost("create-address")]
-    // [Authorize(Policy = "SecurityStampRequirement")]
-    // public async Task<IActionResult> CreateAddress([FromBody] AddressDto dto)
-    // {
-    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //     if (string.IsNullOrEmpty(userId))
-    //         return Unauthorized("User not authenticated");
-    //     return HandleAppResult(await Mediator.Send(new AddAddressCommand { UserId = userId, Address = dto }));
-    // }
+    [HttpPost("create-address")]
+    [Authorize(Policy = "SecurityStampRequirement")]
+    public async Task<IActionResult> CreateAddress([FromBody] AddressDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        return HandleAppResult(await Mediator.Send(new AddAddressCommand { UserId = userId, Address = dto }));
+    }
 
-    // [HttpPut("update-address/{id}")]
-    // [Authorize(Policy = "SecurityStampRequirement")]
-    // public async Task<IActionResult> UpdateAddress(string id, [FromBody] AddressDto address)
-    // {
-    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //     if (string.IsNullOrEmpty(userId))
-    //         return Unauthorized("User not authenticated");
-    //     return HandleAppResult(await Mediator.Send(new UpdateAddressCommand { UserId = userId, AddressId = id, Address = address }));
-    // }
+    [HttpPut("update-address/{id}")]
+    [Authorize(Policy = "SecurityStampRequirement")]
+    public async Task<IActionResult> UpdateAddress(string id, [FromBody] AddressDto address)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        return HandleAppResult(await Mediator.Send(new UpdateAddressCommand { UserId = userId, AddressId = id, Address = address }));
+    }
 
     // [HttpGet("myaddresses")]
     // [Authorize(Policy = "SecurityStampRequirement")]
@@ -53,15 +53,15 @@ public class AddressController(IConfiguration configuration) : BaseApiController
     //     return HandleAppResult(await Mediator.Send(new GetAddressByIdQuery { AddressId = id }));
     // }
 
-    // [HttpDelete("delete-address")]
-    // [Authorize(Policy = "SecurityStampRequirement")]
-    // public async Task<IActionResult> DeleteAddress([FromBody] DeleteAddressDto dto)
-    // {
-    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //     if (string.IsNullOrEmpty(userId))
-    //         return Unauthorized("User not authenticated");
-    //     return HandleAppResult(await Mediator.Send(new DeleteAddressCommand { AddressId = dto.AddressId, UserId = userId }));
-    // }
+    [HttpDelete("delete-address/{id}")]
+    [Authorize(Policy = "SecurityStampRequirement")]
+    public async Task<IActionResult> DeleteAddress(string id)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        return HandleAppResult(await Mediator.Send(new DeleteAddressCommand { AddressId = id, UserId = userId }));
+    }
 
 
     [HttpGet("provinces")]

@@ -11,5 +11,4 @@ public class BasketItem : BaseEntity<int>
     //navigation properties
     public required string ProductId { get; set; }
     public required string BasketId { get; set; }
-    public Basket Basket { get; set; } = null!;
 }

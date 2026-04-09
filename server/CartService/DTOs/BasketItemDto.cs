@@ -9,5 +9,4 @@ public class BasketItemDto
     //navigation properties
     public required string ProductId { get; set; }
     public required string BasketId { get; set; }
-    public BasketDto Basket { get; set; } = null!;
 }

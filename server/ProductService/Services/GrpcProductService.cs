@@ -141,6 +141,7 @@ namespace ProductService.Services
                 IsFeatured = p.IsFeatured,
                 IsNewArrival = p.IsNewArrival,
                 IsOnSale = p.IsOnSale,
+                QuantityInStock = p.QuantityInStock,
                 AverageRating = (double)p.AverageRating,
                 RatingCount = p.RatingCount,
                 TotalRatingStar = p.TotalRatingStar,

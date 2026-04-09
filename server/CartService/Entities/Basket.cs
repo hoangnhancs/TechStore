@@ -23,8 +23,7 @@ public class Basket : BaseEntity<string>
             {   
                 ProductId = productId,
                 Quantity = quantity,
-                BasketId = Id,
-                Basket = this
+                BasketId = Id
             });
         }
     }

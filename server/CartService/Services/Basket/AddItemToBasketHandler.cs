@@ -4,6 +4,7 @@ using CartService.DTOs;
 using CartService.Persistence;
 using CartService.Services.Basket;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Shared.Core.EF.Application;
 
@@ -37,6 +38,21 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             return AppResult<BasketDto>.Failure("User ID cannot be null or empty", 400);
         }
 
+        var basket = (await _unitOfWork.BasketRepository.GetListAsync(
+            p => p.UserId == request.UserId,
+            q => q.Include(b => b.Items),
+            cancellationToken: cancellationToken
+        )).FirstOrDefault();
+
+        if (basket == null)
+        {
+            basket = new Entities.Basket
+            {
+                UserId = request.UserId,
+                Items = new List<Entities.BasketItem>()
+            };
+        }
+
         // Validate product exists via gRPC
         try
         {
@@ -64,13 +80,8 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             return AppResult<BasketDto>.Failure("Error validating product. Please try again.", 500);
         }
 
-        var newBasket = new Entities.Basket
-        {
-            UserId = request.UserId
-        };
-        newBasket.AddItem(request.ProductId, request.Quantity);
-        
-        await _unitOfWork.BasketRepository.AddAsync(newBasket, cancellationToken);
+
+        basket.AddItem(request.ProductId, request.Quantity);
 
         // await _userActionTrackingRepository.AddUserActionTracking(new UserActionTracking
         // {
@@ -85,7 +96,7 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
 
         
 
-        return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(newBasket));
+        return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(basket));
     }
 }
 

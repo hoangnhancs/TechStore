@@ -27,7 +27,7 @@ namespace ProductService.Controllers
         {
             return HandleAppResult(await Mediator.Send(new CreateNewBannerImageCommand { NewImages = files }));
         }
-        [HttpDelete]
+        [HttpPost("delete")]
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteBannerImage([FromBody] List<int> bannerImageIds)
         {
