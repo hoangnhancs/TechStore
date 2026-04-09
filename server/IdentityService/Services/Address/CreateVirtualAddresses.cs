@@ -36,18 +36,22 @@ public class CreateVirtualAddresses
         public int ProvinceID { get; set; }
         public string? ProvinceName { get; set; }
         public string? Code { get; set; }
+        public int IsEnable { get; set; }
     }
     public class DistrictData
     {
         public int DistrictID { get; set; }
         public string? DistrictName { get; set; }
         public string? Code { get; set; }
+        public int IsEnable { get; set; }
     }
     public class WardData
     {
+        public int WardID { get; set; }
         public string? WardCode { get; set; }
         public string? WardName { get; set; }
         public string? Code { get; set; }
+        public int IsEnable { get; set; }
     }
 
     public class CreateVirtualAddressesCommand : IRequest<AppResult<Unit>>
@@ -112,8 +116,11 @@ public class CreateVirtualAddresses
                     UserId = user.Id,
                     FullName = user.DisplayName ?? throw new Exception("User name is null"),
                     Province = randomProvince.ProvinceName ?? throw new Exception("Province name is null"),
+                    ProvinceCode = randomProvince.Code ?? throw new Exception($"Province code of province {randomProvince.ProvinceName} is null"),
                     District = randomDistrict.DistrictName ?? throw new Exception("District name is null"),
+                    DistrictCode = randomDistrict.Code ?? throw new Exception($"District code of district {randomDistrict.DistrictName} is null"),
                     Ward = randomWard.WardName ?? throw new Exception("Ward name is null"),
+                    WardCode = randomWard.WardCode ?? throw new Exception($"Ward code of ward {randomWard.WardName} is null"),
                     DetailAddress = "123/45 test " + user.DisplayName?.ToLower(),
                     PhoneNumber = "01234566789",
                     IsDefault = true,

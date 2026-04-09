@@ -14,5 +14,17 @@ namespace IdentityService.Repositories
         public AddressRepository(IdentitySvcDbContext dbContext) : base(dbContext)
         {
         }
+
+        public async Task SetOtherAddressNotDefaultAsync(string userId, CancellationToken cancellationToken)
+        {
+            var addresses = await GetListAsync(
+                predicate: a => a.UserId == userId && a.IsDefault == true,
+                cancellationToken: cancellationToken
+            );
+            foreach (var address in addresses)
+            {
+                address.IsDefault = false;
+            }
+        }
     }
 }

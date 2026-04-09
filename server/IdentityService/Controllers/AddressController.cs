@@ -1,5 +1,6 @@
 using System;
 using System.Security.Claims;
+using System.Text.Json;
 using IdentityService.DTOs;
 using IdentityService.Services.Address;
 using Microsoft.AspNetCore.Authorization;
@@ -74,7 +75,9 @@ public class AddressController(IConfiguration configuration) : BaseApiController
             return StatusCode((int)response.StatusCode, "Failed to fetch provinces");
 
         var content = await response.Content.ReadAsStringAsync();
-        return Ok(content);
+        var jsonResult = JsonSerializer.Deserialize<ProvinceResponse>(content);
+        var provinces = jsonResult?.data;
+        return Ok(provinces);
     }
 
     [HttpGet("districts")]
@@ -88,7 +91,9 @@ public class AddressController(IConfiguration configuration) : BaseApiController
             return StatusCode((int)response.StatusCode, "Failed to fetch districts");
 
         var content = await response.Content.ReadAsStringAsync();
-        return Ok(content);
+        var jsonResult = JsonSerializer.Deserialize<DistrictResponse>(content);
+        var districts = jsonResult?.data;
+        return Ok(districts);
     }
 
     [HttpGet("wards")]
@@ -102,7 +107,9 @@ public class AddressController(IConfiguration configuration) : BaseApiController
             return StatusCode((int)response.StatusCode, "Failed to fetch wards");
 
         var content = await response.Content.ReadAsStringAsync();
-        return Ok(content);
+        var jsonResult = JsonSerializer.Deserialize<WardResponse>(content);
+        var wards = jsonResult?.data;
+        return Ok(wards);
     }
     
     [HttpPost("create-virtual-addresses")]

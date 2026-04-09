@@ -12,8 +12,11 @@ namespace IdentityService.Entities
         public User? User { get; set; }
         public required string FullName { get; set; }
         public required string Province { get; set; }
+        public required string ProvinceCode { get; set; }
         public string? District { get; set; }
+        public string? DistrictCode { get; set; }
         public required string Ward { get; set; }
+        public required string WardCode { get; set; }
         public required string DetailAddress { get; set; }
         public string? PhoneNumber { get; set; }
         public bool IsDefault { get; set; }

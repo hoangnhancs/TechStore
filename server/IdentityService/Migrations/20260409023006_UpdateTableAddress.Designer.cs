@@ -3,6 +3,7 @@ using System;
 using IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace IdentityService.Migrations
 {
     [DbContext(typeof(IdentitySvcDbContext))]
-    partial class IdentitySvcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409023006_UpdateTableAddress")]
+    partial class UpdateTableAddress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,8 +43,8 @@ namespace IdentityService.Migrations
                     b.Property<string>("District")
                         .HasColumnType("text");
 
-                    b.Property<string>("DistrictCode")
-                        .HasColumnType("text");
+                    b.Property<int?>("DistrictId")
+                        .HasColumnType("integer");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -60,9 +63,8 @@ namespace IdentityService.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ProvinceCode")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("ProvinceId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -78,9 +80,8 @@ namespace IdentityService.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("WardCode")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("WardId")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 

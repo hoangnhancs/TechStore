@@ -4,6 +4,7 @@ using IdentityService.Entities;
 using IdentityService.Persistence;
 using IdentityService.Repositories;
 using IdentityService.Repositories.Interfaces;
+using IdentityService.RequestHelpers;
 using IdentityService.Services.Interfaces;
 using IdentityService.Services.OtherServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -34,6 +35,8 @@ builder.Services.AddMediatR(cfg =>
     // Hoặc assembly chứa các Handler
     cfg.RegisterServicesFromAssembly(typeof(CreateVirtualAddressesCommand).Assembly);
 });
+
+builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
