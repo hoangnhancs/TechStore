@@ -24,7 +24,6 @@ public class ProductWithEvents : AggregateRoot<string>
     {
         var oldPrice = Price;
         Price = newPrice;
-        SetUpdatedAt();
         
         // Raise domain event
         AddDomainEvent(new ProductPriceChangedEvent(Id, oldPrice, newPrice));
@@ -36,7 +35,6 @@ public class ProductWithEvents : AggregateRoot<string>
             throw new InvalidOperationException("Insufficient stock");
             
         QuantityInStock -= quantity;
-        SetUpdatedAt();
         
         // Raise domain event for other services (SearchService, NotificationService)
         AddDomainEvent(new ProductStockChangedEvent(Id, QuantityInStock, orderId));

@@ -13,6 +13,5 @@ namespace Shared.Core.EF.Domain.Entities
         string? UpdatedBy { get; set; }
         bool IsDeleted { get; }
         void MarkAsDeleted();
-        void SetUpdatedAt(DateTime? updatedAt = null, string? updatedBy = null);
     }
 }

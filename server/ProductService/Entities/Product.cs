@@ -53,7 +53,6 @@ public class Product : BaseEntity<string>
         OldPrice = oldPrice;
         DiscountPercentage = discountPercentage;
         IsOnSale = discountPercentage > 0;
-        SetUpdatedAt(); // Từ BaseEntity
     }
 
     public void IncreaseStock(int quantity)
@@ -62,7 +61,6 @@ public class Product : BaseEntity<string>
             throw new ArgumentException("Quantity must be positive", nameof(quantity));
             
         QuantityInStock += quantity;
-        SetUpdatedAt();
     }
 
     public void DecreaseStock(int quantity)
@@ -75,7 +73,6 @@ public class Product : BaseEntity<string>
             
         QuantityInStock -= quantity;
         UnitSold += quantity;
-        SetUpdatedAt();
     }
 
     public void UpdateRating(int newRating)
@@ -86,6 +83,5 @@ public class Product : BaseEntity<string>
         TotalRatingStar += newRating;
         RatingCount++;
         AverageRating = (decimal)TotalRatingStar / RatingCount;
-        SetUpdatedAt();
     }
 }

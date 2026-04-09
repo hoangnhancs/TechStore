@@ -24,16 +24,9 @@ namespace Shared.Core.EF.Domain.Entities
             Id = id;
         }
 
-        public void SetUpdatedAt(DateTime? updatedAt = null, string? updatedBy = null)
-        {
-            UpdatedAt = updatedAt ?? DateTime.UtcNow;
-            UpdatedBy = updatedBy;
-        }
-
         public void MarkAsDeleted()
         {
             IsDeleted = true;
-            SetUpdatedAt();
         }
     }
 }
