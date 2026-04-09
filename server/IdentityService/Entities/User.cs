@@ -29,13 +29,6 @@ namespace IdentityService.Entities
         public void MarkAsDeleted()
         {
             IsDeleted = true;
-            SetUpdatedAt();
-        }
-
-        public void SetUpdatedAt(DateTime? updatedAt = null, string? updatedBy = null)
-        {
-            UpdatedAt = updatedAt ?? DateTime.UtcNow;
-            UpdatedBy = updatedBy;
         }
     }
     public enum UserGender
