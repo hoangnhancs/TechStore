@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Infrastructure.EF.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Entities;
@@ -10,7 +11,7 @@ using static OrderService.Entities.Order;
 
 namespace OrderService.Data
 {
-    public class OrderSvcDbContext : DbContext
+    public class OrderSvcDbContext : BaseDbContext
     {
         public OrderSvcDbContext(DbContextOptions<OrderSvcDbContext> options) : base(options)
         {

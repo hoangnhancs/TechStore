@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Shared.Core.EF.Domain.Entities
 {
-    public interface IBaseEntity<TId> : IEntity<TId>
+    public interface IAuditableEntity
     {
         DateTime CreatedAt { get; set; }
         DateTime UpdatedAt { get; set; }
@@ -13,5 +13,9 @@ namespace Shared.Core.EF.Domain.Entities
         string? UpdatedBy { get; set; }
         bool IsDeleted { get; }
         void MarkAsDeleted();
+    }
+
+    public interface IBaseEntity<TId> : IEntity<TId>, IAuditableEntity
+    {
     }
 }

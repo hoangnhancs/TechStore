@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Infrastructure.EF.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using ProductService.Entities;
 
 namespace ProductService.Data
 {
-    public class ProductSvcDbContext : DbContext
+    public class ProductSvcDbContext : BaseDbContext
     {
         public ProductSvcDbContext(DbContextOptions<ProductSvcDbContext> options) : base(options)
         {

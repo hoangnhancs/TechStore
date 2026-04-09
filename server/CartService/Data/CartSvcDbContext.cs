@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CartService.Entities;
+using Infrastructure.EF.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CartService.Data
 {
-    public class CartSvcDbContext : DbContext
+    public class CartSvcDbContext : BaseDbContext
     {
         public CartSvcDbContext(DbContextOptions<CartSvcDbContext> options) : base(options)
         {

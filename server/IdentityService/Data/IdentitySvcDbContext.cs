@@ -1,17 +1,27 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using IdentityService.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Infrastructure.EF.Data;
+using Shared.Core.EF.Domain.Entities;
 
 namespace IdentityService.Data
 {
-    public class IdentitySvcDbContext(DbContextOptions<IdentitySvcDbContext> options) : IdentityDbContext<User>(options)
+    public class IdentitySvcDbContext : IdentityDbContext<User>
     {
+        private readonly IHttpContextAccessor? _httpContextAccessor;
+
+        public IdentitySvcDbContext(DbContextOptions<IdentitySvcDbContext> options, IHttpContextAccessor? httpContextAccessor = null) : base(options)
+        {
+            _httpContextAccessor = httpContextAccessor;
+        }
+
         public DbSet<Address> Addresses { get; set; }
         public DbSet<UserImage> UserImages { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
@@ -28,6 +38,13 @@ namespace IdentityService.Data
 
             modelBuilder.Entity<RefreshToken>()
                 .HasKey(r => r.Id);
+        }
+        //vì IdentitySvcDbContext kế thừa IdentityDbContext<User> nên không thể kế thừa BaseDbContext để tự động set audit fields, nên đành override SaveChangesAsync để set thủ công
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            var userId = _httpContextAccessor?.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            AuditHelper.ApplyAudit(ChangeTracker, userId);
+            return await base.SaveChangesAsync(cancellationToken);
         }
     }
 }
