@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
 using OrderService.DTOs;
-using ProductService;
+using ProductService.Grpc;
 
 namespace OrderService.Services
 {

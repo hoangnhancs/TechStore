@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Net.Client;
-using ProductService;
+using ProductService.Grpc;
 using SearchService.Entities;
 
 namespace SearchService.Services

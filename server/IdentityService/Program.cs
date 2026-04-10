@@ -5,6 +5,7 @@ using IdentityService.Persistence;
 using IdentityService.Repositories;
 using IdentityService.Repositories.Interfaces;
 using IdentityService.RequestHelpers;
+using IdentityService.Services;
 using IdentityService.Services.Interfaces;
 using IdentityService.Services.OtherServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -37,7 +38,7 @@ builder.Services.AddMediatR(cfg =>
 });
 
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
+builder.Services.AddGrpc();
 builder.Services.AddTransient<ExceptionMiddleware>();
 
 builder.Services.AddIdentity<User, IdentityRole>(opt =>
@@ -128,5 +129,6 @@ catch (Exception ex)
 
 app.MapControllers();
 
+app.MapGrpcService<GrpcIdentityService>();
 
 app.Run();

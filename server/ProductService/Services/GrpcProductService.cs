@@ -6,6 +6,7 @@ using Grpc.Core;
 using ProductService.Data;
 using Microsoft.EntityFrameworkCore;
 using Google.Protobuf.WellKnownTypes;
+using ProductService.Grpc;
 
 namespace ProductService.Services
 {

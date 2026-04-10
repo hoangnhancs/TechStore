@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Net.Client;
-using ProductService;
+using ProductService.Grpc;
 
 namespace CartService.Services
 {

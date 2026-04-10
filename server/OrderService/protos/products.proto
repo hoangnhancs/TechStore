@@ -2,7 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/timestamp.proto";
 
-option csharp_namespace = "ProductService";
+option csharp_namespace = "ProductService.Grpc";
 
 service GrpcProduct {
     rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);

@@ -10,17 +10,12 @@
     <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="Google.Protobuf" Version="3.34.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.76.0" />
-    <PackageReference Include="Grpc.Tools" Version="2.78.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <PackageReference Include="Grpc.Tools" Version="2.78.0" />
     <PackageReference Include="MassTransit.EntityFrameworkCore" Version="8.5.7" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="8.5.7" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="9.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
 
@@ -28,12 +23,10 @@
     <ProjectReference Include="..\BuildingBlocks\Infrastructure.EF\Infrastructure.EF.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Core.EF\Shared.Core.EF.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Web\Shared.Web.csproj" />
-    <ProjectReference Include="..\Contract\Contract.csproj" />
-    <ProjectReference Include="..\EmailService\EmailService.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Protobuf Include="protos\products.proto" GrpcServices="Client" />
+    <Protobuf Include="protos/users.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>
