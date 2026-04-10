@@ -1,4 +1,5 @@
 using CommentService.Data;
+using CommentService.RequestHelpers;
 using CommentService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -49,6 +50,8 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddTransient<ExceptionMiddleware>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
 {

@@ -3,6 +3,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ReviewService.Data;
+using ReviewService.RequestHelpers;
 using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +50,8 @@ builder.Services.AddAuthentication(options =>
     });
 
 builder.Services.AddTransient<ExceptionMiddleware>();
+
+builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
 {
