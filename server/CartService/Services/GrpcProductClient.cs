@@ -73,6 +73,43 @@ namespace CartService.Services
             }
         }
 
+        public async Task<List<GrpcProductModel>> GetProducts(List<string> productIds, CancellationToken cancellationToken = default)
+        {
+            var products = new List<GrpcProductModel>();
+
+            try
+            {
+                var response = await _client.GetProductsAsync(
+                    new GetProductsRequest { Ids = { productIds } },
+                    deadline: DateTime.UtcNow.AddSeconds(5),
+                    cancellationToken: cancellationToken
+                );
+                products.AddRange(response.Products);
+                _logger.LogInformation("Received {Count} products from gRPC service", products.Count);
+                return products;
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.NotFound)
+            {
+                _logger.LogWarning("Products not found");
+                return products;
+            }
+            catch (RpcException ex) when (ex.StatusCode == StatusCode.DeadlineExceeded)
+            {
+                _logger.LogError(ex, "Timeout calling gRPC service for products");
+                throw new TimeoutException("Timeout getting products from gRPC service", ex);
+            }
+            catch (RpcException ex)
+            {
+                _logger.LogError(ex, "Error calling gRPC service for products. Status: {Status}", ex.Status);
+                throw new InvalidOperationException("Error getting products from gRPC service", ex);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error getting products from gRPC service");
+                throw;
+            }
+        }
+
         public void Dispose()
         {
             if (!_disposed)

@@ -8,7 +8,134 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach"
+        },
+        {
+            "name": "ProductService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/ProductService/bin/Debug/net9.0/ProductService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/ProductService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-ProductService"
+        },
+        {
+            "name": "IdentityService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/IdentityService/bin/Debug/net9.0/IdentityService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/IdentityService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-IdentityService"
+        },
+        {
+            "name": "CartService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/CartService/bin/Debug/net9.0/CartService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/CartService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-CartService"
+        },
+        {
+            "name": "OrderService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/OrderService/bin/Debug/net9.0/OrderService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/OrderService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-OrderService"
+        },
+        {
+            "name": "PaymentService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/PaymentService/bin/Debug/net9.0/PaymentService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/PaymentService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-PaymentService"
+        },
+        {
+            "name": "ReviewService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/ReviewService/bin/Debug/net9.0/ReviewService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/ReviewService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-ReviewService"
+        },
+        {
+            "name": "CommentService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/CommentService/bin/Debug/net9.0/CommentService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/CommentService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-CommentService"
+        },
+        {
+            "name": "SearchService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/SearchService/bin/Debug/net9.0/SearchService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/SearchService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-SearchService"
+        },
+        {
+            "name": "NotificationService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/NotificationService/bin/Debug/net9.0/NotificationService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/NotificationService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-NotificationService"
+        },
+        {
+            "name": "GatewayService",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "${workspaceFolder}/server/GatewayService/bin/Debug/net9.0/GatewayService.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/server/GatewayService",
+            "stopAtEntry": false,
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
+            "preLaunchTask": "build-GatewayService"
         }
-
+    ],
+    "compounds": [
+        {
+            "name": "Start All Services",
+            "configurations": [
+                "ProductService",
+                "IdentityService",
+                "CartService",
+                "OrderService",
+                "PaymentService",
+                "ReviewService",
+                "CommentService",
+                "SearchService",
+                "NotificationService",
+                "GatewayService"
+            ],
+            "stopAll": true
+        }
     ]
 }

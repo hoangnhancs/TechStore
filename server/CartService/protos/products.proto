@@ -6,14 +6,23 @@ option csharp_namespace = "ProductService.Grpc";
 
 service GrpcProduct {
     rpc GetProduct (GetProductRequest) returns (GrpcProductResponse);
+    rpc GetProducts (GetProductsRequest) returns (GrpcProductsResponse);
 }
 
 message GetProductRequest {
     string id = 1;
 }
 
+message GetProductsRequest {
+    repeated string ids = 1;
+}
+
 message GrpcProductResponse {
     GrpcProductModel product = 1;
+}
+
+message GrpcProductsResponse {
+    repeated GrpcProductModel products = 1;
 }
 
 message GrpcProductModel {

@@ -13,11 +13,13 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
 {
     private readonly ICartUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly GrpcProductClient _grpcProductClient;
 
-    public GetBasketHandler(IMapper mapper, ICartUnitOfWork unitOfWork)
+    public GetBasketHandler(IMapper mapper, ICartUnitOfWork unitOfWork, GrpcProductClient grpcProductClient)
     {
         _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _grpcProductClient = grpcProductClient;
     }
 
     public async Task<AppResult<BasketDto>> Handle(GetBasketQuery request, CancellationToken cancellationToken)
@@ -40,6 +42,25 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
             await _unitOfWork.CommitAsync(cancellationToken);
         }
 
-        return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(basket));
+        var dto = _mapper.Map<BasketDto>(basket);
+        var productIds = basket.Items.Select(i => i.ProductId).Distinct().ToList();
+        var products = await _grpcProductClient.GetProducts(productIds, cancellationToken);
+        var productDict = products.ToDictionary(p => p.Id);
+
+        foreach (var item in dto.Items)
+        {
+            if (!productDict.TryGetValue(item.ProductId, out var product)) continue;
+
+            item.ProductName = product.Name;
+            item.Price = product.Price;
+            item.ImageUrl = product.MainImageUrl;
+            item.BrandId = product.BrandId;
+            item.BrandName = product.BrandName;
+            item.CategoryId = product.CategoryId;
+            item.CategoryName = product.CategoryName;  
+            item.CategoryDisplayName = product.CategoryDisplayName;   
+        }
+
+        return AppResult<BasketDto>.Success(dto);
     }
 }

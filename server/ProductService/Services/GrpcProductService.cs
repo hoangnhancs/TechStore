@@ -185,6 +185,84 @@ namespace ProductService.Services
             };
         }
 
+        public override async Task<GrpcProductsResponse> GetProducts(GetProductsRequest request, ServerCallContext context)
+        {
+            _logger.LogInformation("Received GetProducts request for {ProductIdsCount} product IDs", request.Ids.Count);
+
+            var products = await _dbContext.Products.Where(p => request.Ids.Contains(p.Id))
+                .Include(p => p.ProductFilterTagValues)
+                .ThenInclude(pftv => pftv.FilterTagValue)
+                .Include(p => p.Attributes)
+                .Include(p => p.DisplayTags)
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .ToListAsync();
+
+            var response = new GrpcProductsResponse();
+
+            foreach (var p in products)
+            {
+                var grpcProduct = new GrpcProductModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = (long)p.Price,
+                    OldPrice = (long)p.OldPrice,
+                    DiscountPercentage = (float)p.DiscountPercentage,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category?.Name ?? string.Empty,
+                    CategoryDisplayName = p.Category?.DisplayName ?? string.Empty,
+                    BrandId = p.BrandId,
+                    BrandName = p.Brand?.Name ?? string.Empty,
+                    MainImageUrl = p.MainImageUrl,
+                    UrlSlung = p.UrlSlug,
+                    IsActive = p.IsActive,
+                    IsFeatured = p.IsFeatured,
+                    IsNewArrival = p.IsNewArrival,
+                    IsOnSale = p.IsOnSale,
+                    AverageRating = (double)p.AverageRating,
+                    RatingCount = p.RatingCount,
+                    TotalRatingStar = p.TotalRatingStar,
+                    UnitSold = p.UnitSold,
+                    CreatedAt = Timestamp.FromDateTime(p.CreatedAt.ToUniversalTime()),
+                    UpdatedAt = Timestamp.FromDateTime(p.UpdatedAt.ToUniversalTime()),
+                    QuantityInStock = p.QuantityInStock
+                };
+
+                // Add Attributes (read-only collection)
+                if (p.Attributes != null)
+                {
+                    grpcProduct.Attributes.AddRange(p.Attributes.Select(a => new GrpcProductAttributeDto
+                    {
+                        Name = a.Name,
+                        Value = a.Value,
+                        AttributeType = a.AttributeType,
+                        DisplayOrder = a.DisplayOrder
+                    }));
+                }
+
+                // Add DisplayTags (read-only collection)
+                if (p.DisplayTags != null)
+                {
+                    grpcProduct.DisplayTags.AddRange(p.DisplayTags.Select(dt => dt.DisplayTag));
+                }
+
+                if (p.ProductFilterTagValues != null)
+                {
+                    grpcProduct.ProductFilterTagValues.AddRange(p.ProductFilterTagValues.Select(pftv => new GrpcProductFilterTagValueDto
+                    {
+                        Id = pftv.Id,
+                        FilterTagValueId = pftv.FilterTagValueId,
+                        FilterTagId = pftv.FilterTagValue == null ? 0 : pftv.FilterTagValue.FilterTagId,
+                        ProductId = pftv.ProductId
+                    }));
+                }   
+                response.Products.Add(grpcProduct);
+            }
+            return response;
+        }
+
         /// <summary>
         /// Reserve stock for order items with atomic check-and-update
         /// This will decrease the QuantityInStock for each product atomically

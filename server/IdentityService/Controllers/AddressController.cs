@@ -14,7 +14,8 @@ namespace IdentityService.Controllers;
 public class AddressController(IConfiguration configuration) : BaseApiController
 {
     [HttpPost("create-address")]
-    [Authorize(Policy = "SecurityStampRequirement")]
+    // [Authorize(Policy = "SecurityStampRequirement")]
+    [Authorize]
     public async Task<IActionResult> CreateAddress([FromBody] AddressDto dto)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -24,7 +25,8 @@ public class AddressController(IConfiguration configuration) : BaseApiController
     }
 
     [HttpPut("update-address/{id}")]
-    [Authorize(Policy = "SecurityStampRequirement")]
+    // [Authorize(Policy = "SecurityStampRequirement")]
+    [Authorize]
     public async Task<IActionResult> UpdateAddress(string id, [FromBody] AddressDto address)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -33,15 +35,16 @@ public class AddressController(IConfiguration configuration) : BaseApiController
         return HandleAppResult(await Mediator.Send(new UpdateAddressCommand { UserId = userId, AddressId = id, Address = address }));
     }
 
-    // [HttpGet("myaddresses")]
+    [HttpGet("myaddresses")]
     // [Authorize(Policy = "SecurityStampRequirement")]
-    // public async Task<IActionResult> GetAddresses()
-    // {
-    //     var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-    //     if (string.IsNullOrEmpty(userId))
-    //         return Unauthorized("User not authenticated");
-    //     return HandleAppResult(await Mediator.Send(new GetAddressesByUserIdQuery { UserId = userId }));
-    // }
+    [Authorize]
+    public async Task<IActionResult> GetAddresses()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        return HandleAppResult(await Mediator.Send(new GetAddressesByUserIdQuery { UserId = userId }));
+    }
 
     // [HttpGet("myaddresses/{id}")]
     // [Authorize(Policy = "SecurityStampRequirement")]
@@ -54,7 +57,8 @@ public class AddressController(IConfiguration configuration) : BaseApiController
     // }
 
     [HttpDelete("delete-address/{id}")]
-    [Authorize(Policy = "SecurityStampRequirement")]
+    // [Authorize(Policy = "SecurityStampRequirement")]
+    [Authorize]
     public async Task<IActionResult> DeleteAddress(string id)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

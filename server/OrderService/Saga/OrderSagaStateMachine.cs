@@ -28,7 +28,7 @@ namespace OrderService.Saga
         public Event<StockReserved>? StockReservedEvent { get; set; }
         public Event<StockReservationFailed>? StockReservationFailedEvent { get; set; }
         public Event<ConfirmOrder>? ConfirmOrderEvent { get; set; }
-        public Event<CreatePayment>? CreatePaymentEvent { get; set; }
+        //public Event<CreatePayment>? CreatePaymentEvent { get; set; }
         public Event<PaymentCreated>? PaymentCreatedEvent { get; set; }
         public Event<PaymentCompleted>? PaymentSucceededEvent { get; set; }
         public Event<PaymentFailed>? PaymentFailedEvent { get; set; }
