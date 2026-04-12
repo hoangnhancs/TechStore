@@ -96,7 +96,10 @@ public class OrdersController : BaseApiController
     [Authorize]
     public async Task<IActionResult> GetOrderDetails(string orderId)
     {
-        var query = new GetOrderDetailsByOrderIdQuery { OrderId = orderId };
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+        var query = new GetOrderDetailsByOrderIdQuery { UserId = userId, OrderId = orderId };
         return HandleAppResult(await Mediator.Send(query));
     }
 

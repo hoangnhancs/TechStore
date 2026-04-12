@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ReviewService.Data;
 using ReviewService.RequestHelpers;
+using ReviewService.SignalR;
 using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -83,6 +84,8 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 
+builder.Services.AddSignalR();  
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -91,6 +94,11 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
 
+app.MapControllers();
+
+app.MapHub<ReviewHub>("/hubs/review"); //map hub cho client kết nối
 
 app.Run();

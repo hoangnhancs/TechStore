@@ -22,6 +22,7 @@ public class GetOrderDetailsByOrderIdHandler : IRequestHandler<GetOrderDetailsBy
     {
         var order = await _unitOfWork.OrderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order == null) return AppResult<OrderDto>.Failure("Order not found", 404);
+        if (order.UserId != request.UserId) return AppResult<OrderDto>.Failure("Unauthorized access to order details", 403);
         return AppResult<OrderDto>.Success(_mapper.Map<OrderDto>(order));
     }
 }

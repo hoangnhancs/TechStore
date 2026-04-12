@@ -10,6 +10,8 @@ using OrderService.RequestHelpers;
 using OrderService.Saga;
 using OrderService.Services;
 using OrderService.Services.Order;
+using OrderService.SignalR;
+
 
 
 // using ProductService;
@@ -115,6 +117,8 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -127,6 +131,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<OrderHub>("/hubs/order"); //map hub cho client kết nối
 
 app.Run();
 

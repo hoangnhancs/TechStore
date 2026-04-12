@@ -9,6 +9,7 @@ using PaymentService.Repositories.Interface;
 using PaymentService.RequestHelpers;
 using PaymentService.Services;
 using PaymentService.Services.Interface;
+using PaymentService.SignalR;
 using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -89,12 +90,14 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
 
-app.UseHttpsRedirection();
+app.MapHub<PaymentHub>("/hubs/payment"); //map hub cho client kết nối
 
 app.Run();
 

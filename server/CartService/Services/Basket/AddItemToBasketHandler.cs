@@ -44,6 +44,7 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             cancellationToken: cancellationToken
         )).FirstOrDefault();
 
+        var isNewBasket = false;
         if (basket == null)
         {
             basket = new Entities.Basket
@@ -51,6 +52,7 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
                 UserId = request.UserId,
                 Items = new List<Entities.BasketItem>()
             };
+            isNewBasket = true;
         }
 
         // Validate product exists via gRPC
@@ -83,20 +85,42 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
 
         basket.AddItem(request.ProductId, request.Quantity);
 
+        if (isNewBasket)
+        {
+            await _unitOfWork.BasketRepository.AddAsync(basket, cancellationToken);
+        }
+
         // await _userActionTrackingRepository.AddUserActionTracking(new UserActionTracking
         // {
         //     UserId = request.UserId,
         //     ProductId = request.ProductId,
         //     ActionType = UserActionTracking.UserActionType.AddToCart
         // }, cancellationToken);
+        try
+        {
+            var result = await _unitOfWork.CommitAsync(cancellationToken);
+            if (!result)
+            {
+                _logger.LogWarning(
+                    "CommitAsync returned false while adding product {ProductId} to basket for user {UserId}. IsNewBasket: {IsNewBasket}",
+                    request.ProductId,
+                    request.UserId,
+                    isNewBasket);
+                return AppResult<BasketDto>.Failure("No changes were saved to basket.", 400);
+            }
 
-        var result = await _unitOfWork.CommitAsync(cancellationToken);
-
-        if (!result) return AppResult<BasketDto>.Failure("Don't have any update when add item", 400);
-
-        
-
-        return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(basket));
+            return AppResult<BasketDto>.Success(_mapper.Map<BasketDto>(basket));
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Database update error while adding product {ProductId} to basket for user {UserId}", request.ProductId, request.UserId);
+            return AppResult<BasketDto>.Failure("Error updating basket. Please try again.", 500);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error while adding product {ProductId} to basket for user {UserId}", request.ProductId, request.UserId);
+            return AppResult<BasketDto>.Failure("An unexpected error occurred. Please try again.", 500);
+        }
     }
 }
 

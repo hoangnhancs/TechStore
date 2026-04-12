@@ -114,6 +114,8 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             var orderItems = dto.Items.Select(item => new OrderItem
             {
                 ProductId = item.ProductId,
+                ProductName = item.ProductName,
+                ProductImageUrl = item.ProductImageUrl,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 OrderId = string.Empty // Will be set after order is created

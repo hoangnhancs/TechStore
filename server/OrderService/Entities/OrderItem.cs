@@ -8,6 +8,8 @@ public class OrderItem : BaseEntity<int>
     public int Quantity { get; set; }
     public long UnitPrice { get; set; }
     public required string ProductId { get; set; }
+    public string? ProductName { get; set; }
+    public string? ProductImageUrl { get; set; }
     public required string OrderId { get; set; }
     public Order? Order { get; set; }
 }

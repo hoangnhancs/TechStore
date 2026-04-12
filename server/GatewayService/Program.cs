@@ -66,6 +66,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("customPolicy");
 
+app.UseWebSockets();
+
 app.MapReverseProxy();
 
 app.UseAuthentication();

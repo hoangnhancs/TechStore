@@ -21,6 +21,8 @@ public class CreateOrderDto
 public class CreateOrderItemDto
 {
     public required string ProductId { get; set; }
+    public string? ProductName { get; set; }
+    public string? ProductImageUrl { get; set; }
     public required int Quantity { get; set; }
     public required long UnitPrice { get; set; }
 }

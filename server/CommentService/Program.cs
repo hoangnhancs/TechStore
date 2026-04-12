@@ -1,6 +1,7 @@
 using CommentService.Data;
 using CommentService.RequestHelpers;
 using CommentService.Services;
+using CommentService.SignalR;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -83,6 +84,8 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -95,6 +98,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHub<CommentHub>("/hubs/comment"); //map hub cho client kết nối
 
 app.Run();
 
