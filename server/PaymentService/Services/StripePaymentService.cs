@@ -44,6 +44,10 @@ namespace PaymentService.Services
         
             var options = new PaymentIntentCreateOptions
             {
+                AutomaticPaymentMethods = new PaymentIntentAutomaticPaymentMethodsOptions
+                {
+                    Enabled = true
+                },
                 Amount = (long)amount, // Convert to cents
                 Currency = "vnd",
                 Metadata = new Dictionary<string, string>

@@ -12,6 +12,8 @@ using PaymentService.Services.Interface;
 using PaymentService.SignalR;
 using SharedWeb.Middleware;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Load local secrets if exists (ignored by Git)
@@ -68,6 +70,8 @@ builder.Services.AddScoped<MomoPaymentService>();
 builder.Services.AddScoped<VNPayPaymentService>();
 builder.Services.AddScoped<BankTransferPaymentService>();
 
+builder.Services.AddControllers();
+
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
@@ -105,6 +109,7 @@ var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
+app.MapControllers();
 
 app.MapHub<PaymentHub>("/hubs/payment"); //map hub cho client kết nối
 

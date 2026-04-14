@@ -28,18 +28,19 @@ namespace PaymentService.Controllers
             _logger = logger;
         }
 
-        [HttpPost("webhook/stripe")]
+        [HttpPost("~/webhook/stripe")]
         public async Task<IActionResult> StripeWebhook()
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
             try
             {
+                var whs = _config["StripeSettings:WebhookSecret"];
                 // Verify signature to ensure request is from Stripe
                 var stripeEvent = EventUtility.ConstructEvent(
                     json,
                     Request.Headers["Stripe-Signature"],
-                    _config["StripeSettings:WebhookSecret"] // whsec_xxx from dashboard or CLI
+                    whs // whsec_xxx from dashboard or CLI
                 );
 
                 switch (stripeEvent.Type)

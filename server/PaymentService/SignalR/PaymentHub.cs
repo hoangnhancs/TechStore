@@ -1,13 +1,15 @@
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using MediatR;
-using Microsoft.AspNetCore.SignalR;
 
 namespace PaymentService.SignalR
 {
+    [AllowAnonymous]
     public class PaymentHub : Hub
     {
         private readonly IMediator _mediator;
@@ -25,23 +27,23 @@ namespace PaymentService.SignalR
 
         public async Task JoinPaymentGroup(string orderId)
         {
-            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                await Clients.Caller.SendAsync("JoinGroupError", "User not authenticated");
-                return;
-            }
+            //var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //    await Clients.Caller.SendAsync("JoinGroupError", "User not authenticated");
+            //    return;
+            //}
             await Groups.AddToGroupAsync(Context.ConnectionId, orderId);
         }
 
         public async Task LeavePaymentGroup(string orderId)
         {
-            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                await Clients.Caller.SendAsync("LeaveGroupError", "User not authenticated");
-                return;
-            }
+            //var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            //if (string.IsNullOrEmpty(userId))
+            //{
+            //    await Clients.Caller.SendAsync("LeaveGroupError", "User not authenticated");
+            //    return;
+            //}
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, orderId);
         }
 
