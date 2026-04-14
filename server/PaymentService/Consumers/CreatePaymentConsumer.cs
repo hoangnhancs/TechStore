@@ -4,22 +4,27 @@ using System.Linq;
 using System.Threading.Tasks;
 using Contract;
 using MassTransit;
+using Microsoft.AspNetCore.SignalR;
 using PaymentService.Data;
 using PaymentService.DTOs;
 using PaymentService.Persistence;
 using PaymentService.Services.Interface;
+using PaymentService.SignalR;
 using static PaymentService.Entities.Payment;
 
 namespace PaymentService.Consumers
 {
     public class CreatePaymentConsumer : IConsumer<CreatePayment>
     {
-        private readonly IPaymentUnitOfWork _unitOfWork;
+        private readonly IHubContext<PaymentHub> _hubContext;
         private readonly IPaymentServiceFactory _paymentServiceFactory;
         private readonly ILogger<CreatePaymentConsumer> _logger;
-        public CreatePaymentConsumer(IPaymentUnitOfWork unitOfWork, IPaymentServiceFactory paymentServiceFactory, ILogger<CreatePaymentConsumer> logger)
+        public CreatePaymentConsumer(
+            IHubContext<PaymentHub> hubContext,
+            IPaymentServiceFactory paymentServiceFactory,
+            ILogger<CreatePaymentConsumer> logger)
         {
-            _unitOfWork = unitOfWork;
+            _hubContext = hubContext;
             _paymentServiceFactory = paymentServiceFactory;
             _logger = logger;
         }
@@ -40,7 +45,7 @@ namespace PaymentService.Consumers
             try
             {
                 var service = _paymentServiceFactory.GetPaymentService(paymentMethod);
-                await service.CreatePayment(new CreatePaymentDto
+                var payment = await service.CreatePayment(new CreatePaymentDto
                 {
                     UserId = message.UserId,
                     OrderId = message.OrderId,
@@ -48,6 +53,10 @@ namespace PaymentService.Consumers
                     Currency = message.Currency,
                     PaymentMethod = message.PaymentMethod
                 });
+
+                await _hubContext.Clients
+                    .Group(message.OrderId)
+                    .SendAsync("ReceivePayment", payment, context.CancellationToken);
 
                 _logger.LogInformation("Payment created successfully for OrderId: {OrderId}, waiting for user to complete payment", message.OrderId);
             }
