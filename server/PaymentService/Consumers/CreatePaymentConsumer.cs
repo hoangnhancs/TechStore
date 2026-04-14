@@ -48,6 +48,8 @@ namespace PaymentService.Consumers
                     Currency = message.Currency,
                     PaymentMethod = message.PaymentMethod
                 });
+
+                _logger.LogInformation("Payment created successfully for OrderId: {OrderId}, waiting for user to complete payment", message.OrderId);
             }
             catch (Exception ex)
             {

@@ -59,9 +59,11 @@ namespace OrderService.Consumers
                     ["OrderDate"] = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
                 });
 
-                await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
-                
+
+
                 await _context.SaveChangesAsync();
+
+                await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
 
                 _logger.LogInformation("Order confirmed and marked as Processing: {OrderId}", message.OrderId);
             }

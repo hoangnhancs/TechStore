@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Contract;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Web.Controller;
 using Stripe;
@@ -12,38 +14,71 @@ namespace PaymentService.Controllers
     [Route("api/[controller]")]
     public class PaymentsController : BaseApiController
     {
+        private readonly IConfiguration _config;
+        private readonly IPublishEndpoint _publishEndpoint;
+        private readonly ILogger<PaymentsController> _logger;
+
+        public PaymentsController(
+            IConfiguration config, 
+            IPublishEndpoint publishEndpoint,
+            ILogger<PaymentsController> logger)
+        {
+            _config = config;
+            _publishEndpoint = publishEndpoint;
+            _logger = logger;
+        }
+
         [HttpPost("webhook/stripe")]
         public async Task<IActionResult> StripeWebhook()
         {
-            // var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
-            
-            // // Verify signature để chắc chắn request từ Stripe
-            // var stripeEvent = EventUtility.ConstructEvent(
-            //     json,
-            //     Request.Headers["Stripe-Signature"],
-            //     _stripeSettings.WebhookSecret // whsec_xxx từ dashboard hoặc CLI
-            // );
+            var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
 
-            // switch (stripeEvent.Type)
-            // {
-            //     case Events.PaymentIntentSucceeded:
-            //         var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
-            //         await _bus.Publish(new PaymentCompleted
-            //         {
-            //             OrderId = paymentIntent.Metadata["OrderId"]
-            //         });
-            //         break;
+            try
+            {
+                // Verify signature to ensure request is from Stripe
+                var stripeEvent = EventUtility.ConstructEvent(
+                    json,
+                    Request.Headers["Stripe-Signature"],
+                    _config["StripeSettings:WebhookSecret"] // whsec_xxx from dashboard or CLI
+                );
 
-            //     case Events.PaymentIntentPaymentFailed:
-            //         await _bus.Publish(new PaymentFailed
-            //         {
-            //             OrderId = paymentIntent.Metadata["OrderId"],
-            //             ErrorMessage = paymentIntent.LastPaymentError?.Message
-            //         });
-            //         break;
-            // }
+                switch (stripeEvent.Type)
+                {
+                    case "payment_intent.succeeded":
+                        var paymentIntent = stripeEvent.Data.Object as PaymentIntent;
+                        _logger.LogInformation("Payment succeeded for OrderId: {OrderId}", paymentIntent?.Metadata["orderId"]);
 
-            return Ok();
+                        await _publishEndpoint.Publish(new PaymentCompleted
+                        {
+                            OrderId = paymentIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata")
+                        });
+                        break;
+
+                    case "payment_intent.payment_failed":
+                        var failedIntent = stripeEvent.Data.Object as PaymentIntent;
+                        _logger.LogWarning("Payment failed for OrderId: {OrderId}, Reason: {Reason}", 
+                            failedIntent?.Metadata["orderId"], 
+                            failedIntent?.LastPaymentError?.Message);
+
+                        await _publishEndpoint.Publish(new PaymentFailed
+                        {
+                            OrderId = failedIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata"),
+                            ErrorMessage = failedIntent?.LastPaymentError?.Message ?? "Payment failed"
+                        });
+                        break;
+
+                    default:
+                        _logger.LogInformation("Unhandled Stripe event type: {EventType}", stripeEvent.Type);
+                        break;
+                }
+
+                return Ok();
+            }
+            catch (StripeException ex)
+            {
+                _logger.LogError(ex, "Stripe webhook signature verification failed");
+                return BadRequest();
+            }
         }
     }
 }

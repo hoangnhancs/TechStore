@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using PaymentService.DTOs;
+using PaymentService.Persistence;
 using PaymentService.Services.Interface;
 using Stripe;
 using static PaymentService.Entities.Payment;
@@ -12,10 +13,12 @@ namespace PaymentService.Services
 {
     public class StripePaymentService : IWebhookPaymentService
     {
+        private IPaymentUnitOfWork _unitOfWork;
         private readonly IConfiguration _config;
         private readonly IMapper _mapper;
-        public StripePaymentService(IConfiguration config, IMapper mapper)
+        public StripePaymentService(IPaymentUnitOfWork unitOfWork, IConfiguration config, IMapper mapper)
         {
+            _unitOfWork = unitOfWork;
             _config = config;
             _mapper = mapper;
         }
@@ -41,8 +44,8 @@ namespace PaymentService.Services
         
             var options = new PaymentIntentCreateOptions
             {
-                Amount = (long)(amount * 100), // Convert to cents
-                Currency = "usd",
+                Amount = (long)amount, // Convert to cents
+                Currency = "vnd",
                 Metadata = new Dictionary<string, string>
                 {
                     { "userId", userId },
@@ -68,6 +71,8 @@ namespace PaymentService.Services
             );
             payment.PaymentIntentId = intent.Id;
             payment.ClientSecret = intent.ClientSecret;
+            await _unitOfWork.PaymentRepository.AddAsync(payment);
+            await _unitOfWork.CommitAsync();
             return _mapper.Map<PaymentDto>(payment);
         }
     }

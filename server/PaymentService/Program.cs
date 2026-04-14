@@ -14,6 +14,9 @@ using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load local secrets if exists (ignored by Git)
+builder.Configuration.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
@@ -58,6 +61,12 @@ builder.Services.AddTransient<ExceptionMiddleware>();
 builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentServiceFactory, PaymentServiceFactory>();
+
+// Register Payment Service Implementations
+builder.Services.AddScoped<StripePaymentService>();
+builder.Services.AddScoped<MomoPaymentService>();
+builder.Services.AddScoped<VNPayPaymentService>();
+builder.Services.AddScoped<BankTransferPaymentService>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
