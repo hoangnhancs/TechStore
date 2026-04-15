@@ -16,12 +16,12 @@ namespace PaymentService.Services.Payment
     {
         private readonly IPaymentUnitOfWork _paymentUnitOfWork;
         private readonly IMapper _mapper;
-        private readonly IPaymentService _paymentService;
-        public CreatePaymentHandler(IPaymentUnitOfWork paymentUnitOfWork, IMapper mapper, IPaymentService paymentService)
+        private readonly IPaymentServiceFactory _paymentServiceFactory;
+        public CreatePaymentHandler(IPaymentUnitOfWork paymentUnitOfWork, IMapper mapper, IPaymentServiceFactory paymentServiceFactory)
         {
             _paymentUnitOfWork = paymentUnitOfWork;
             _mapper = mapper;
-            _paymentService = paymentService;
+            _paymentServiceFactory = paymentServiceFactory;
         }
         public async Task<AppResult<PaymentDto>> Handle(CreatePaymentCommand request, CancellationToken cancellationToken)
         {

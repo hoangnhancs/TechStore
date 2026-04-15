@@ -9,6 +9,7 @@ using PaymentService.Repositories.Interface;
 using PaymentService.RequestHelpers;
 using PaymentService.Services;
 using PaymentService.Services.Interface;
+using PaymentService.Services.Payment;
 using PaymentService.SignalR;
 using SharedWeb.Middleware;
 
@@ -58,6 +59,9 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
 builder.Services.AddTransient<ExceptionMiddleware>();
 
 builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
@@ -103,15 +107,32 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("SignalR", policy =>
+//    {
+//        policy.WithOrigins("http://localhost:3000") // origin của FE
+//              .AllowAnyHeader()
+//              .AllowAnyMethod()
+//              .AllowCredentials(); // ← BẮT BUỘC cho SignalR
+//    });
+//});
+
 builder.Services.AddSignalR();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 
-app.MapControllers();
+//app.UseCors("SignalR");           // 1. CORS trước tiên
 
-app.MapHub<PaymentHub>("/hubs/payment"); //map hub cho client kết nối
+//app.UseWebSockets();              // 2. WebSocket support
+
+app.UseAuthentication();          // 3. Auth
+app.UseAuthorization();           // 4. Authorization
+
+app.MapControllers();
+app.MapHub<PaymentHub>("/hubs/payment");
 
 app.Run();
 
