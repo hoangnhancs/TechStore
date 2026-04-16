@@ -1,5 +1,5 @@
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
+
 using ProductService.Data;
 using ProductService.Persistence;
 using ProductService.Repositories;
@@ -10,6 +10,7 @@ using ProductService.Services.Product;
 using SharedWeb.Middleware;
 using PhotoService.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
