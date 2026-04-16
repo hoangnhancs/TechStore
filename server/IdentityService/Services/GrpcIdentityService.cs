@@ -6,6 +6,7 @@ using IdentityService.Grpc;
 using Grpc.Core;
 using IdentityService.Data;
 using Microsoft.EntityFrameworkCore;
+using Google.Protobuf.WellKnownTypes;
 
 namespace IdentityService.Services
 {
@@ -30,7 +31,25 @@ namespace IdentityService.Services
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
-                    ImageUrl = user.Image?.Url
+                    ImageUrl = user.Image?.Url,
+                    IsAdmin = user.IsAdmin,
+                });
+            }
+            return response;
+        }
+
+        public override async Task<GetAllUsersResponse> GetAllUsers(Empty request, ServerCallContext context)
+        {
+            var response = new GetAllUsersResponse();
+            var users = await _dbContext.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                response.Users.Add(new UserInfo
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName,
+                    ImageUrl = user.Image?.Url,
+                    IsAdmin = user.IsAdmin,
                 });
             }
             return response;

@@ -18,4 +18,5 @@ message UserInfo {
     string userId = 1;
     string userName = 2;
     string imageUrl = 3;
+    optional bool isAdmin = 4;
 }
