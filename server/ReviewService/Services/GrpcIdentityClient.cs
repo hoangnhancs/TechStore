@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Grpc.Net.Client;
 using IdentityService.Grpc;
 
-namespace CommentService.Services
+namespace ReviewService.Services
 {
     public class GrpcIdentityClient
     {

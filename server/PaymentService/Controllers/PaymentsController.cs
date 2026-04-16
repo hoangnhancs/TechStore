@@ -4,7 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Contract;
 using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using PaymentService.Services.Payment;
 using Shared.Web.Controller;
 using Stripe;
 
@@ -16,15 +18,18 @@ namespace PaymentService.Controllers
     {
         private readonly IConfiguration _config;
         private readonly IPublishEndpoint _publishEndpoint;
+        private readonly IMediator _mediator;
         private readonly ILogger<PaymentsController> _logger;
 
         public PaymentsController(
             IConfiguration config, 
             IPublishEndpoint publishEndpoint,
+            IMediator mediator,
             ILogger<PaymentsController> logger)
         {
             _config = config;
             _publishEndpoint = publishEndpoint;
+            _mediator = mediator;
             _logger = logger;
         }
 
@@ -53,6 +58,12 @@ namespace PaymentService.Controllers
                         {
                             OrderId = paymentIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata")
                         });
+
+                        await _mediator.Send(new UpdatePaymentStatusCommand
+                        {
+                            OrderId = paymentIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata"),
+                            NewStatus = Entities.Payment.PaymentStatus.Succeeded
+                        });
                         break;
 
                     case "payment_intent.payment_failed":
@@ -65,6 +76,12 @@ namespace PaymentService.Controllers
                         {
                             OrderId = failedIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata"),
                             ErrorMessage = failedIntent?.LastPaymentError?.Message ?? "Payment failed"
+                        });
+
+                        await _mediator.Send(new UpdatePaymentStatusCommand
+                        {
+                            OrderId = failedIntent?.Metadata["orderId"] ?? throw new InvalidOperationException("OrderId not found in metadata"),
+                            NewStatus = Entities.Payment.PaymentStatus.Failed
                         });
                         break;
 

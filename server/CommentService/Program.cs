@@ -1,4 +1,7 @@
 using CommentService.Data;
+using CommentService.Persistence;
+using CommentService.Repositories;
+using CommentService.Repositories.Interface;
 using CommentService.RequestHelpers;
 using CommentService.Services;
 using CommentService.SignalR;
@@ -52,6 +55,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
@@ -83,6 +89,9 @@ builder.Services.AddMassTransit(x =>
 });
 
 builder.Services.AddScoped<GrpcIdentityClient>();
+
+builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 builder.Services.AddSignalR();
 

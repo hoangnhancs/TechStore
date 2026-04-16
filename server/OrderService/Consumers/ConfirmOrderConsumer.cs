@@ -65,6 +65,11 @@ namespace OrderService.Consumers
 
                 await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
 
+                await context.Publish(new OrderConfirmed
+                {
+                    OrderId = message.OrderId
+                });
+
                 _logger.LogInformation("Order confirmed and marked as Processing: {OrderId}", message.OrderId);
             }
             catch (Exception ex)

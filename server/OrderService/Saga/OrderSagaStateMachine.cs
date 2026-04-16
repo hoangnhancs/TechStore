@@ -30,11 +30,20 @@ namespace OrderService.Saga
         public Event<OrderCreated>? OrderCreated { get; set; }
         public Event<StockReserved>? StockReservedEvent { get; set; }
         public Event<StockReservationFailed>? StockReservationFailedEvent { get; set; }
-        public Event<ConfirmOrder>? ConfirmOrderEvent { get; set; }
+        public Event<OrderConfirmed>? OrderConfirmedEvent { get; set; }
         public Event<PaymentCompleted>? PaymentSucceededEvent { get; set; }
         public Event<PaymentFailed>? PaymentFailedEvent { get; set; }
 
-        public OrderSagaStateMachine()
+        public ILogger<OrderSagaStateMachine> Logger { get; }
+
+        public OrderSagaStateMachine(ILogger<OrderSagaStateMachine> logger)
+        {
+            Logger = logger;
+            ConfigureSaga();
+        }
+
+        private void ConfigureSaga()
+
         {
             InstanceState(x => x.CurrentState);
 
@@ -49,7 +58,7 @@ namespace OrderService.Saga
             Event(() => StockReservationFailedEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
 
-            Event(() => ConfirmOrderEvent, x => x.CorrelateBy(
+            Event(() => OrderConfirmedEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
 
             Event(() => PaymentSucceededEvent, x => x.CorrelateBy(
@@ -84,6 +93,7 @@ namespace OrderService.Saga
                 When(StockReservedEvent)
                     .Then(ctx =>
                     {
+                        Logger.LogCritical($"[SAGA] Received StockReserved for OrderId: {ctx.Saga.OrderId}"); // ← LOG
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
                     .PublishAsync(ctx => ctx.Init<CreatePayment>(new
@@ -113,6 +123,7 @@ namespace OrderService.Saga
                 When(PaymentSucceededEvent)
                     .Then(ctx =>
                     {
+                        Logger.LogCritical($"[SAGA] Received PaymentCompleted for OrderId: {ctx.Saga.OrderId}"); // ← LOG
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
                     .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
@@ -137,7 +148,7 @@ namespace OrderService.Saga
             );
 
             During(Processing,
-                When(ConfirmOrderEvent)
+                When(OrderConfirmedEvent)
                     .Then(ctx =>
                     {
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;

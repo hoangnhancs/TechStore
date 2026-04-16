@@ -1,9 +1,12 @@
-using CommentService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ReviewService.Data;
+using ReviewService.Persistence;
+using ReviewService.Repositories;
+using ReviewService.Repositories.Interface;
 using ReviewService.RequestHelpers;
+using ReviewService.Services;
 using ReviewService.SignalR;
 using SharedWeb.Middleware;
 
@@ -52,6 +55,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
@@ -67,7 +73,7 @@ builder.Services.AddMassTransit(x =>
     // Register consumers for Saga commands
 
     // Set endpoint naming to match other services
-    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("comment", false));
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("review", false));
     
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -81,6 +87,9 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+
+builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();
+builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 

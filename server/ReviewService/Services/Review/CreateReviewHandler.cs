@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using CommentService.Services;
 using MediatR;
 using ReviewService.DTOs;
 using ReviewService.Persistence;
