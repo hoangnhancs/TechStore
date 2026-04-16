@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using IdentityService.Grpc;
 
@@ -24,16 +25,12 @@ namespace NotificationService.Services
             return response.Users.ToList();
         }
 
-        public async Task<List<UserInfo>> GetConfiguredAdminUsers()
+        public async Task<List<UserInfo>> GetAllUsers()
         {
-            var userIds = _config.GetSection("SeedAdminUserIds").Get<List<string>>() ?? new List<string>();
-
-            if (userIds.Count == 0)
-            {
-                return new List<UserInfo>();
-            }
-
-            return await GetUsersByIds(userIds);
+            var channel = GrpcChannel.ForAddress(_config["GrpcIdentity"] ?? throw new InvalidOperationException("GrpcIdentity address is not configured"));
+            var client = new GrpcIdentity.GrpcIdentityClient(channel);
+            var response = await client.GetAllUsersAsync(new Empty());
+            return response.Users.ToList();
         }
     }
 }
