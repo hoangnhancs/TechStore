@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using EmailService.Services.Interface;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
 
-namespace EmailService.Services.Interface
+namespace EmailService.Services
 {
     public class MailpitEmailService : IEmailService
     {

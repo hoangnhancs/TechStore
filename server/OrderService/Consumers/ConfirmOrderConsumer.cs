@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Contract;
-using EmailService.Interfaces;
-using EmailService.Services.Interface;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
@@ -19,15 +17,11 @@ namespace OrderService.Consumers
     public class ConfirmOrderConsumer : IConsumer<ConfirmOrder>
     {
         private readonly OrderSvcDbContext _context;
-        private readonly IEmailService _emailService;
-        private readonly IEmailTemplateBuilder _templateBuilder;
         private readonly ILogger<ConfirmOrderConsumer> _logger;
 
-        public ConfirmOrderConsumer(OrderSvcDbContext context, IEmailService emailService, IEmailTemplateBuilder templateBuilder, ILogger<ConfirmOrderConsumer> logger)
+        public ConfirmOrderConsumer(OrderSvcDbContext context, ILogger<ConfirmOrderConsumer> logger)
         {
             _context = context;
-            _emailService = emailService;
-            _templateBuilder = templateBuilder;
             _logger = logger;
         }
 
@@ -39,6 +33,7 @@ namespace OrderService.Consumers
             try
             {
                 var order = await _context.Orders
+                    .Include(o => o.Items)
                     .FirstOrDefaultAsync(o => o.Id == message.OrderId);
 
                 if (order == null)
@@ -50,24 +45,30 @@ namespace OrderService.Consumers
                 // Update order status to Processing
                 order.Process();
 
-                var body = await _templateBuilder.BuildAsync("OrderConfirmation", new()
-                {
-                    ["OrderId"] = order.Id.ToString(),
-                    ["CustomerName"] = order.UserId.ToString(), // Ideally should fetch user details for name
-                    ["TotalPrice"] = order.Total.ToString("C"),
-                    ["Address"] = order.BillingAddress ?? "N/A",
-                    ["OrderDate"] = DateTime.Now.ToString("dd/MM/yyyy HH:mm")
-                });
-
-
-
                 await _context.SaveChangesAsync();
-
-                await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
 
                 await context.Publish(new OrderConfirmed
                 {
-                    OrderId = message.OrderId
+                    OrderId = message.OrderId,
+                    OrderNo = order.OrderNo,
+                    CreatedDate = order.CreatedAt,
+                    UserId = order.UserId,
+                    UserName = order.UserName,
+                    UserEmail = order.UserEmail,
+                    UserPhone = order.UserPhone,
+                    Items = order.Items.Select(i => new OrderItemEvent
+                    {
+                        ProductId = i.ProductId,
+                        ProductName = i.ProductName ?? "",
+                        ProductImageUrl = i.ProductImageUrl ?? "",
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice
+                    }).ToList(),
+                    SubTotal = order.SubTotal,
+                    Address = order.ShippingAddress ?? "",
+                    ShippingCost = order.ShippingCost,
+                    Discount = order.Discount,
+                    Total = order.Total
                 });
 
                 _logger.LogInformation("Order confirmed and marked as Processing: {OrderId}", message.OrderId);

@@ -1,4 +1,3 @@
-using EmailService.Extensions;
 using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -68,8 +67,6 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddSingleton<GrpcProductClient>();
 
 builder.Services.AddTransient<ExceptionMiddleware>();
-
-builder.Services.AddEmailServices(builder.Configuration);
 
 builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();

@@ -1,8 +1,6 @@
 using System.Security.Claims;
 using AutoMapper;
 using Contract;
-using EmailService.Interfaces;
-using EmailService.Services.Interface;
 using MassTransit;
 using MediatR;
 using OrderService.DTOs;
@@ -151,7 +149,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
                 {
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice
+                    UnitPrice = item.UnitPrice,
+                    ProductImageUrl = item.ProductImageUrl ?? "",
+                    ProductName = item.ProductName ?? ""
                 }).ToList(),
                 ShippingAddress = order.ShippingAddress ?? "",
                 BillingAddress = order.BillingAddress ?? "",

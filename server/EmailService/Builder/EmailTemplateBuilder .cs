@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EmailService.Interfaces;
+using HandlebarsDotNet;
 
 namespace EmailService.Builder
 {
@@ -13,19 +14,18 @@ namespace EmailService.Builder
         {
             _templateDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates");
         }
-        public async Task<string> BuildAsync(string templateName, Dictionary<string, string> parameters)
+        public async Task<string> BuildAsync(string templateName, object parameters)
         {
             var path = Path.Combine(_templateDir, $"{templateName}.html");
-        
+
             if (!File.Exists(path))
-                throw new FileNotFoundException($"Template '{templateName}' không tồn tại: {path}");
+                throw new FileNotFoundException($"Template '{templateName}' không tồn tại");
 
-            var template = await File.ReadAllTextAsync(path);
+            var source = await File.ReadAllTextAsync(path);
 
-            foreach (var (key, value) in parameters)
-                template = template.Replace($"{{{{{key}}}}}", value);
+            var template = Handlebars.Compile(source);
 
-            return template;
+            return template(parameters);
         }
     }
 }

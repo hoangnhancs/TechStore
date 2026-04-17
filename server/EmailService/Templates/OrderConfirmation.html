@@ -1,13 +1,155 @@
 <!DOCTYPE html>
 <html>
-<body>
-    <h1>Xác nhận đơn hàng #{{OrderId}}</h1>
-    <p>Xin chào {{CustomerName}},</p>
-    <p>Đơn hàng của bạn đã được xác nhận.</p>
-    <table>
-        <tr><td>Tổng tiền:</td><td>{{TotalPrice}}</td></tr>
-        <tr><td>Địa chỉ:</td><td>{{Address}}</td></tr>
-        <tr><td>Ngày đặt:</td><td>{{OrderDate}}</td></tr>
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận đơn hàng</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px;">
+        <tr>
+            <td align="center">
+
+                <!-- CONTAINER -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
+
+                    <!-- HEADER -->
+                    <tr>
+                        <td style="background:#111827; color:#ffffff; padding:20px;">
+                            <h2 style="margin:0;">🧾 Xác nhận đơn hàng</h2>
+                            <p style="margin:5px 0 0; font-size:14px;">
+                                Mã đơn: <b>#{{OrderNo}}</b>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- BODY -->
+                    <tr>
+                        <td style="padding:20px; color:#333;">
+
+                            <p>Xin chào <b>{{CustomerName}}</b>,</p>
+                            <p>Đơn hàng của bạn đã được xác nhận thành công 🎉</p>
+
+                            <!-- ORDER INFO -->
+                            <table width="100%" style="margin-top:15px; font-size:14px;">
+                                <tr>
+                                    <td><b>Ngày đặt:</b></td>
+                                    <td>{{OrderDate}}</td>
+                                </tr>
+                                <tr>
+                                    <td><b>Địa chỉ nhận hàng:</b></td>
+                                    <td>{{Address}}</td>
+                                </tr>
+                            </table>
+
+                            <!-- PRODUCT LIST -->
+                            <h3 style="margin-top:25px;">🛒 Sản phẩm</h3>
+
+                            <table width="100%" cellpadding="10" cellspacing="0" style="border-collapse:collapse; font-size:14px;">
+                                <thead>
+                                    <tr style="background:#f9fafb; border-bottom:1px solid #e5e7eb;">
+                                        <th align="left">Sản phẩm</th>
+                                        <th align="center">SL</th>
+                                        <th align="right">Giá</th>
+                                        <th align="right">Tổng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{#each Items}}
+                                    <tr style="border-bottom:1px solid #f0f0f0;">
+
+                                        <!-- PRODUCT INFO -->
+                                        <td>
+                                            <table cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <!-- IMAGE -->
+                                                    <td style="padding-right:10px;">
+                                                        <img src="{{ImageUrl}}"
+                                                             width="60" height="60"
+                                                             style="border-radius:6px; object-fit:cover; border:1px solid #eee;" />
+                                                    </td>
+
+                                                    <!-- NAME -->
+                                                    <td>
+                                                        <div style="font-weight:500;">
+                                                            {{Name}}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+
+                                        <!-- QUANTITY -->
+                                        <td align="center">{{Quantity}}</td>
+
+                                        <!-- PRICE -->
+                                        <td align="right">{{Price}}</td>
+
+                                        <!-- TOTAL -->
+                                        <td align="right">{{Total}}</td>
+
+                                    </tr>
+                                    {{/each}}
+                                </tbody>
+                            </table>
+
+                            <!-- SUMMARY -->
+                            <table width="100%" style="margin-top:20px; font-size:14px;">
+                                <tr>
+                                    <td align="right">Tạm tính:</td>
+                                    <td align="right" width="140">{{SubTotal}}</td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right">Phí vận chuyển:</td>
+                                    <td align="right">{{ShippingFee}}</td>
+                                </tr>
+
+                                {{#if Discount}}
+                                <tr>
+                                    <td align="right">Giảm giá:</td>
+                                    <td align="right" style="color:#16a34a;">- {{Discount}}</td>
+                                </tr>
+                                {{/if}}
+
+                                <tr>
+                                    <td colspan="2">
+                                        <hr style="border:none; border-top:1px solid #e5e7eb;">
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td align="right" style="font-size:16px;"><b>Tổng thanh toán:</b></td>
+                                    <td align="right" style="color:#dc2626; font-size:18px;">
+                                        <b>{{TotalPrice}}</b>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- CTA BUTTON -->
+                            <div style="text-align:center; margin-top:30px;">
+                                <a href="{{OrderUrl}}"
+                                   style="background:#2563eb; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:6px; display:inline-block;">
+                                    Xem chi tiết đơn hàng
+                                </a>
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="background:#f9fafb; text-align:center; padding:15px; font-size:12px; color:#888;">
+                            <p style="margin:0;">© 2026 TechStore</p>
+                            <p style="margin:5px 0 0;">Email này được gửi tự động, vui lòng không trả lời.</p>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
     </table>
+
 </body>
 </html>

@@ -29,7 +29,6 @@
     <ProjectReference Include="..\BuildingBlocks\Shared.Core.EF\Shared.Core.EF.csproj" />
     <ProjectReference Include="..\BuildingBlocks\Shared.Web\Shared.Web.csproj" />
     <ProjectReference Include="..\Contract\Contract.csproj" />
-    <ProjectReference Include="..\EmailService\EmailService.csproj" />
   </ItemGroup>
 
   <ItemGroup>

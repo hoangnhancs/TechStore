@@ -1,6 +1,7 @@
+using Shared.Core.EF.Domain.Entities;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
-using Shared.Core.EF.Domain.Entities;
+using System.Security.Cryptography;
 
 namespace OrderService.Entities;
 
@@ -10,6 +11,7 @@ public class Order : BaseEntity<string>
     public required string UserName { get; set; }
     public string? UserEmail { get; set; }
     public required string UserPhone { get; set; }
+    public required string OrderNo { get; set; }
     public List<OrderItem> Items { get; set; } = [];
     [Column(TypeName = "varchar(20)")]
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
@@ -60,6 +62,7 @@ public class Order : BaseEntity<string>
             UserName = userName,
             UserEmail = userEmail,
             UserPhone = userPhone,
+            OrderNo = GenerateOrderNo(),
             Items = items,
             ShippingAddress = shippingAddress,
             BillingAddress = billingAddress,
@@ -248,5 +251,23 @@ public class Order : BaseEntity<string>
         Momo,
         VNPay,
         BankTransfer
+    }
+
+    public static string GenerateOrderNo()
+    {
+        var datePart = DateTime.Now.ToString("yyMMdd"); // 260412
+
+        var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var random = new char[8];
+        using var rng = RandomNumberGenerator.Create();
+        var bytes = new byte[8];
+        rng.GetBytes(bytes);
+        for (int i = 0; i < 8; i++)
+            random[i] = chars[bytes[i] % chars.Length];
+
+        var randomPart = new string(random); // M5CK59V0
+
+        return $"#{datePart}{randomPart}";
+        // → #260412M5CK59V0
     }
 }

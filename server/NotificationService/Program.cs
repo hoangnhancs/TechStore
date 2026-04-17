@@ -1,5 +1,8 @@
+using EmailService.Extensions;
+using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using NotificationService.Consumers;
 using NotificationService.Data;
 using NotificationService.Services;
 using SharedWeb.Middleware;
@@ -44,6 +47,8 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddEmailServices(builder.Configuration);
+
 builder.Services.AddTransient<ExceptionMiddleware>();
 
 builder.Services.AddScoped<GrpcIdentityClient>();
@@ -51,7 +56,34 @@ builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+builder.Services.AddMassTransit(x =>
+{
+    // Add Entity Framework Outbox FIRST for reliable event delivery
+    //x.AddEntityFrameworkOutbox<NotificationSvcDbContext>(o =>
+    //{
+    //    o.QueryDelay = TimeSpan.FromSeconds(10); // Polling interval for outbox messages
+    //    o.UsePostgres();
+    //    o.UseBusOutbox(); // Use outbox within EF transaction
+    //});
 
+    // Register consumers for Saga commands
+    x.AddConsumer<OrderConfirmedConsumer>();
+
+    // Set endpoint naming to match other services
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("notification", false));
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        {
+            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        });
+
+        // ConfigureEndpoints handles both saga and consumers with consistent naming
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

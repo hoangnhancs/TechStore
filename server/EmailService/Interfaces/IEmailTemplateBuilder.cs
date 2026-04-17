@@ -7,6 +7,6 @@ namespace EmailService.Interfaces
 {
     public interface IEmailTemplateBuilder
     {
-        Task<string> BuildAsync(string templateName, Dictionary<string, string> parameters);
+        Task<string> BuildAsync(string templateName, object parameters);
     }
 }

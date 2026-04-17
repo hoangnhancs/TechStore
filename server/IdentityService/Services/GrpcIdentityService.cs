@@ -27,13 +27,19 @@ namespace IdentityService.Services
                 .Include(u => u.Image).ToListAsync();
             foreach (var user in users)
             {
-                response.Users.Add(new UserInfo
+                var userInfo = new UserInfo
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
-                    ImageUrl = user.Image?.Url,
                     IsAdmin = user.IsAdmin,
-                });
+                };
+
+                if (user.Image?.Url != null)
+                {
+                    userInfo.ImageUrl = user.Image.Url;
+                }
+
+                response.Users.Add(userInfo);
             }
             return response;
         }
@@ -44,13 +50,19 @@ namespace IdentityService.Services
             var users = await _dbContext.Users.ToListAsync();
             foreach (var user in users)
             {
-                response.Users.Add(new UserInfo
+                var userInfo = new UserInfo
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
-                    ImageUrl = user.Image?.Url,
                     IsAdmin = user.IsAdmin,
-                });
+                };
+
+                if (user.Image?.Url != null)
+                {
+                    userInfo.ImageUrl = user.Image.Url;
+                }
+
+                response.Users.Add(userInfo);
             }
             return response;
         }
