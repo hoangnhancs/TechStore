@@ -8,6 +8,6 @@ namespace PaymentService.Services.Interface
 {
     public interface IWebhookPaymentService : IPaymentService
     {
-        Task<PaymentDto> HandleWebhook(HttpRequest request);
+        Task HandleWebhookAsync(string payload, string signatureHeader, CancellationToken cancellationToken = default);
     }
 }

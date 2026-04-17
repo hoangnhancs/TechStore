@@ -14,7 +14,7 @@ namespace PaymentService.Services
             throw new NotImplementedException();
         }
 
-        public Task<PaymentDto> HandleWebhook(HttpRequest request)
+        public Task HandleWebhookAsync(string payload, string signatureHeader, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

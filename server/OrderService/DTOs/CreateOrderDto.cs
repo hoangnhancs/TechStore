@@ -7,6 +7,8 @@ namespace OrderService.DTOs;
 /// </summary>
 public class CreateOrderDto
 {
+    public required string RecipientName { get; set; }
+    public required string RecipientPhone { get; set; }
     public required string ShippingAddress { get; set; }
     public string? BillingAddress { get; set; }
     public required List<CreateOrderItemDto> Items { get; set; }

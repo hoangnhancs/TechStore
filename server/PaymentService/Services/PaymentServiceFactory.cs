@@ -18,6 +18,7 @@ namespace PaymentService.Services
         {
             return paymentMethod switch
             {
+                PaymentMethodType.CashOnDelivery => _serviceProvider.GetRequiredService<CODPaymentService>(),
                 PaymentMethodType.CreditCard    => _serviceProvider.GetRequiredService<StripePaymentService>(),
                 PaymentMethodType.Momo          => _serviceProvider.GetRequiredService<MomoPaymentService>(),
                 PaymentMethodType.VNPay         => _serviceProvider.GetRequiredService<VNPayPaymentService>(),

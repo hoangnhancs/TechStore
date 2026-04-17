@@ -100,8 +100,8 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             // Step 2: Create order entity in "Pending" status
             // Saga will handle stock reservation asynchronously
             var userId = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var username = _httpContextAccessor.HttpContext?.User.Identity?.Name;
-            var phone = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.MobilePhone)?.Value;
+            //var username = _httpContextAccessor.HttpContext?.User.Identity?.Name;
+            //var phone = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.MobilePhone)?.Value;
             var email = _httpContextAccessor.HttpContext?.User.FindFirst(ClaimTypes.Email)?.Value;
 
             if (!Enum.TryParse<PaymentMethod>(dto.PaymentMethod, ignoreCase: true, out var paymentMethod))
@@ -121,9 +121,9 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
 
             var order = Entities.Order.CreateOrder(
                 userId: userId ?? throw new ArgumentException("User ID not found in token"),
-                userName: username ?? throw new ArgumentException("Username not found in token"),
+                recipientName: dto.RecipientName ?? throw new ArgumentException("Username not found in token"),
                 userEmail: email,
-                userPhone: phone ?? throw new ArgumentException("User phone not found in token"),
+                recipientPhone: dto.RecipientPhone ?? throw new ArgumentException("User phone not found in token"),
                 items: orderItems,
                 shippingAddress: dto.ShippingAddress,
                 billingAddress: dto.BillingAddress,

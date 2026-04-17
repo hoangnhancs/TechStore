@@ -53,9 +53,9 @@ namespace OrderService.Consumers
                     OrderNo = order.OrderNo,
                     CreatedDate = order.CreatedAt,
                     UserId = order.UserId,
-                    UserName = order.UserName,
+                    UserName = order.RecipientName,
                     UserEmail = order.UserEmail,
-                    UserPhone = order.UserPhone,
+                    UserPhone = order.RecipientPhone,
                     Items = order.Items.Select(i => new OrderItemEvent
                     {
                         ProductId = i.ProductId,

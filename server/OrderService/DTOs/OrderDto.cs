@@ -6,9 +6,9 @@ public class OrderDto
 {
     public string Id { get; set; } = null!;
     public string? UserId { get; set; }
-    public string? UserName { get; set; }
+    public string? RecipientName { get; set; }
     public string? UserEmail { get; set; }
-    public required string UserPhone { get; set; }
+    public required string RecipientPhone { get; set; }
     public required string OrderNo { get; set; }
     public List<OrderItemDto> Items { get; set; } = [];
     public string Status { get; set; } = null!;

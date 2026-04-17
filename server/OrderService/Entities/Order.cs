@@ -8,9 +8,9 @@ namespace OrderService.Entities;
 public class Order : BaseEntity<string>
 {
     public required string UserId { get; set; }
-    public required string UserName { get; set; }
+    public required string RecipientName { get; set; }
     public string? UserEmail { get; set; }
-    public required string UserPhone { get; set; }
+    public required string RecipientPhone { get; set; }
     public required string OrderNo { get; set; }
     public List<OrderItem> Items { get; set; } = [];
     [Column(TypeName = "varchar(20)")]
@@ -26,6 +26,7 @@ public class Order : BaseEntity<string>
     public Shipment? Shipment { get; set; }
     [Column(TypeName = "varchar(20)")]
     public required PaymentMethod PmtMethod { get; set; }
+    [Column(TypeName = "varchar(20)")]
     public PaymentStatus PmtStatus { get; private set; } = PaymentStatus.Pending;
     public List<OrderStatusHistory> StatusHistories { get; set; } = [];
 
@@ -38,9 +39,9 @@ public class Order : BaseEntity<string>
     /// </summary>
     public static Order CreateOrder(
         string userId, 
-        string userName,
+        string recipientName,
         string? userEmail,
-        string userPhone,
+        string recipientPhone,
         List<OrderItem> items, 
         string shippingAddress, 
         string? billingAddress, 
@@ -60,9 +61,9 @@ public class Order : BaseEntity<string>
         var order = new Order
         {
             UserId = userId,
-            UserName = userName,
+            RecipientName = recipientName,
             UserEmail = userEmail,
-            UserPhone = userPhone,
+            RecipientPhone = recipientPhone,
             OrderNo = GenerateOrderNo(),
             Items = items,
             ShippingAddress = shippingAddress,
