@@ -18,7 +18,7 @@ namespace PaymentService.Entities
         public string? PaymentIntentId { get; set; }
         public string? ClientSecret { get; set; }
         [Column(TypeName = "varchar(20)")]
-        public PaymentStatus Status { get; set; } = PaymentStatus.Processing;
+        public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
         public Payment() : base(Guid.NewGuid().ToString())
         {
         }
@@ -30,12 +30,12 @@ namespace PaymentService.Entities
                 OrderId = orderId,
                 Amount = amount,
                 PaymentMethod = paymentMethod,
-                Status = PaymentStatus.Processing
+                Status = PaymentStatus.Pending
             };
         }
         public enum PaymentStatus
         {
-            Processing,
+            Pending,
             Succeeded,
             Failed,
             Canceled,

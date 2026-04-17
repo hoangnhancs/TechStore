@@ -24,7 +24,7 @@ namespace PaymentService.Services.Payment
                 OrderId = createPaymentDto.OrderId,
                 Amount = createPaymentDto.Amount,
                 PaymentMethod = Enum.Parse<PaymentMethodType>(createPaymentDto.PaymentMethod.ToString()),
-                Status = PaymentStatus.Processing
+                Status = PaymentStatus.Pending
             };
             return _mapper.Map<PaymentDto>(payment);
         }

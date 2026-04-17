@@ -15,11 +15,13 @@ namespace OrderService.RequestHelpers
             // Order mappings
             CreateMap<Order, OrderDto>()
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
-                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PmtMethod.ToString()));
+                .ForMember(dest => dest.PmtMethod, opt => opt.MapFrom(src => src.PmtMethod.ToString()))
+                .ForMember(dest => dest.PmtStatus, opt => opt.MapFrom(src => src.PmtStatus.ToString()));
             
             CreateMap<OrderDto, Order>()
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
-                .ForMember(dest => dest.PmtMethod, opt => opt.Ignore()); // PaymentMethod is managed by domain
+                .ForMember(dest => dest.PmtMethod, opt => opt.Ignore())
+                .ForMember(dest => dest.PmtStatus, opt => opt.Ignore()); // PaymentMethod is managed by domain
 
             // OrderItem mappings
             CreateMap<OrderItem, OrderItemDto>().ReverseMap();

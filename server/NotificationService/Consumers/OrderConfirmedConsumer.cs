@@ -30,7 +30,7 @@ namespace NotificationService.Consumers
                 Discount = message.Discount.ToString("N0") + "₫",
                 TotalPrice = message.Total.ToString("N0") + "₫",
 
-                OrderUrl = $"http://localhost:3000/orders/{message.OrderId}",
+                OrderUrl = $"http://localhost:3000/my-orders/{message.OrderId}",
 
                 Items = message.Items.Select(i => new
                 {

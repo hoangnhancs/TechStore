@@ -11,7 +11,7 @@ namespace Shared.Core.EF.Domain.Repositories
     {
         // Query operations
         Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
-        Task<T?> GetByIdAsync(TId id, Func<IQueryable<T>, IQueryable<T>>? include, CancellationToken cancellationToken = default);
+        Task<T?> GetByIdAsync(TId id, Func<IQueryable<T>, IQueryable<T>>? query, CancellationToken cancellationToken = default);
         
         Task<IEnumerable<T>> GetListAsync(
             Expression<Func<T, bool>>? predicate = null,

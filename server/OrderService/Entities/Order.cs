@@ -26,6 +26,7 @@ public class Order : BaseEntity<string>
     public Shipment? Shipment { get; set; }
     [Column(TypeName = "varchar(20)")]
     public required PaymentMethod PmtMethod { get; set; }
+    public PaymentStatus PmtStatus { get; private set; } = PaymentStatus.Pending;
     public List<OrderStatusHistory> StatusHistories { get; set; } = [];
 
     public Order() : base(Guid.NewGuid().ToString())
@@ -68,7 +69,7 @@ public class Order : BaseEntity<string>
             BillingAddress = billingAddress,
             ShippingCost = shippingCost,
             Discount = discount,
-            PmtMethod = paymentMethod
+            PmtMethod = paymentMethod,
         };
         order.StatusHistories.Add(new OrderStatusHistory
         {
@@ -119,6 +120,10 @@ public class Order : BaseEntity<string>
             ChangedBy = "system",
             ChangedAt = DateTime.UtcNow
         });
+        if (PmtMethod != PaymentMethod.CashOnDelivery)
+        {
+            PmtStatus = PaymentStatus.Succeeded;
+        }
     }
 
     public void UpdateFromShipment(ShipmentStatus shipmentStatus)
@@ -207,6 +212,17 @@ public class Order : BaseEntity<string>
             ChangedBy = "system",
             ChangedAt = DateTime.UtcNow
         });
+        PmtStatus = PaymentStatus.Canceled;
+    }
+
+    public void PaymentSuccessed()
+    {
+        PmtStatus = PaymentStatus.Succeeded;
+    }
+
+    public void PaymentFailed()
+    {
+        PmtStatus = PaymentStatus.Failed;
     }
 
     // public void UpdateStatus(OrderStatus newStatus)
@@ -234,14 +250,22 @@ public class Order : BaseEntity<string>
     // }
     public enum OrderStatus
     {
-        Pending,
         Created,
-        Processing,
+        Pending,
         WaitingForPayment,
+        Processing,
         HandedOverToCarrier,
         Delivered,
         Completed,
         Cancelled
+    }
+
+    public enum PaymentStatus
+    {
+        Pending,
+        Succeeded,
+        Failed,
+        Canceled,
     }
 
     public enum PaymentMethod
@@ -267,7 +291,7 @@ public class Order : BaseEntity<string>
 
         var randomPart = new string(random); // M5CK59V0
 
-        return $"#{datePart}{randomPart}";
+        return $"{datePart}{randomPart}";
         // → #260412M5CK59V0
     }
 }
