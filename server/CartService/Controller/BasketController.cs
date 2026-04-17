@@ -86,7 +86,7 @@ namespace CartService.Controller
             return HandleAppResult(await Mediator.Send(new RemovePermanentItemsFromBasketCommand
             {
                 UserId = userId,
-                ProductIds = dto.RemoveProductIds
+                ProductIds = dto.ProductIds
             }));
         }
     }

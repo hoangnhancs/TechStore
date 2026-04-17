@@ -26,7 +26,7 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
     {
         var basket = (await _unitOfWork.BasketRepository.GetListAsync(
             p => p.UserId == request.UserId,
-            q => q.Include(b => b.Items),
+            q => q.Include(b => b.Items).OrderByDescending(i => i.CreatedAt),
             cancellationToken: cancellationToken
         )).FirstOrDefault();
 

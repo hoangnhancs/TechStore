@@ -2,6 +2,6 @@ namespace CartService.DTOs
 {
     public class RemovePermanentItemsDto
     {
-        public List<string> RemoveProductIds { get; set; } = [];
+        public List<string> ProductIds { get; set; } = [];
     }
 }
