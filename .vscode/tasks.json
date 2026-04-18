@@ -1,75 +1,95 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build-ProductService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/ProductService/ProductService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-IdentityService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/IdentityService/IdentityService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-CartService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/CartService/CartService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-OrderService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/OrderService/OrderService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-PaymentService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/PaymentService/PaymentService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-ReviewService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/ReviewService/ReviewService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-CommentService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/CommentService/CommentService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-SearchService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/SearchService/SearchService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-NotificationService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/NotificationService/NotificationService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        },
-        {
-            "label": "build-GatewayService",
-            "command": "dotnet",
-            "type": "process",
-            "args": ["build", "${workspaceFolder}/server/GatewayService/GatewayService.csproj", "/property:GenerateFullPaths=true", "/consoleloggerparameters:NoSummary"],
-            "problemMatcher": "$msCompile"
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ProductService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/ProductService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "IdentityService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/IdentityService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "CartService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/CartService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "OrderService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/OrderService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "PaymentService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/PaymentService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "ReviewService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/ReviewService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "CommentService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/CommentService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "SearchService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/SearchService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "NotificationService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/NotificationService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "GatewayService",
+      "type": "shell",
+      "command": "dotnet run",
+      "options": { "cwd": "${workspaceFolder}/server/GatewayService" },
+      "presentation": { "panel": "dedicated", "reveal": "silent", "showReuseMessage": false }
+    },
+    {
+      "label": "Start All Services",
+      "dependsOn": [
+        "ProductService",
+        "IdentityService",
+        "CartService",
+        "OrderService",
+        "PaymentService",
+        "ReviewService",
+        "CommentService",
+        "SearchService",
+        "NotificationService",
+        "GatewayService"
+      ],
+      "dependsOrder": "parallel",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
 }
