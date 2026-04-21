@@ -10,12 +10,12 @@ namespace CartService.Persistence
 {
     public class CartUnitOfWork : UnitOfWork<CartSvcDbContext>, ICartUnitOfWork
     {
-        public IBasketRepository BasketRepository { get; }
+        private IBasketRepository? _basketRepository;
+        public IBasketRepository BasketRepository =>
+            _basketRepository ??= new BasketRepository(_dbContext);
         public CartUnitOfWork(
-            CartSvcDbContext context, 
-            IBasketRepository basketRepository) : base(context)
+            CartSvcDbContext context) : base(context)
         {
-            BasketRepository = basketRepository;
         }
     }
 }

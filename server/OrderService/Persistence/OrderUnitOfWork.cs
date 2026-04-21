@@ -4,18 +4,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.EF.UnitOfWork;
 using OrderService.Data;
+using OrderService.Repositories;
 using OrderService.Repositories.Interface;
 
 namespace OrderService.Persistence
 {
     public class OrderUnitOfWork : UnitOfWork<OrderSvcDbContext>, IOrderUnitOfWork
     {
-        public IOrderRepository OrderRepository { get; }
+        private IOrderRepository? _orderRepository;
+        public IOrderRepository OrderRepository => 
+            _orderRepository ??= new OrderRepository(_dbContext);
         public OrderUnitOfWork(
-            OrderSvcDbContext context, 
-            IOrderRepository orderRepository) : base(context)
+            OrderSvcDbContext context) : base(context)
         {
-            OrderRepository = orderRepository;
         }
     }
 }

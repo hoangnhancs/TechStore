@@ -12,14 +12,14 @@ namespace IdentityService.Persistence
 {
     public class IdentityUnitOfWork : UnitOfWork<IdentitySvcDbContext>, IIdentityUnitOfWork
     {
-        public IRefreshTokenRepository RefreshTokenRepository { get; }
-        public IAddressRepository AddressRepository { get; }
-        public IdentityUnitOfWork(IdentitySvcDbContext context, 
-            IRefreshTokenRepository refreshTokenRepository,
-            IAddressRepository addressRepository) : base(context)
+        private IRefreshTokenRepository? _refreshTokenRepository;
+        private IAddressRepository? _addressRepository;
+        public IRefreshTokenRepository RefreshTokenRepository => 
+            _refreshTokenRepository ??= new RefreshTokenRepository(_dbContext);
+        public IAddressRepository AddressRepository => 
+            _addressRepository ??= new AddressRepository(_dbContext);   
+        public IdentityUnitOfWork(IdentitySvcDbContext context) : base(context)
         {
-            RefreshTokenRepository = refreshTokenRepository ?? throw new ArgumentNullException(nameof(refreshTokenRepository));
-            AddressRepository = addressRepository ?? throw new ArgumentNullException(nameof(addressRepository));
         }
     }
 }

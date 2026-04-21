@@ -58,8 +58,8 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddSingleton<GrpcProductClient>();
 builder.Services.AddTransient<ExceptionMiddleware>();
 
-builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>();
-builder.Services.AddScoped<IBasketRepository, BasketRepository>();
+builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 builder.Services.AddEndpointsApiExplorer();

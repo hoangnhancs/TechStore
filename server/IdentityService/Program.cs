@@ -93,9 +93,9 @@ builder.Services.AddScoped<IHttpContextAccessorHelper, HttpContextAccessorHelper
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<ITokenServices, TokenServices>();
 
-builder.Services.AddScoped<IIdentityUnitOfWork, IdentityUnitOfWork>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-builder.Services.AddScoped<IAddressRepository, AddressRepository>();
+builder.Services.AddScoped<IIdentityUnitOfWork, IdentityUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+// builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 
 
 var app = builder.Build();

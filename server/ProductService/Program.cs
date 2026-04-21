@@ -94,12 +94,12 @@ builder.Services.AddGrpc();
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
-builder.Services.AddScoped<IProductUnitOfWork, ProductUnitOfWork>();
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-builder.Services.AddScoped<IBannerImageRepository, BannerImageRepository>();
-builder.Services.AddScoped<IBrandRepository, BrandRepository>();
-builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<IFilterTagRepository, FilterTagRepository>();
+builder.Services.AddScoped<IProductUnitOfWork, ProductUnitOfWork>(); // Chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IProductRepository, ProductRepository>();
+// builder.Services.AddScoped<IBannerImageRepository, BannerImageRepository>();
+// builder.Services.AddScoped<IBrandRepository, BrandRepository>();
+// builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+// builder.Services.AddScoped<IFilterTagRepository, FilterTagRepository>();
 
 builder.Services.AddPhotoServices(builder.Configuration);
 

@@ -68,8 +68,8 @@ builder.Services.AddSingleton<GrpcProductClient>();
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
-builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 

@@ -31,6 +31,7 @@ namespace IdentityService.Services
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
+                    UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
                 };
 
@@ -54,6 +55,7 @@ namespace IdentityService.Services
                 {
                     UserId = user.Id,
                     UserName = user.UserName,
+                    UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
                 };
 

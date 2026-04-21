@@ -64,8 +64,8 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddTransient<ExceptionMiddleware>();
 
-builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
-builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>(); // Chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IPaymentServiceFactory, PaymentServiceFactory>();
 
 // Register Payment Service Implementations

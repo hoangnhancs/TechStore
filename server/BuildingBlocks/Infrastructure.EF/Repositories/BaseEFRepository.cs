@@ -14,18 +14,19 @@ namespace Infrastructure.EF.Repositories
          where T : class, IBaseEntity<TId>
          where TContext : DbContext
     {
-        protected readonly TContext Context;
+        protected readonly TContext _dbContext;
         protected readonly DbSet<T> DbSet;
 
-        public BaseEFRepository(TContext context)
+        public BaseEFRepository(TContext dbContext)
         {
-            Context = context;
-            DbSet = Context.Set<T>();
+            _dbContext = dbContext;
+            DbSet = _dbContext.Set<T>();
         }
 
         public virtual async Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
         {
-            return await DbSet.FindAsync(id, cancellationToken);
+            // return await DbSet.FindAsync(id, cancellationToken);
+            return await DbSet.FindAsync(new object?[] { id }, cancellationToken);
         }
 
         public virtual async Task<T?> GetByIdAsync(

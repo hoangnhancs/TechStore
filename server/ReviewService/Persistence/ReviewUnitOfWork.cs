@@ -5,16 +5,17 @@ using System.Threading.Tasks;
 using ReviewService.Data;
 using ReviewService.Repositories.Interface;
 using Infrastructure.EF.UnitOfWork;
+using ReviewService.Repositories;
 
 namespace ReviewService.Persistence
 {
     public class ReviewUnitOfWork : UnitOfWork<ReviewSvcDbContext>, IReviewUnitOfWork
     {
-        public IReviewRepository ReviewRepository { get; }
-        public ReviewUnitOfWork(ReviewSvcDbContext context,
-            IReviewRepository reviewRepository) : base(context)
+        private IReviewRepository? _reviewRepository;
+        public IReviewRepository ReviewRepository => 
+            _reviewRepository ??= new ReviewRepository(_dbContext);
+        public ReviewUnitOfWork(ReviewSvcDbContext context) : base(context)
         {
-            ReviewRepository = reviewRepository;
         }
     }
 }

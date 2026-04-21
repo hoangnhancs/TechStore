@@ -10,11 +10,11 @@ namespace Infrastructure.EF.UnitOfWork
 {
     public class UnitOfWork<TContext> : IUnitOfWork where TContext : DbContext
     {
-        protected readonly TContext Context;
+        protected readonly TContext _dbContext;
         private IDbContextTransaction? _currentTransaction;
         public UnitOfWork(TContext context)
         {
-            Context = context ?? throw new ArgumentNullException(nameof(context));
+            _dbContext = context ?? throw new ArgumentNullException(nameof(context));
         }
         public virtual async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
         {
@@ -23,14 +23,17 @@ namespace Infrastructure.EF.UnitOfWork
                 throw new InvalidOperationException("A transaction is already in progress");
             }
 
-            _currentTransaction = await Context.Database.BeginTransactionAsync(cancellationToken);
+            _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         }
 
         public virtual async Task<bool> CommitAsync(CancellationToken cancellationToken = default)
         {
+            if (_currentTransaction != null)
+                throw new InvalidOperationException(
+                    "A transaction is in progress. Use CommitTransactionAsync instead.");
             try
             {
-                var result = await Context.SaveChangesAsync(cancellationToken);
+                var result = await _dbContext.SaveChangesAsync(cancellationToken);
                 return result > 0;
             }
             catch (DbUpdateConcurrencyException ex)
@@ -54,7 +57,7 @@ namespace Infrastructure.EF.UnitOfWork
 
             try
             {
-                await Context.SaveChangesAsync(cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
                 await _currentTransaction.CommitAsync(cancellationToken);
             }
             catch
@@ -75,7 +78,7 @@ namespace Infrastructure.EF.UnitOfWork
         public virtual void Dispose()
         {
             _currentTransaction?.Dispose();
-            Context.Dispose();
+            _dbContext.Dispose();
         }
 
         public virtual async Task RollbackAsync(CancellationToken cancellationToken = default)
@@ -88,7 +91,7 @@ namespace Infrastructure.EF.UnitOfWork
             }
 
             // Discard changes in tracked entities
-            foreach (var entry in Context.ChangeTracker.Entries())
+            foreach (var entry in _dbContext.ChangeTracker.Entries())
             {
                 switch (entry.State)
                 {

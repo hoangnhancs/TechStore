@@ -4,18 +4,19 @@ using System.Linq;
 using System.Threading.Tasks;
 using Infrastructure.EF.UnitOfWork;
 using PaymentService.Data;
+using PaymentService.Repositories;
 using PaymentService.Repositories.Interface;
 
 namespace PaymentService.Persistence
 {
     public class PaymentUnitOfWork : UnitOfWork<PaymentSvcDbContext>, IPaymentUnitOfWork
     {
-        public IPaymentRepository PaymentRepository { get;}
+        private IPaymentRepository? _paymentRepository;
+        public IPaymentRepository PaymentRepository => 
+            _paymentRepository ??= new PaymentRepository(_dbContext);
         public PaymentUnitOfWork(
-            PaymentSvcDbContext dbContext, 
-            IPaymentRepository paymentRepository) : base(dbContext)
+            PaymentSvcDbContext dbContext) : base(dbContext)
         {
-            PaymentRepository = paymentRepository;
         }
     }
 }

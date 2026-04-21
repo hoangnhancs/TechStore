@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 using Shared.Core.EF.Domain.Entities;
@@ -14,7 +15,9 @@ namespace NotificationService.Entities
         public bool IsRead { get; set; } = false;
 
         // Phân loại cao
+        [Column(TypeName = "varchar(20)")]
         public NotificationCategory Category { get; set; }  // System | Order | Payment | Interaction | Promotion
+        [Column(TypeName = "varchar(30)")]
         public NotificationType Type { get; set; }           // chi tiết hơn
 
         // Reference đến entity liên quan

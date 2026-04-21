@@ -90,8 +90,8 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 
-builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>();
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 
 builder.Services.AddSignalR();
 
