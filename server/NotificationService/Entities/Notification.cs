@@ -12,7 +12,6 @@ namespace NotificationService.Entities
         public required string Title { get; set; }
         public required string Message { get; set; }
         public string? Link { get; set; }
-        public bool IsRead { get; set; } = false;
 
         // Phân loại cao
         [Column(TypeName = "varchar(20)")]
@@ -21,25 +20,46 @@ namespace NotificationService.Entities
         public NotificationType Type { get; set; }           // chi tiết hơn
 
         // Reference đến entity liên quan
-        public string? ReferenceId { get; set; }     // orderId, commentId, reviewId...
-        public string? ReferenceType { get; set; }   // "Order", "Comment", "Review"
-
+        public string? ReferenceId { get; set; } 
+        [Column(TypeName = "varchar(20)")]    // orderId, commentId, reviewId...
+        public NotificationReferenceType? ReferenceType { get; set; }   // Order, Comment, Review
+        public string? ParentReferenceId { get; set; } 
+        [Column(TypeName = "varchar(20)")]    // orderId, commentId, reviewId...
+        public NotificationReferenceType? ParentReferenceType { get; set; }   // Order, Comment, Review
+        public List<NotificationRecipient> Recipients { get; set; } = [];
         // Sender: null nếu là System
         public string? SenderId { get; set; }
-        public string? ReceiverId { get; set; }
-        public string? GroupId { get; set; }
-        public NotificationGroup? Group { get; set; }
-
+        // public string? SenderName { get; set; }
         public Notification() : base(Guid.NewGuid().ToString())
         {
+        }
+        public void AddRecipient(string userId)
+        {
+            if (Recipients.Any(r => r.UserId == userId))
+                return; // Đã là người nhận, không thêm nữa
+
+            Recipients.Add(new NotificationRecipient
+            {
+                Notification = this,
+                NotificationId = this.Id,
+                UserId = userId,
+            });
+        }
+        public enum NotificationReferenceType
+        {
+            Order,
+            Comment,
+            Review,
+            Product,
+            Other
         }
         public enum NotificationCategory
         {
             System,
             Order,
             Payment,
-            Interaction,
-            Promotion
+            Interaction, //Tương tác giữa người với người
+            Promotion //Khuyến mãi / marketing
         }
         public enum NotificationType
         {

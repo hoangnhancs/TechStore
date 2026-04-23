@@ -10,7 +10,7 @@ namespace NotificationService.Entities
     public class NotificationGroup : BaseEntity<string>
     {
         public string Name { get; set; } = string.Empty;
-        [Column(TypeName = "nvarchar(20)")]
+        [Column(TypeName = "varchar(20)")]
         public NotificationGroupType Type { get; set; }
     
         // Chỉ dùng khi Type = ProductFollowers
@@ -19,6 +19,20 @@ namespace NotificationService.Entities
         public List<NotificationGroupMember> Members { get; set; } = [];
         public NotificationGroup() : base(Guid.NewGuid().ToString())
         {
+        }
+
+        public void AddMember(string userId)
+        {
+            if (Members.Any(m => m.UserId == userId))
+                return; // Đã là thành viên, không thêm nữa
+
+            Members.Add(new NotificationGroupMember
+            {
+                NotificationGroupId = this.Id,
+                UserId = userId,
+                // UserName = userName,
+                // UserImageUrl = userImageUrl
+            });
         }
     }
 

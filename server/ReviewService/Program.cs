@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using ReviewService.Data;
+using Shared.Web.Extensions;
 using ReviewService.Persistence;
 using ReviewService.Repositories;
 using ReviewService.Repositories.Interface;
@@ -9,6 +10,7 @@ using ReviewService.RequestHelpers;
 using ReviewService.Services;
 using ReviewService.SignalR;
 using SharedWeb.Middleware;
+using IdentityService.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 builder.Services.AddDbContext<ReviewSvcDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -53,7 +55,7 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -86,6 +88,10 @@ builder.Services.AddMassTransit(x =>
         // ConfigureEndpoints handles both saga and consumers with consistent naming
         cfg.ConfigureEndpoints(context);
     });
+});
+builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcIdentity"] ?? throw new InvalidOperationException("GrpcIdentity address is not configured"));
 });
 
 builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();

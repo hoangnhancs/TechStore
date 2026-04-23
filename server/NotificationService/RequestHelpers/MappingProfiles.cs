@@ -12,10 +12,11 @@ namespace NotificationService.RequestHelpers
     {
         public MappingProfiles()
         {
-            CreateMap<Notification, NotificationDto>()
-                .ReverseMap();
-            CreateMap<NotificationGroup, NotificationGroupDto>()
-                .ReverseMap();
+            CreateMap<Notification, NotificationDto>();
+            CreateMap<NotificationDto, Notification>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
+            CreateMap<CreateNotificationDto, Notification>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore());
             CreateMap<NotificationGroupMember, NotificationGroupMemberDto>()
                 .ReverseMap();
         }

@@ -1,19 +1,19 @@
 using CartService.Data;
 using CartService.Persistence;
-using CartService.Repositories.Interface;
+using Shared.Web.Extensions;
 using CartService.RequestHelpers;
-using CartService.Services;
 using CartService.Services.Basket;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using SharedWeb.Middleware;
+using ProductService.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 builder.Services.AddDbContext<CartSvcDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -55,9 +55,13 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(GetBasketQuery).Assembly);
 });
 
-builder.Services.AddSingleton<GrpcProductClient>();
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
+});
+builder.Services.AddScoped<ExceptionMiddleware>();
 
+builder.Services.AddScoped<CartService.Services.GrpcProductClient>();
 builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
 // builder.Services.AddScoped<IBasketRepository, BasketRepository>();
 

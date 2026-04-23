@@ -6,7 +6,7 @@ using MediatR;
 using NotificationService.DTOs;
 using Shared.Core.EF.Application;
 
-namespace NotificationService.Services.Notification
+namespace NotificationService.Services.NotificationGroup
 {
     public class GetNotificationGroupsByUserIdQuery : IRequest<AppResult<List<NotificationGroupDto>>>
     {

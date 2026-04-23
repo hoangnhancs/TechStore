@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
+using Shared.Web.Extensions;
 using OrderService.Persistence;
 using OrderService.Repositories;
 using OrderService.Repositories.Interface;
@@ -15,12 +16,13 @@ using OrderService.SignalR;
 
 // using ProductService;
 using SharedWeb.Middleware;
+using ProductService.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 builder.Services.AddDbContext<OrderSvcDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -64,13 +66,6 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(GetListOrdersInRangeDateQuery).Assembly);
 });
 
-builder.Services.AddSingleton<GrpcProductClient>();
-
-builder.Services.AddTransient<ExceptionMiddleware>();
-
-builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
-// builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 // Configure MassTransit with RabbitMQ
@@ -111,6 +106,15 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
+});
+
+builder.Services.AddScoped<ExceptionMiddleware>();
+builder.Services.AddScoped<GrpcProductClient>();
+builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
+// builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
 builder.Services.AddEndpointsApiExplorer();
 

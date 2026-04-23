@@ -6,9 +6,10 @@ using AutoMapper;
 using MediatR;
 using NotificationService.DTOs;
 using NotificationService.Persistence;
+using Org.BouncyCastle.Tls;
 using Shared.Core.EF.Application;
 
-namespace NotificationService.Services.Notification
+namespace NotificationService.Services.NotificationGroup
 {
     public class GetNotificationGroupsByUserIdHandler : IRequestHandler<GetNotificationGroupsByUserIdQuery, AppResult<List<NotificationGroupDto>>>
     {
@@ -22,7 +23,13 @@ namespace NotificationService.Services.Notification
         }
         public async Task<AppResult<List<NotificationGroupDto>>> Handle(GetNotificationGroupsByUserIdQuery request, CancellationToken cancellationToken)
         {
-            await _unitOfWork.NotificationRepository.Ge
+            var groups = await _unitOfWork.NotificationGroupRepository.GetListAsync(
+                predicate: ng => ng.Members.Any(m => m.UserId == request.UserId),
+                cancellationToken: cancellationToken
+            );
+
+            var groupDtos = _mapper.Map<List<NotificationGroupDto>>(groups);
+            return AppResult<List<NotificationGroupDto>>.Success(groupDtos);
         }
     }
 }

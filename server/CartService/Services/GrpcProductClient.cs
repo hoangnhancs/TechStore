@@ -8,26 +8,15 @@ using ProductService.Grpc;
 
 namespace CartService.Services
 {
-    public class GrpcProductClient : IDisposable
+    public class GrpcProductClient 
     {
         private readonly ILogger<GrpcProductClient> _logger;
-        private readonly GrpcChannel _channel;
-        private readonly GrpcProduct.GrpcProductClient _client;
-        private bool _disposed = false;
+        private readonly GrpcProduct.GrpcProductClient _client; //generated client from proto file
 
-        public GrpcProductClient(ILogger<GrpcProductClient> logger, IConfiguration config)
+        public GrpcProductClient(ILogger<GrpcProductClient> logger, GrpcProduct.GrpcProductClient client)
         {
             _logger = logger;
-            var grpcAddress = config["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured");
-            
-            // Reuse channel for better performance
-            _channel = GrpcChannel.ForAddress(grpcAddress, new GrpcChannelOptions
-            {
-                // Thêm các options cho production
-                MaxReceiveMessageSize = 5 * 1024 * 1024, // 5MB
-                MaxSendMessageSize = 5 * 1024 * 1024,
-            });
-            _client = new GrpcProduct.GrpcProductClient(_channel);
+            _client = client;
         }
 
         public async Task<GrpcProductModel?> GetProduct(string productId, CancellationToken cancellationToken = default)
@@ -107,15 +96,6 @@ namespace CartService.Services
             {
                 _logger.LogError(ex, "Unexpected error getting products from gRPC service");
                 throw;
-            }
-        }
-
-        public void Dispose()
-        {
-            if (!_disposed)
-            {
-                _channel?.Dispose();
-                _disposed = true;
             }
         }
     }

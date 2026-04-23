@@ -1,15 +1,18 @@
 using EmailService.Extensions;
 using MassTransit;
+using Shared.Web.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Consumers;
 using NotificationService.Data;
-using NotificationService.Services;
+using NotificationService.Persistence;
+using NotificationService.RequestHelpers;
 using SharedWeb.Middleware;
+using IdentityService.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 
 builder.Services.AddDbContext<NotificationSvcDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -47,11 +50,7 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddEmailServices(builder.Configuration);
 
-builder.Services.AddTransient<ExceptionMiddleware>();
-
-builder.Services.AddScoped<GrpcIdentityClient>();
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -84,7 +83,19 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcIdentity"] ?? throw new InvalidOperationException("GrpcIdentity address is not configured"));
+});
 
+builder.Services.AddScoped<ExceptionMiddleware>();
+
+builder.Services.AddScoped<NotificationService.Services.GrpcIdentityClient>();
+builder.Services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
+
+
+builder.Services.AddEmailServices(builder.Configuration);
+builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -97,7 +108,7 @@ try
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<NotificationSvcDbContext>();
     var logger = services.GetRequiredService<ILogger<DbInitializer>>();
-    var grpcIdentityClient = services.GetRequiredService<GrpcIdentityClient>();
+    var grpcIdentityClient = services.GetRequiredService<NotificationService.Services.GrpcIdentityClient>();
     await context.Database.MigrateAsync();
     await DbInitializer.SeedData(context, logger, grpcIdentityClient);
 }
@@ -113,6 +124,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
 
 
 app.Run();

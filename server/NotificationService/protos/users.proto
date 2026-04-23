@@ -6,6 +6,7 @@ option csharp_namespace = "IdentityService.Grpc";
 service GrpcIdentity {
     rpc GetUsersByIds (GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
     rpc GetAllUsers (google.protobuf.Empty) returns (GetAllUsersResponse);
+    rpc GetSystemUser (google.protobuf.Empty) returns (UserInfo);
 }
 
 message GetUsersByIdsRequest {

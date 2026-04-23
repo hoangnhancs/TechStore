@@ -7,6 +7,8 @@ using MediatR;
 using Microsoft.AspNetCore.SignalR;
 using NotificationService.DTOs;
 using NotificationService.Services.Notification;
+using NotificationService.Services.NotificationGroup;
+using NotificationService.Services.NotificationGroupMember;
 
 namespace NotificationService.SignalR
 {
@@ -18,48 +20,132 @@ namespace NotificationService.SignalR
         {
             _mediator = mediator;
         }
-
-        public async Task SendNotification(string title, string message, string? link, string? receiverId,
-        string? groupId, string senderId, string? commentResultId, string? reviewResultId, string type)
+        public async Task JoinNotificationGroup()
         {
             var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
                 await Clients.Caller.SendAsync("ReviewError", "User not authenticated");
+                Console.WriteLine("User not authenticated");
+                return;
+            }
+
+            //admin thi only join group admin
+            var notiGrsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
+            if (notiGrsResult.IsSuccess && notiGrsResult.Value != null)
+            {
+                foreach (var group in notiGrsResult.Value)
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, group.Name);
+                    Console.WriteLine($"Client {userId} joined group {group.Name}");
+                }
+            }
+
+            // var roles = Context.User?.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+            //ca nhan chi dung cho ca nhan
+
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"{userId}-notifications");
+            Console.WriteLine($"Client {userId} joined group {userId}-notifications");
+            
+        }
+
+        public async Task LeaveNotificationGroup()
+        {
+            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return;
+            }
+            var notiGrsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
+            if (notiGrsResult.IsSuccess && notiGrsResult.Value != null)
+            {
+                foreach (var group in notiGrsResult.Value)
+                {
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, group.Name);
+                    Console.WriteLine($"Client {userId} left group {group.Name}");
+                }
+            }
+
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{userId}-notifications");
+        }
+
+
+        public async Task SendNotification(CreateNotificationDto dto)
+        {
+            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                await Clients.Caller.SendAsync("NotificationError", "User not authenticated");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(dto.ReceiverId) && string.IsNullOrEmpty(dto.GroupId))
+            {
+                await Clients.Caller.SendAsync("NotificationError", "ReceiverId or GroupId must be provided");
                 return;
             }
             // var roles = Context.User?.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+            //tao notification truoc de lay value gui qua signalR
+            var noti = await _mediator.Send(new CreateNotificationCommand { CreateNotificationDto = dto });
+            if (!noti.IsSuccess)
+            {
+                await Clients.Caller.SendAsync("NotificationError", "Failed to create notification");
+                return;
+            }
+
+            if (!String.IsNullOrEmpty(dto.GroupId))
+            {
+                var reqRes = await _mediator.Send(new GetNotificationGroupByIdQuery { GroupId = dto.GroupId });
+                if (reqRes.IsSuccess && reqRes.Value != null)
+                {
+                    var group = reqRes.Value;
+                    await Clients.Group($"{group.Name}-notifications").SendAsync("ReceiveNotification", noti.Value);
+                    Console.WriteLine($"Sent notification to group {group.Name}-notifications");
+                }
+            }
+            else
+            {
+                await Clients.Group($"{dto.ReceiverId}-notifications").SendAsync("ReceiveNotification", noti.Value);
+                Console.WriteLine($"Sent notification to group {dto.ReceiverId}-notifications");
+            }
+
             var command = new CreateNotificationCommand
             {
-                CommentResultId = commentResultId,
-                ReviewResultId = reviewResultId,
-                NotificationDto = new NotificationDto
-                {
-                    Title = title,
-                    Message = message,
-                    Link = link,
-                    ReceiverId = receiverId,
-                    GroupId = groupId,
-                    SenderId = senderId,
-                    Type = type
-                }
+                CreateNotificationDto = dto
             };
             var result = await _mediator.Send(command);
-            if (String.IsNullOrEmpty(receiverId))
+            if (String.IsNullOrEmpty(dto.ReceiverId))
             {
                 await Clients.Group("admin-notifications").SendAsync("ReceiveNotification", result.Value);
                 Console.WriteLine($"Sent notification to group admin-notifications");
             }
-            else if (String.IsNullOrEmpty(groupId))
+            else if (String.IsNullOrEmpty(dto.GroupId))
             {
-                await Clients.Group($"{receiverId}-notifications").SendAsync("ReceiveNotification", result.Value);
-                Console.WriteLine($"Sent notification to group {receiverId}-notifications");
+                await Clients.Group($"{dto.ReceiverId}-notifications").SendAsync("ReceiveNotification", result.Value);
+                Console.WriteLine($"Sent notification to group {dto.ReceiverId}-notifications");
             }
 
         }
-    public async Task LoadAllNotifications()
+        public async Task LoadAllNotifications()
+        {
+            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                await Clients.Caller.SendAsync("NotificationError", "User not authenticated");
+                return;
+            }
+
+            var notifications = await _mediator.Send(new GetNotificationByUserIdQuery { UserId = userId });
+            if (!notifications.IsSuccess)
+            {
+                await Clients.Caller.SendAsync("NotificationError", string.IsNullOrEmpty(notifications.Error) ? "Failed to load notifications" : notifications.Error);
+                return;
+            }
+            await Clients.Caller.SendAsync("ReceiveAllNotifications", notifications.Value);
+        }
+
+    public async Task MarkAsReadListNotifications(List<string> notificationIds)
     {
-        var notifications = new List<NotificationDto>();
         var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId))
         {
@@ -67,149 +153,34 @@ namespace NotificationService.SignalR
             return;
         }
 
-        var notiGrsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
-        if (notiGrsResult.IsSuccess && notiGrsResult.Value != null)
-        {
-            foreach (var gorup in notiGrsResult.Value)
-            {
-                var notisResult = await _mediator.Send(new GetNotificationsByGroupIdQuery { GroupId = gorup.Id });
-                if (notisResult.IsSuccess && notisResult.Value != null)
-                {
-                    notifications.AddRange(notisResult.Value);
-                }
-            }
-        }
+        var res = await _mediator.Send(new MarkAsReadListNotificationCommand { UserId = userId, NotificationIds = notificationIds });
 
-        var userRoles = Context.User?.FindAll(ClaimTypes.Role).Select(x => x.Value).ToList();
-        if (userRoles?.Contains("Admin") == false)
+        if (!res.IsSuccess)
         {
-            var personnalNotisResult = await _mediator.Send(new GetListNotificationsByUserIdQuery { UserId = userId });
-            if (personnalNotisResult.IsSuccess && personnalNotisResult.Value != null)
-            {
-                notifications.AddRange(personnalNotisResult.Value);
-            }
-        }
-
-        await Clients.Caller.SendAsync("ReceiveAllNotifications", notifications);
-
-    }
-    public async Task JoinNotificationGroup()
-    {
-        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            await Clients.Caller.SendAsync("ReviewError", "User not authenticated");
-            Console.WriteLine("User not authenticated");
+            await Clients.Caller.SendAsync("NotificationError", string.IsNullOrEmpty(res.Error) ? "Have not found some notifications." : res.Error);
             return;
         }
 
-        //admin thi only join group admin
-        var notiGrsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
-        if (notiGrsResult.IsSuccess && notiGrsResult.Value != null)
-        {
-            foreach (var group in notiGrsResult.Value)
-            {
-                await Groups.AddToGroupAsync(Context.ConnectionId, group.Name);
-                Console.WriteLine($"Client {userId} joined group {group.Name}");
-            }
-        }
-
-        var roles = Context.User?.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
-        //ca nhan chi dung cho ca nhan
-        if (roles?.Contains("Admin") == false)
-        {
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"{userId}-notifications");
-            Console.WriteLine($"Client {userId} joined group {userId}-notifications");
-        }
-    }
-
-    public async Task LeaveNotificationGroup()
-    {
-        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            return;
-        }
-        var userRoles = Context.User?.FindAll(ClaimTypes.Role).Select(x => x.Value).ToList();
-        if (userRoles?.Contains("Admin") == true)
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, "admin-notifications");
-        }
-        else
-        {
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"{userId}-notifications");
-        }
-
-    }
-
-    public async Task MarkAsReadListNotifications(List<string> notificationIds)
-    {
-        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
-        {
-            await Clients.Caller.SendAsync("ReviewError", "User not authenticated");
-            return;
-        }
-
-        var groupsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
-        var groupIds = groupsResult.Value!.Select(g => g.Id).ToHashSet();
-
-        var notiesResult = await _mediator.Send(new GetListNotificationsByListIdsQuery { NotificationIds = notificationIds });
-
-        if (!notiesResult.IsSuccess || notiesResult.Value == null)
-        {
-            await Clients.Caller.SendAsync("ReviewError", "Have not found some notifications.");
-            return;
-        }
-
-        var noties = notiesResult.Value;
-
-        var unauthorizedNotis = noties
-            .Where(n => n.ReceiverId != userId && !groupIds.Contains(n.GroupId!))
-            .ToList();
-        if (unauthorizedNotis.Any())
-        {
-            await Clients.Caller.SendAsync("ReviewError", "You don't have permission to mark some notifications as read.");
-            return;
-        }
-
-        await _mediator.Send(new MarkAsReadListNotificationCommand { NotificationIds = notificationIds });
         await Clients.Caller.SendAsync("ReceiveNotificationsRead", notificationIds);
     }
 
-    public async Task DeleteListNotifications(List<string> notificationIds)
-    {
-        var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(userId))
+        public async Task DeleteListNotifications(List<string> notificationIds)
         {
-            await Clients.Caller.SendAsync("ReviewError", "User not authenticated");
-            return;
+            var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                await Clients.Caller.SendAsync("NotificationError", "User not authenticated");
+                return;
+            }
+
+            var res = await _mediator.Send(new DeleteListNotificationsCommand { UserId = userId, NotificationIds = notificationIds });
+            if (!res.IsSuccess)
+            {
+                await Clients.Caller.SendAsync("NotificationError", string.IsNullOrEmpty(res.Error) ? "Have not found some notifications." : res.Error);
+                return;
+            }
+
+            await Clients.Caller.SendAsync("ReceiveNotificationsDeleted", notificationIds);
         }
-
-        var groupsResult = await _mediator.Send(new GetNotificationGroupsByUserIdQuery { UserId = userId });
-        var groupIds = groupsResult.Value!.Select(g => g.Id).ToHashSet();
-
-        var notiesResult = await _mediator.Send(new GetListNotificationsByListIdsQuery { NotificationIds = notificationIds });
-
-        if (!notiesResult.IsSuccess || notiesResult.Value == null)
-        {
-            await Clients.Caller.SendAsync("ReviewError", "Have not found some notifications.");
-            return;
-        }
-
-        var noties = notiesResult.Value;
-
-        var unauthorizedNotis = noties
-            .Where(n => n.ReceiverId != userId && !groupIds.Contains(n.GroupId!))
-            .ToList();
-        if (unauthorizedNotis.Any())
-        {
-            await Clients.Caller.SendAsync("ReviewError", "You don't have permission to mark some notifications as read.");
-            return;
-        }
-
-        await _mediator.Send(new DeleteListNotificationsCommand { NotificationIds = notificationIds });
-        await Clients.Caller.SendAsync("ReceiveNotificationsDeleted", notificationIds);
-    }
     }
 }

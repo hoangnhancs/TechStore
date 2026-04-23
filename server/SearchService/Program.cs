@@ -1,10 +1,12 @@
 using MassTransit;
 using Polly;
+using Shared.Web.Extensions;
 using Polly.Extensions.Http;
 using SearchService.Consumers;
 using SearchService.Data;
 using SearchService.Services;
 using SharedWeb.Middleware;
+using ProductService.Grpc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetPolicy());
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());//auto mapper 14.x.x and lower
@@ -37,9 +39,13 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
+{
+    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
+});
 
 builder.Services.AddScoped<GrpcProductClient>();
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 var app = builder.Build();
 

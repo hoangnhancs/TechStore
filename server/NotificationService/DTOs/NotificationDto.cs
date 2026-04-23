@@ -11,7 +11,6 @@ namespace NotificationService.DTOs
         public required string Title { get; set; }
         public required string Message { get; set; }
         public string? Link { get; set; }
-        public bool IsRead { get; set; } = false;
 
         // Phân loại cao
         public string? Category { get; set; }  // System | Order | Payment | Interaction | Promotion
@@ -20,10 +19,11 @@ namespace NotificationService.DTOs
         // Reference đến entity liên quan
         public string? ReferenceId { get; set; }     // orderId, commentId, reviewId...
         public string? ReferenceType { get; set; }   // "Order", "Comment", "Review"
-
+        public string? ParentReferenceId { get; set; }     // orderId, commentId, reviewId...
+        public string? ParentReferenceType { get; set; }   // "Order", "
         // Sender: null nếu là System
-        public string? SenderId { get; set; }
-        public string? ReceiverId { get; set; }
-        public string? GroupId { get; set; }
+        public required string SenderId { get; set; }
+        public string? SenderName { get; set; }
+        public string? SenderImageUrl { get; set; }
     }
 }

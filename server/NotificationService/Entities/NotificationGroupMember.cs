@@ -11,8 +11,8 @@ namespace NotificationService.Entities
         public required string NotificationGroupId { get; set; }
         public NotificationGroup? NotificationGroup { get; set; }
         public required string UserId { get; set; }
-        public required string UserName { get; set; }
-        public required string UserEmail { get; set; }
+        // public required string UserName { get; set; }
+        // public required string UserImageUrl { get; set; }
         public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
         public NotificationGroupMember() : base(Guid.NewGuid().ToString())
         {

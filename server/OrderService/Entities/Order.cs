@@ -10,6 +10,7 @@ public class Order : BaseEntity<string>
     public required string UserId { get; set; }
     public required string RecipientName { get; set; }
     public string? UserEmail { get; set; }
+    public string? UserImageUrl { get; set; }
     public required string RecipientPhone { get; set; }
     public required string OrderNo { get; set; }
     public List<OrderItem> Items { get; set; } = [];

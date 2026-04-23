@@ -9,18 +9,16 @@ namespace ReviewService.Services
 {
     public class GrpcIdentityClient
     {
-        private readonly IConfiguration _config;
-        public GrpcIdentityClient(IConfiguration config)
+        private readonly GrpcIdentity.GrpcIdentityClient _client;
+        public GrpcIdentityClient(GrpcIdentity.GrpcIdentityClient client)
         {
-            _config = config;
+            _client = client;
         }
         public async Task<List<UserInfo>> GetUsersByIds(List<string> userIds)
         {
-            var channel = GrpcChannel.ForAddress(_config["GrpcIdentity"] ?? throw new InvalidOperationException("GrpcIdentity address is not configured"));
-            var client = new GrpcIdentity.GrpcIdentityClient(channel);
             var request = new GetUsersByIdsRequest();
             request.UserIds.AddRange(userIds);
-            var response = await client.GetUsersByIdsAsync(request);
+            var response = await _client.GetUsersByIdsAsync(request);
             return response.Users.ToList();
         }
     }

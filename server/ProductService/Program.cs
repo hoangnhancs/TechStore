@@ -1,4 +1,5 @@
 using MassTransit;
+using Shared.Web.Extensions;
 
 using ProductService.Data;
 using ProductService.Persistence;
@@ -17,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 builder.Services.AddDbContext<ProductSvcDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -92,7 +93,7 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddGrpc();
 
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddScoped<IProductUnitOfWork, ProductUnitOfWork>(); // Chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
 // builder.Services.AddScoped<IProductRepository, ProductRepository>();

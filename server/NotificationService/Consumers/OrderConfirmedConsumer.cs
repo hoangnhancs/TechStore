@@ -2,6 +2,12 @@
 using EmailService.Interfaces;
 using EmailService.Services.Interface;
 using MassTransit;
+using MediatR;
+using NotificationService.DTOs;
+using NotificationService.Services;
+using NotificationService.Services.Notification;
+using NotificationService.Services.NotificationGroup;
+using NotificationService.Services.Order;
 
 namespace NotificationService.Consumers
 {
@@ -9,40 +15,21 @@ namespace NotificationService.Consumers
     {
         private readonly IEmailService _emailService;
         private readonly IEmailTemplateBuilder _templateBuilder;
-        public OrderConfirmedConsumer(IEmailService emailService, IEmailTemplateBuilder templateBuilder)
+        private readonly GrpcIdentityClient _grpcIdentityClient;
+        private readonly IMediator _mediator;
+        public OrderConfirmedConsumer(IEmailService emailService, 
+            IEmailTemplateBuilder templateBuilder, 
+            GrpcIdentityClient grpcIdentityClient, 
+            IMediator mediator)
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
+            _grpcIdentityClient = grpcIdentityClient;
+            _mediator = mediator;
         }
         public async Task Consume(ConsumeContext<OrderConfirmed> context)
         {
-            var message = context.Message;
-            var body = await _templateBuilder.BuildAsync("OrderConfirmation", new
-            {
-                OrderNo = message.OrderNo,
-                CustomerName = message.UserName,
-
-                OrderDate = message.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
-                Address = message.Address ?? "N/A",
-
-                SubTotal = message.SubTotal.ToString("N0") + "₫",
-                ShippingFee =message.ShippingCost.ToString("N0") + "₫",
-                Discount = message.Discount.ToString("N0") + "₫",
-                TotalPrice = message.Total.ToString("N0") + "₫",
-
-                OrderUrl = $"http://localhost:3000/my-orders/{message.OrderId}",
-
-                Items = message.Items.Select(i => new
-                {
-                    Name = i.ProductName,
-                    Quantity = i.Quantity,
-                    Price = i.UnitPrice.ToString("N0") + "₫",
-                    Total = (i.UnitPrice * i.Quantity).ToString("N0") + "₫",
-                    ImageUrl = i.ProductImageUrl
-                })
-            });
-
-            await _emailService.SendEmailAsync("thaihoangnhantk17lqd@gmail.com", "Xác nhận đơn hàng", body);
+            await _mediator.Send(new HandleOrderConfirmedCommand { Message = context.Message });
         }
     }
 }

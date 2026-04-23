@@ -11,17 +11,15 @@ namespace SearchService.Services
     public class GrpcProductClient
     {
         private ILogger<GrpcProductClient> _logger;
-        private readonly IConfiguration _config;
-        public GrpcProductClient(ILogger<GrpcProductClient> logger, IConfiguration config)
+        private readonly GrpcProduct.GrpcProductClient _client;
+        public GrpcProductClient(ILogger<GrpcProductClient> logger, GrpcProduct.GrpcProductClient client)
         {
             _logger = logger;
-            _config = config;
+            _client = client;
         }
         public List<ProductItem> GetUpdatedProduct(DateTime? lastUpdated)
         {
             _logger.LogInformation("Getting products from gRPC service with last updated: {LastUpdated}", lastUpdated);
-            var channel = GrpcChannel.ForAddress(_config["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
-            var client = new GrpcProduct.GrpcProductClient(channel);
             var request = new GetUpdatedProductRequest
             {
                 LastUpdated = lastUpdated.HasValue ? Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(lastUpdated.Value.ToUniversalTime()) : null
@@ -29,7 +27,7 @@ namespace SearchService.Services
 
             try
             {
-                var reply = client.GetUpdatedProduct(request);
+                var reply = _client.GetUpdatedProduct(request);
                 _logger.LogInformation("Received {ProductCount} products from gRPC service", reply.Product
                     .Count);
                 var products = reply.Product.Select(p => new ProductItem

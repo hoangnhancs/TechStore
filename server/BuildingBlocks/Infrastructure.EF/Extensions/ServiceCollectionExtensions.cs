@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Infrastructure.EF.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Shared.Core.EF.UnitOfWork;
-
 
 namespace Infrastructure.EF.Extensions
 {
@@ -16,7 +11,7 @@ namespace Infrastructure.EF.Extensions
             this IServiceCollection services)
             where TContext : DbContext
         {
-            // Register Unit of Work as Scoped (one per request)
+            // Register the default EF unit of work implementation.
             services.AddScoped<IUnitOfWork, UnitOfWork<TContext>>();
 
             return services;
@@ -27,10 +22,23 @@ namespace Infrastructure.EF.Extensions
             where TContext : DbContext
             where TUnitOfWork : class, IUnitOfWork
         {
-            // Register custom Unit of Work implementation
+            // Register a custom unit of work as the shared abstraction.
             services.AddScoped<IUnitOfWork, TUnitOfWork>();
 
             return services;
         }
+
+        // public static IServiceCollection AddEFInfrastructure<TContext, TAbstraction, TUnitOfWork>(
+        //     this IServiceCollection services)
+        //     where TContext : DbContext
+        //     where TAbstraction : class, IUnitOfWork
+        //     where TUnitOfWork : class, TAbstraction
+        // {
+        //     // Register domain-specific abstraction and map IUnitOfWork to the same scoped instance.
+        //     services.AddScoped<TAbstraction, TUnitOfWork>();
+        //     services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TAbstraction>());
+
+        //     return services;
+        // }
     }
 }

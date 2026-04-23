@@ -68,5 +68,29 @@ namespace IdentityService.Services
             }
             return response;
         }
+
+        public override async Task<UserInfo> GetSystemUser(Empty request, ServerCallContext context)
+        {
+            var systemUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == "system");
+            if (systemUser == null)
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, "System user not found"));
+            }
+
+            var userInfo = new UserInfo
+            {
+                UserId = systemUser.Id,
+                UserName = systemUser.UserName,
+                UserEmail = systemUser.Email,
+                IsAdmin = systemUser.IsAdmin,
+            };
+
+            if (systemUser.Image?.Url != null)
+            {
+                userInfo.ImageUrl = systemUser.Image.Url;
+            }
+
+            return userInfo;
+        }
     }
 }

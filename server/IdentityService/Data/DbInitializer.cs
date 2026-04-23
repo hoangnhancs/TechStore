@@ -11,8 +11,18 @@ namespace IdentityService
 {
     public class DbInitializer
         {
-        public static async Task SeedData(IdentitySvcDbContext context, UserManager<User> userManager)
+        public static async Task SeedData(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
+            var roles = new[] { "Member", "Admin", "System" };
+
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+            
             if (!userManager.Users.Any())
             {
                 var userNames = new List<string>() { "Bob", "Jane", "Tom", "Erik", "Philip", "Ralph", "Join", "Sam", "Ken", "Timmy" };
@@ -56,6 +66,24 @@ namespace IdentityService
 
                 await userManager.CreateAsync(admin2, "Pa$$w0rd");
                 await userManager.AddToRolesAsync(admin2, ["Member", "Admin"]);
+
+                var system = new User
+                {
+                    DisplayName = "System",
+                    UserName = "system",
+                    Email = "system@techstore.com.vn",   
+                    PhoneNumber = GenerateVietnamPhoneNumber(),
+                    EmailConfirmed = true,  
+                    IsAdmin = true
+                };
+                var result = await userManager.CreateAsync(system, "Pa$$w0rd");
+
+                if (!result.Succeeded)
+                {
+                    throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+                }
+                await userManager.AddToRolesAsync(system, ["Member", "Admin", "System"]);
+
             }
         }
         public static string GenerateVietnamPhoneNumber()

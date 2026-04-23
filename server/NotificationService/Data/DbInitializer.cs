@@ -30,8 +30,8 @@ namespace NotificationService.Data
                         NotificationGroupId = adminNotiGr.Id,
                         NotificationGroup = adminNotiGr,
                         UserId = u.UserId,
-                        UserName = u.UserName,
-                        UserEmail = u.UserEmail,
+                        // UserName = u.UserName,
+                        // UserImageUrl = u.UserEmail,
                         CreatedAt = DateTime.UtcNow,
                     }).ToList();
                 userNotiGr.Members = allUsers.Where(u => u.IsAdmin == false)
@@ -40,8 +40,8 @@ namespace NotificationService.Data
                         NotificationGroupId = userNotiGr.Id,
                         NotificationGroup = userNotiGr,
                         UserId = u.UserId,
-                        UserName = u.UserName,
-                        UserEmail = u.UserEmail,
+                        // UserName = u.UserName,
+                        // UserImageUrl = u.UserEmail,
                         CreatedAt = DateTime.UtcNow,
                     }).ToList();
 

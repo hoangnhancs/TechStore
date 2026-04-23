@@ -10,5 +10,6 @@ namespace NotificationService.Persistence
     public interface INotificationUnitOfWork : IUnitOfWork
     {
         public INotificationRepository NotificationRepository { get; }
+        public INotificationGroupRepository NotificationGroupRepository { get; }
     }
 }

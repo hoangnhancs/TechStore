@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using PaymentService.Consumers;
+using Shared.Web.Extensions;
 using PaymentService.Data;
 using PaymentService.Persistence;
 using PaymentService.Repositories;
@@ -62,7 +63,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>(); // Chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
 // builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
@@ -74,7 +75,7 @@ builder.Services.AddScoped<MomoPaymentService>();
 builder.Services.AddScoped<VNPayPaymentService>();
 builder.Services.AddScoped<BankTransferPaymentService>();
 
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 

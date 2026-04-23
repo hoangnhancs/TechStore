@@ -11,6 +11,7 @@ using IdentityService.Services.OtherServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Shared.Web.Extensions;
 using Shared.Web.Helper;
 using Shared.Web.Helper.Interface;
 using SharedWeb.Middleware;
@@ -20,7 +21,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddControllers();
+builder.Services.AddSharedControllers();
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -39,7 +40,7 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddGrpc();
-builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddIdentity<User, IdentityRole>(opt =>
 {
@@ -116,9 +117,10 @@ try
 {
     var context = services.GetRequiredService<IdentitySvcDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
+    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
     
     await context.Database.MigrateAsync();
-    await DbInitializer.SeedData(context, userManager);
+    await DbInitializer.SeedData(userManager, roleManager);
 }
 catch (Exception ex)
 {

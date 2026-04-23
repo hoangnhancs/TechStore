@@ -13,6 +13,6 @@ namespace NotificationService.DTOs
     
         // Chỉ dùng khi Type = ProductFollowers
         public string? ReferenceId { get; set; }       // productId
-        public string? ReferenceType { get; set; }     // "Product"
+        public string? ReferenceType { get; set; }     // "Product", giống như là thông báo sản phẩm đặt trước
     }
 }

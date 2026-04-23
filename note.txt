@@ -1,0 +1,4 @@
+builder.Services.AddControllers()
+    .AddJsonOptions(x =>
+        x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+//allow convert string to enum
