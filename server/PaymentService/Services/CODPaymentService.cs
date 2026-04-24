@@ -1,9 +1,11 @@
 using AutoMapper;
 using Contract;
 using MassTransit;
+using Microsoft.AspNetCore.SignalR;
 using PaymentService.DTOs;
 using PaymentService.Persistence;
 using PaymentService.Services.Interface;
+using PaymentService.SignalR;
 using Stripe;
 using System;
 using System.Collections.Generic;
@@ -18,11 +20,16 @@ namespace PaymentService.Services
         private readonly IPaymentUnitOfWork _unitOfWork;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IMapper _mapper;
-        public CODPaymentService(IPaymentUnitOfWork unitOfWork, IPublishEndpoint publishEndpoint, IMapper mapper)
+        private readonly IHubContext<PaymentHub> _hubContext;
+        public CODPaymentService(IPaymentUnitOfWork unitOfWork, 
+        IPublishEndpoint publishEndpoint, 
+        IMapper mapper,
+        IHubContext<PaymentHub> hubContext)
         {
             _unitOfWork = unitOfWork;
             _publishEndpoint = publishEndpoint;
             _mapper = mapper;
+            _hubContext = hubContext;
         }
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto createPaymentDto)
         {
@@ -51,7 +58,12 @@ namespace PaymentService.Services
                 OrderId = createPaymentDto.OrderId
             });
             await _unitOfWork.CommitAsync();
-            return _mapper.Map<PaymentDto>(payment);
+            var paymentDto = _mapper.Map<PaymentDto>(payment);
+            await _hubContext.Clients
+                    .Group(paymentDto.OrderId)
+                    .SendAsync("ReceivePayment", paymentDto);
+
+            return paymentDto;
         }
     }
 }

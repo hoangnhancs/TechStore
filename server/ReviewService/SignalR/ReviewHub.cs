@@ -24,10 +24,14 @@ namespace ReviewService.SignalR
                 await Clients.Caller.SendAsync("ReviewError", "User not authenticated");
                 return null;
             }
+            var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
+            var userImageUrl = Context.User?.FindFirstValue("image_url");
             var command = new CreateReviewCommand
             {
                 ProductId = productId,
                 UserId = userId,
+                UserName = userName,
+                UserImageUrl = userImageUrl,
                 Content = content,
                 Rating = rating,
             };

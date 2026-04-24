@@ -33,15 +33,15 @@ namespace CommentService.Services.Comment
             };
             await _unitOfWork.CommentRepository.AddAsync(comment);
             var userIds = new List<string> { comment.UserId };
-            var users = await _grpcIdentityClient.GetUsersByIds(userIds);
+            // var users = await _grpcIdentityClient.GetUsersByIds(userIds);
             var result = await _unitOfWork.CommitAsync();
             if (!result)
             {
                 return AppResult<CommentDto>.Failure("Failed to create comment", 400);
             }
             var dto = _mapper.Map<CommentDto>(comment);
-            dto.UserName = users.FirstOrDefault()?.UserName;
-            dto.UserImageUrl = users.FirstOrDefault()?.ImageUrl;
+            dto.UserName = request.UserName;
+            dto.UserImageUrl = request.UserImageUrl;
             return AppResult<CommentDto>.Success(dto);
         }
     }

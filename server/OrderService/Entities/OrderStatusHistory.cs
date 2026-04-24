@@ -12,7 +12,7 @@ namespace OrderService.Entities
     {
         public required string OrderId { get; set; }
         [Column(TypeName = "varchar(20)")]
-        public OrderStatus FromStatus { get; set; }
+        public OrderStatus? FromStatus { get; set; }
         [Column(TypeName = "varchar(20)")]
         public OrderStatus ToStatus { get; set; }
         public string? Note { get; set; }

@@ -9,6 +9,7 @@ using NotificationService.Persistence;
 using NotificationService.RequestHelpers;
 using SharedWeb.Middleware;
 using IdentityService.Grpc;
+using NotificationService.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,10 +51,12 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-
+builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+
+builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddMassTransit(x =>
 {
@@ -88,17 +91,17 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcIdentity"] ?? throw new InvalidOperationException("GrpcIdentity address is not configured"));
 });
 
-builder.Services.AddScoped<ExceptionMiddleware>();
-
 builder.Services.AddScoped<NotificationService.Services.GrpcIdentityClient>();
 builder.Services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
 
 
 builder.Services.AddEmailServices(builder.Configuration);
-builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+builder.Services.AddSignalR();
 
 var app = builder.Build();
 
@@ -126,6 +129,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.MapHub<NotificationHub>("/hubs/notification"); //map hub cho client kết nối
+
 
 app.MapControllers();
 

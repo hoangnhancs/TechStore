@@ -96,7 +96,7 @@ namespace NotificationService.Services.Order
                     Title = $"Đơn hàng của bạn đã được xác nhận: {message.OrderNo}",
                     Message = $"Cảm ơn bạn đã đặt hàng! Đơn hàng {message.OrderNo} của bạn đã được xác nhận và đang được xử lý.",
                     Category = "Order",
-                    Type = "OrderConfirmed",
+                    Type = "OrderPlaced",
                     ReferenceId = message.OrderId,
                     ReferenceType = "Order",
                     ReceiverId = message.UserId, // Gửi trực tiếp đến user

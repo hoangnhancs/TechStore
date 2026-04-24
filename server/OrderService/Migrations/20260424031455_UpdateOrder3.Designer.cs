@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OrderService.Data;
@@ -11,9 +12,11 @@ using OrderService.Data;
 namespace OrderService.Migrations
 {
     [DbContext(typeof(OrderSvcDbContext))]
-    partial class OrderSvcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424031455_UpdateOrder3")]
+    partial class UpdateOrder3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -339,6 +342,7 @@ namespace OrderService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("FromStatus")
+                        .IsRequired()
                         .HasColumnType("varchar(20)");
 
                     b.Property<bool>("IsDeleted")

@@ -84,6 +84,8 @@ namespace NotificationService.SignalR
                 await Clients.Caller.SendAsync("NotificationError", "ReceiverId or GroupId must be provided");
                 return;
             }
+            var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
+            dto.SenderName = userName;
             // var roles = Context.User?.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
             //tao notification truoc de lay value gui qua signalR
             var noti = await _mediator.Send(new CreateNotificationCommand { CreateNotificationDto = dto });

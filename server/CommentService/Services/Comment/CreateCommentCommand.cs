@@ -12,6 +12,8 @@ namespace CommentService.Services.Comment
     {
         public required string ProductId { get; set; } = string.Empty;
         public required string UserId { get; set; } = string.Empty;
+        public string? UserName { get; set; }
+        public string? UserImageUrl { get; set; }
         public required string Content { get; set; } = string.Empty;
         public string? ParentCommentId { get; set; } = null;
     }

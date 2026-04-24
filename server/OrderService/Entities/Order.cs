@@ -76,7 +76,7 @@ public class Order : BaseEntity<string>
         order.StatusHistories.Add(new OrderStatusHistory
         {
             OrderId = order.Id,
-            FromStatus = OrderStatus.Pending,
+            FromStatus = null,
             ToStatus = OrderStatus.Pending,
             ChangedBy = "system",
             ChangedAt = DateTime.UtcNow
@@ -93,39 +93,69 @@ public class Order : BaseEntity<string>
         Total = SubTotal + ShippingCost - Discount;
     }
 
-    public void UpdateOrder(List<OrderItem> items, string shippingAddress, string? billingAddress, long shippingCost, long discount)
-    {
-        if (Status != OrderStatus.Created)
-            throw new InvalidOperationException("Cannot update order after processing");
+    // public void UpdateOrder(List<OrderItem> items, string shippingAddress, string? billingAddress, long shippingCost, long discount)
+    // {
+    //     if (Status != OrderStatus.Created)
+    //         throw new InvalidOperationException("Cannot update order after processing");
 
-        Items = items;
-        ShippingAddress = shippingAddress;
-        BillingAddress = billingAddress;
-        ShippingCost = shippingCost;
-        Discount = discount;
+    //     Items = items;
+    //     ShippingAddress = shippingAddress;
+    //     BillingAddress = billingAddress;
+    //     ShippingCost = shippingCost;
+    //     Discount = discount;
 
-        CalculateTotals();
-        UpdatedAt = DateTime.UtcNow;
-    }
+    //     CalculateTotals();
+    //     UpdatedAt = DateTime.UtcNow;
+    // }
     public void Process()
     {
         if (Status != OrderStatus.Pending)
             throw new InvalidOperationException($"Cannot process order with status {Status}");
 
-        Status = OrderStatus.Processing;
-        UpdatedAt = DateTime.UtcNow;
-        StatusHistories.Add(new OrderStatusHistory
-        {
-            OrderId = Id,
-            FromStatus = OrderStatus.Pending,
-            ToStatus = OrderStatus.Processing,
-            ChangedBy = "system",
-            ChangedAt = DateTime.UtcNow
-        });
+        UpdateOrderStatus(OrderStatus.Processing);
+
         if (PmtMethod != PaymentMethod.CashOnDelivery)
         {
             PmtStatus = PaymentStatus.Succeeded;
         }
+    }
+
+    public void Complete()
+    {
+        if (Status != OrderStatus.Delivered)
+            throw new InvalidOperationException($"Cannot complete order with status {Status}");
+
+        UpdateOrderStatus(OrderStatus.Completed);
+    }
+
+    public void Cancel(string reason)
+    {
+        if (Status == OrderStatus.Completed)
+            throw new InvalidOperationException("Cannot cancel completed order");
+
+        UpdateOrderStatus(OrderStatus.Cancelled, reason);
+        PmtStatus = PaymentStatus.Canceled;
+    }
+
+    protected void UpdateOrderStatus(OrderStatus newStatus, string? reason = null, string? changeBy = null)
+    {
+        var oldStatus = this.Status;
+        if (oldStatus == newStatus) return;
+
+        
+        StatusHistories.Add(new OrderStatusHistory
+        {
+            OrderId = Id,
+            FromStatus = oldStatus,
+            ToStatus = newStatus,
+            Note = reason,           // lý do từ Saga (hết stock, payment fail...)
+            ChangedBy = changeBy ?? "system",
+            ChangedAt = DateTime.UtcNow
+        });
+
+        Status = newStatus;
+        
+        UpdatedAt = DateTime.UtcNow;
     }
 
     public void UpdateFromShipment(ShipmentStatus shipmentStatus)
@@ -189,43 +219,16 @@ public class Order : BaseEntity<string>
         }
     }
 
-    public void Complete()
-    {
-        if (Status != OrderStatus.Delivered)
-            throw new InvalidOperationException($"Cannot complete order with status {Status}");
 
-        Status = OrderStatus.Completed;
-        UpdatedAt = DateTime.UtcNow;
-    }
+    // public void PaymentSuccessed()
+    // {
+    //     PmtStatus = PaymentStatus.Succeeded;
+    // }
 
-    public void Cancel(string reason)
-    {
-        if (Status == OrderStatus.Completed)
-            throw new InvalidOperationException("Cannot cancel completed order");
-
-        Status = OrderStatus.Cancelled;
-        UpdatedAt = DateTime.UtcNow;
-        StatusHistories.Add(new OrderStatusHistory
-        {
-            OrderId = Id,
-            FromStatus = Status,
-            ToStatus = OrderStatus.Cancelled,
-            Note = reason,           // lý do từ Saga (hết stock, payment fail...)
-            ChangedBy = "system",
-            ChangedAt = DateTime.UtcNow
-        });
-        PmtStatus = PaymentStatus.Canceled;
-    }
-
-    public void PaymentSuccessed()
-    {
-        PmtStatus = PaymentStatus.Succeeded;
-    }
-
-    public void PaymentFailed()
-    {
-        PmtStatus = PaymentStatus.Failed;
-    }
+    // public void PaymentFailed()
+    // {
+    //     PmtStatus = PaymentStatus.Failed;
+    // }
 
     // public void UpdateStatus(OrderStatus newStatus)
     // {

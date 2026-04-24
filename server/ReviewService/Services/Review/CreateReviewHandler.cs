@@ -34,7 +34,7 @@ namespace ReviewService.Services.Review
             };
             await _unitOfWork.ReviewRepository.AddAsync(review);
             var userIds = new List<string> { review.UserId };
-            var users = await _grpcIdentityClient.GetUsersByIds(userIds);
+            // var users = await _grpcIdentityClient.GetUsersByIds(userIds);
             var result = await _unitOfWork.CommitAsync();
             if (!result)
             {
@@ -42,8 +42,8 @@ namespace ReviewService.Services.Review
             }
             var dto = _mapper.Map<ReviewDto>(review);
 
-            dto.UserName = users.FirstOrDefault()?.UserName;
-            dto.UserImageUrl = users.FirstOrDefault()?.ImageUrl;
+            dto.UserName = request.UserName;
+            dto.UserImageUrl = request.UserImageUrl;
             return AppResult<ReviewDto>.Success(dto);
         }
 

@@ -20,6 +20,8 @@ namespace CommentService.SignalR
         public async Task<string?> SendComment(string productId, string content, string? parrentCommentId = null)
         {
             var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
+            var userImageUrl = Context.User?.FindFirstValue("image_url");
             if (string.IsNullOrEmpty(userId))
             {
                 await Clients.Caller.SendAsync("CommentError", "User not authenticated");
@@ -29,6 +31,8 @@ namespace CommentService.SignalR
             {
                 ProductId = productId,
                 UserId = userId,
+                UserName = userName,
+                UserImageUrl = userImageUrl,
                 ParentCommentId = parrentCommentId,
                 Content = content
             };

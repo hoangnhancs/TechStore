@@ -74,6 +74,7 @@ builder.Services.AddScoped<StripePaymentService>();
 builder.Services.AddScoped<MomoPaymentService>();
 builder.Services.AddScoped<VNPayPaymentService>();
 builder.Services.AddScoped<BankTransferPaymentService>();
+builder.Services.AddScoped<CODPaymentService>();
 
 builder.Services.AddSharedControllers();
 
