@@ -8,6 +8,7 @@ using MediatR;
 using NotificationService.DTOs;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
+using NotificationService.Services.Sender;
 using Shared.Core.EF.Application;
 
 namespace NotificationService.Services.Order
@@ -18,12 +19,14 @@ namespace NotificationService.Services.Order
         private readonly IEmailTemplateBuilder _templateBuilder;
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
-        public HandleOrderConfirmedHandler(IEmailService emailService, IEmailTemplateBuilder templateBuilder, GrpcIdentityClient grpcIdentityClient, IMediator mediator)
+        private readonly INotificationServiceSender _notificationSender;
+        public HandleOrderConfirmedHandler(IEmailService emailService, IEmailTemplateBuilder templateBuilder, GrpcIdentityClient grpcIdentityClient, IMediator mediator, INotificationServiceSender notificationSender)
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
             _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
+            _notificationSender = notificationSender;
         }
         public async Task<AppResult<Unit>> Handle(HandleOrderConfirmedCommand request, CancellationToken cancellationToken)
         {
@@ -105,8 +108,17 @@ namespace NotificationService.Services.Order
                     SenderImageUrl = systemUser?.ImageUrl,
                 }
             };
-            await _mediator.Send(adminNotificationCommand);
-            await _mediator.Send(userNotificationCommand);
+            var adminNotiResult = await _mediator.Send(adminNotificationCommand);
+            if (adminNotiResult.IsSuccess && adminNotiResult.Value != null)
+            {
+                await _notificationSender.SendToGroupAsync(adminGroup.Name, adminNotiResult.Value);
+            }
+
+            var userNotiResult = await _mediator.Send(userNotificationCommand);
+            if (userNotiResult.IsSuccess && userNotiResult.Value != null)
+            {
+                await _notificationSender.SendToUserAsync(message.UserId, userNotiResult.Value);
+            }
 
             return AppResult<Unit>.Success(Unit.Value);
         }
