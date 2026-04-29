@@ -90,6 +90,9 @@ builder.Services.AddMassTransit(x =>
     // Register consumers for Saga commands
     x.AddConsumer<OrderService.Consumers.ConfirmOrderConsumer>();
     x.AddConsumer<OrderService.Consumers.CancelOrderConsumer>();
+    x.AddConsumer<OrderService.Consumers.SetOrderWaitingForPaymentConsumer>();
+    x.AddConsumer<OrderService.Consumers.ConfirmCodOrderConsumer>();
+    x.AddConsumer<OrderService.Consumers.RetryPaymentConsumer>();
     
     // Set endpoint naming to match other services
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
@@ -101,6 +104,8 @@ builder.Services.AddMassTransit(x =>
             h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
             h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
         });
+
+        cfg.UseDelayedMessageScheduler();
 
         // ConfigureEndpoints handles both saga and consumers with consistent naming
         cfg.ConfigureEndpoints(context);
