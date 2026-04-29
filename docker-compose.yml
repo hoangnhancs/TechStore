@@ -1,36 +1,47 @@
 services:
+  identity-service:
+    image: thaihoangnhantk/identity-service:latest
+    ports:
+      - "5001:8080"  # ← 8080 vì app listen 8080
+    depends_on:
+      - postgres
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=identity;User Id=postgres;Password=postgrespw
+
   postgres:
     image: postgres:latest
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgrespw
-      - POSTGRES_DB=products
+      - POSTGRES_DB=identity
     ports:
-      - 5432:5432
+      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql
       # - /var/lib/postgresql
-  mongodb:
-    image: mongo:latest
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: mongopw
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodata:/data/db
-  rabbitmq:
-    image: rabbitmq:3-management-alpine
-    ports:
-      - 5672:5672
-      - 15672:15672 
-  mailpit:
-    image: axllent/mailpit
-    container_name: mailpit
-    ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # UI
-    restart: unless-stopped
+  # mongodb:
+  #   image: mongo:latest
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: mongopw
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodata:/data/db
+  # rabbitmq:
+  #   build:
+  #     context: ./rabbitmq
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - 5672:5672
+  #     - 15672:15672
+  # mailpit:
+  #   image: axllent/mailpit
+  #   container_name: mailpit
+  #   ports:
+  #     - "1025:1025"  # SMTP
+  #     - "8025:8025"  # UI
+  #   restart: unless-stopped
   # product-svc:
   #   image: thaihoangnhantk/product-svc:latest
   #   build:
@@ -38,4 +49,4 @@ services:
   #     dockerfile: server/ProductService
 volumes:
   pgdata:
-  mongodata:
+  # mongodata:
