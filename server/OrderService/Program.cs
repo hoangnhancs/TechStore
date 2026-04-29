@@ -17,6 +17,7 @@ using OrderService.SignalR;
 // using ProductService;
 using SharedWeb.Middleware;
 using ProductService.Grpc;
+using Quartz;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -97,20 +98,35 @@ builder.Services.AddMassTransit(x =>
     // Set endpoint naming to match other services
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
     
+    x.AddQuartzConsumers(); // Add Quartz consumers for scheduled tasks
+
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
-        {
-            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
-            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
-        });
+        // cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        // {
+        //     h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+        //     h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        // });
 
         cfg.UseDelayedMessageScheduler();
-
+        cfg.Host(builder.Configuration["RabbitMq:ConnectionString"]);
         // ConfigureEndpoints handles both saga and consumers with consistent naming
         cfg.ConfigureEndpoints(context);
     });
 });
+
+builder.Services.AddQuartz(q =>
+{
+    q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
+    q.UsePersistentStore(s =>
+    {
+        s.UseProperties = true;
+        s.UsePostgres(builder.Configuration["ConnectionStrings:DefaultConnection"]!);
+    });
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
 {
     o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));

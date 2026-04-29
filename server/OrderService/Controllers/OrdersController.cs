@@ -125,4 +125,42 @@ public class OrdersController : BaseApiController
         };
         return HandleAppResult(await Mediator.Send(query));
     }
+
+    /// <summary>
+    /// Admin confirms a COD order (moves it from WaitingForPayment → Processing via Saga)
+    /// </summary>
+    [HttpPost("{orderId}/confirm-cod")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ConfirmCod(string orderId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+
+        return HandleAppResult(await Mediator.Send(new ConfirmCodOrderCommand
+        {
+            OrderId = orderId,
+            UserId = userId,
+            IsAdmin = true
+        }));
+    }
+
+    /// <summary>
+    /// User retries payment (optionally with a different payment method)
+    /// </summary>
+    [HttpPost("{orderId}/retry-payment")]
+    [Authorize]
+    public async Task<IActionResult> RetryPayment(string orderId, [FromBody] RetryPaymentDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("User not authenticated");
+
+        return HandleAppResult(await Mediator.Send(new RetryPaymentCommand
+        {
+            OrderId = orderId,
+            UserId = userId,
+            PaymentMethod = dto.PaymentMethod
+        }));
+    }
 }
