@@ -48,7 +48,9 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
-builder.Services.AddScoped<INotificationSender, SignalRNotificationSender>();
+builder.Services.AddScoped<NotificationService.Services.Sender.INotificationServiceSender, NotificationService.Services.Sender.NotificationServiceSender>();
+
+
 builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddSignalR();
 

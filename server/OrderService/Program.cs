@@ -8,8 +8,9 @@ using OrderService.Saga;
 using OrderService.Services;
 using OrderService.SignalR;
 using ProductService.Grpc;
+using Quartz;
 using Shared.Web.Extensions;
-using SharedWeb.Middleware;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -45,8 +46,13 @@ builder.Services.AddMassTransit(x =>
 
     x.AddConsumer<ConfirmOrderConsumer>();
     x.AddConsumer<CancelOrderConsumer>();
+    x.AddConsumer<SetOrderWaitingForPaymentConsumer>();
+    x.AddConsumer<ConfirmCodOrderConsumer>();
+    x.AddConsumer<RetryPaymentConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
+
+    x.AddQuartzConsumers(); // Add Quartz consumers for scheduled tasks
 
     x.UsingRabbitMq((context, cfg) =>
     {
@@ -55,9 +61,23 @@ builder.Services.AddMassTransit(x =>
             h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
             h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
         });
+        cfg.UseDelayedMessageScheduler();
         cfg.ConfigureEndpoints(context);
     });
 });
+
+builder.Services.AddQuartz(q =>
+{
+    q.UseDefaultThreadPool(tp => tp.MaxConcurrency = 10);
+    q.UsePersistentStore(s =>
+    {
+        s.UseProperties = true;
+        s.UsePostgres(builder.Configuration["ConnectionStrings:DefaultConnection"]!);
+    });
+});
+
+builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
+
 
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
@@ -79,18 +99,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<OrderHub>("/hubs/order");
-
-try
-{
-    using var scope = app.Services.CreateScope();
-    var context = scope.ServiceProvider.GetRequiredService<OrderSvcDbContext>();
-    await context.Database.MigrateAsync();
-}
-catch (Exception ex)
-{
-    var logger = app.Services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred while migrating the database.");
-}
 
 app.Run();
 

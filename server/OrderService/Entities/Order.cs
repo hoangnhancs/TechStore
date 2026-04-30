@@ -107,17 +107,46 @@ public class Order : BaseEntity<string>
     //     CalculateTotals();
     //     UpdatedAt = DateTime.UtcNow;
     // }
-    public void Process()
+    public void WaitForPayment()
     {
         if (Status != OrderStatus.Pending)
+            throw new InvalidOperationException($"Cannot set WaitingForPayment from status {Status}");
+
+        UpdateOrderStatus(OrderStatus.WaitingForPayment);
+    }
+
+    public void RetryPayment()
+    {
+        if (Status != OrderStatus.WaitingForPayment)
+            throw new InvalidOperationException($"Cannot retry payment from status {Status}");
+
+        PmtStatus = PaymentStatus.Pending;
+        // Stay in WaitingForPayment, new payment intent will be created
+    }
+
+    public void UpdatePaymentMethod(PaymentMethod method)
+    {
+        PmtMethod = method;
+        UpdatedAt = DateTime.UtcNow;
+    }
+
+    public void Process()
+    {
+        if (Status != OrderStatus.Pending && Status != OrderStatus.WaitingForPayment)
             throw new InvalidOperationException($"Cannot process order with status {Status}");
 
         UpdateOrderStatus(OrderStatus.Processing);
+        PmtStatus = PaymentStatus.Succeeded;
+    }
 
+    public void ManualProcess()
+    {
+        if (Status != OrderStatus.WaitingForPayment)
+            throw new InvalidOperationException($"Cannot manually process order with status {Status}");
         if (PmtMethod != PaymentMethod.CashOnDelivery)
-        {
-            PmtStatus = PaymentStatus.Succeeded;
-        }
+            throw new InvalidOperationException("Only CashOnDelivery orders can be manually processed");
+        UpdateOrderStatus(OrderStatus.Processing);
+        PmtStatus = PaymentStatus.Pending; // COD pays on delivery
     }
 
     public void Complete()
@@ -255,7 +284,7 @@ public class Order : BaseEntity<string>
     // }
     public enum OrderStatus
     {
-        Created,
+        // Created,
         Pending,
         WaitingForPayment,
         Processing,

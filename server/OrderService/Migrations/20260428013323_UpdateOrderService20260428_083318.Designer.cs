@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OrderService.Data;
@@ -11,9 +12,11 @@ using OrderService.Data;
 namespace OrderService.Migrations
 {
     [DbContext(typeof(OrderSvcDbContext))]
-    partial class OrderSvcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260428013323_UpdateOrderService20260428_083318")]
+    partial class UpdateOrderService20260428_083318
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -454,15 +457,9 @@ namespace OrderService.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("PaymentExpiryTokenId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("PaymentRetryCount")
-                        .HasColumnType("integer");
 
                     b.Property<long>("Total")
                         .HasColumnType("bigint");
