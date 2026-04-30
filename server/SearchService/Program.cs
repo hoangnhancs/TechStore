@@ -1,59 +1,49 @@
 using MassTransit;
 using Polly;
-using Shared.Web.Extensions;
 using Polly.Extensions.Http;
+using ProductService.Grpc;
 using SearchService.Consumers;
 using SearchService.Data;
 using SearchService.Services;
-using SharedWeb.Middleware;
-using ProductService.Grpc;
+using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-
 builder.Services.AddSharedControllers();
 
-builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetPolicy());
-builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());//auto mapper 14.x.x and lower
+builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
 builder.Services.AddMassTransit(x =>
 {
-   x.AddConsumer<ProductCreatedConsumer>();
+    x.AddConsumer<ProductCreatedConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("search", false));
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMq:Host"], "/", h =>
+        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
         {
-            h.Username(builder.Configuration.GetValue("RabbitMq:Username", "guest"));
-            h.Password(builder.Configuration.GetValue("RabbitMq:Password", "guest"));
-        });
-        cfg.ReceiveEndpoint("search-aution-created", e =>
-        {
-            e.UseMessageRetry(r => r.Interval(5, 5));
-            e.ConfigureConsumer<ProductCreatedConsumer>(context);
+            h.Username(builder.Configuration.GetValue("RabbitMQ:Username", "guest"));
+            h.Password(builder.Configuration.GetValue("RabbitMQ:Password", "guest"));
         });
         cfg.ConfigureEndpoints(context);
     });
 });
+
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
-{
-    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
-});
+    o.Address = new Uri(builder.Configuration["GrpcProduct"]
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
 builder.Services.AddScoped<GrpcProductClient>();
-builder.Services.AddScoped<ExceptionMiddleware>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
+
+app.UseSharedMiddleware();
 
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
@@ -61,9 +51,10 @@ app.Lifetime.ApplicationStarted.Register(async () =>
     {
         await DbInitializer.SeedData(app);
     }
-    catch (Exception e)
+    catch (Exception ex)
     {
-        Console.WriteLine(e);
+        var logger = app.Services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the search database.");
     }
 });
 
@@ -71,8 +62,9 @@ app.MapControllers();
 
 app.Run();
 
-static IAsyncPolicy<HttpResponseMessage> GetPolicy()
+static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
     => HttpPolicyExtensions
         .HandleTransientHttpError()
         .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
         .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(3));
+

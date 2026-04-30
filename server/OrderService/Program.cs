@@ -1,85 +1,41 @@
 using MassTransit;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using OrderService.Consumers;
 using OrderService.Data;
-using Shared.Web.Extensions;
 using OrderService.Persistence;
-using OrderService.Repositories;
-using OrderService.Repositories.Interface;
 using OrderService.RequestHelpers;
 using OrderService.Saga;
 using OrderService.Services;
-using OrderService.Services.Order;
 using OrderService.SignalR;
-
-
-
-// using ProductService;
-using SharedWeb.Middleware;
 using ProductService.Grpc;
+using Shared.Web.Extensions;
+using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-
 builder.Services.AddSharedControllers();
-builder.Services.AddDbContext<OrderSvcDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key configuration is missing")))
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Request.Cookies.TryGetValue("access_token", out var accessToken);
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    context.Token = accessToken;
-                }
-                return Task.CompletedTask;
-            }
-        };
-    });
+builder.Services.AddDbContext<OrderSvcDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(GetListOrdersInRangeDateQuery).Assembly);
-});
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
-// Configure MassTransit with RabbitMQ
 builder.Services.AddMassTransit(x =>
 {
-    // Add Entity Framework Outbox FIRST for reliable event delivery
     x.AddEntityFrameworkOutbox<OrderSvcDbContext>(o =>
     {
-        o.QueryDelay = TimeSpan.FromSeconds(10); // Polling interval for outbox messages
+        o.QueryDelay = TimeSpan.FromSeconds(10);
         o.UsePostgres();
-        o.UseBusOutbox(); // Use outbox within EF transaction
+        o.UseBusOutbox();
     });
 
-    // Register Saga State Machine
     x.AddSagaStateMachine<OrderSagaStateMachine, OrderSagaState>()
         .EntityFrameworkRepository(r =>
         {
@@ -87,13 +43,11 @@ builder.Services.AddMassTransit(x =>
             r.UsePostgres();
         });
 
-    // Register consumers for Saga commands
-    x.AddConsumer<OrderService.Consumers.ConfirmOrderConsumer>();
-    x.AddConsumer<OrderService.Consumers.CancelOrderConsumer>();
-    
-    // Set endpoint naming to match other services
+    x.AddConsumer<ConfirmOrderConsumer>();
+    x.AddConsumer<CancelOrderConsumer>();
+
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false));
-    
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
@@ -101,39 +55,42 @@ builder.Services.AddMassTransit(x =>
             h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
             h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
         });
-
-        // ConfigureEndpoints handles both saga and consumers with consistent naming
         cfg.ConfigureEndpoints(context);
     });
 });
+
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
-{
-    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
-});
+    o.Address = new Uri(builder.Configuration["GrpcProduct"]
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
-builder.Services.AddScoped<ExceptionMiddleware>();
 builder.Services.AddScoped<GrpcProductClient>();
-builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
-// builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-
-builder.Services.AddEndpointsApiExplorer();
-
+builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
 builder.Services.AddSignalR();
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
 
+app.UseSharedMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<OrderHub>("/hubs/order");
 
-app.MapHub<OrderHub>("/hubs/order"); //map hub cho client kết nối
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<OrderSvcDbContext>();
+    await context.Database.MigrateAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
+}
 
 app.Run();
 

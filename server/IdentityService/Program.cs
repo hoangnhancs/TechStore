@@ -2,13 +2,10 @@ using IdentityService;
 using IdentityService.Data;
 using IdentityService.Entities;
 using IdentityService.Persistence;
-using IdentityService.Repositories;
-using IdentityService.Repositories.Interfaces;
 using IdentityService.RequestHelpers;
 using IdentityService.Services;
 using IdentityService.Services.Interfaces;
 using IdentityService.Services.OtherServices;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Shared.Web.Extensions;
@@ -19,28 +16,24 @@ using static IdentityService.Services.Address.CreateVirtualAddresses;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddSharedControllers();
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
-builder.Services.AddDbContext<IdentitySvcDbContext>(options =>
+builder.Services.AddSharedControllers();
+
+builder.Services.AddDbContext<IdentitySvcDbContext>(opt =>
 {
-    var connStr = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-    options.UseNpgsql(connStr);
+    var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+    opt.UseNpgsql(connStr);
 });
 
-builder.Services.AddMediatR(cfg => 
+builder.Services.AddMediatR(cfg =>
 {
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
-    // Hoặc assembly chứa các Handler
     cfg.RegisterServicesFromAssembly(typeof(CreateVirtualAddressesCommand).Assembly);
 });
 
 builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 builder.Services.AddGrpc();
-builder.Services.AddScoped<ExceptionMiddleware>();
 
 builder.Services.AddIdentity<User, IdentityRole>(opt =>
 {
@@ -51,86 +44,42 @@ builder.Services.AddIdentity<User, IdentityRole>(opt =>
     .AddEntityFrameworkStores<IdentitySvcDbContext>()
     .AddDefaultTokenProviders();
 
-// Add JWT Bearer authentication only
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key configuration is missing")))
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Request.Cookies.TryGetValue("access_token", out var accessToken);
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    context.Token = accessToken;
-                }
-                return Task.CompletedTask;
-            }
-        };
-    });
-
+// Override Identity's default cookie auth with JWT from cookie
+builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 builder.Services.AddAuthorization();
 
-// Helpers
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddScoped<IHttpContextAccessorHelper, HttpContextAccessorHelper>();
-
-// Security/Token
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<ITokenServices, TokenServices>();
-
-builder.Services.AddScoped<IIdentityUnitOfWork, IdentityUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
-// builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-// builder.Services.AddScoped<IAddressRepository, AddressRepository>();
-
+builder.Services.AddScoped<IIdentityUnitOfWork, IdentityUnitOfWork>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
 
+app.UseSharedMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 
-using var scope = app.Services.CreateScope();
-var services = scope.ServiceProvider;
+app.MapControllers();
+app.MapGrpcService<GrpcIdentityService>();
 
 try
 {
-    var context = services.GetRequiredService<IdentitySvcDbContext>();
-    var userManager = services.GetRequiredService<UserManager<User>>();
-    var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-    
+    using var scope = app.Services.CreateScope();
+    var context     = scope.ServiceProvider.GetRequiredService<IdentitySvcDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     await context.Database.MigrateAsync();
     await DbInitializer.SeedData(userManager, roleManager);
 }
 catch (Exception ex)
 {
-    
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    logger.LogError(ex, "An error occurred creating the DB");
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating or seeding the database.");
 }
 
-app.MapControllers();
-
-app.MapGrpcService<GrpcIdentityService>();
-
 app.Run();
+

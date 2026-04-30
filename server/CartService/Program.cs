@@ -1,84 +1,54 @@
 using CartService.Data;
 using CartService.Persistence;
-using Shared.Web.Extensions;
 using CartService.RequestHelpers;
-using CartService.Services.Basket;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using CartService.Services;
 using Microsoft.EntityFrameworkCore;
-using SharedWeb.Middleware;
 using ProductService.Grpc;
+using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-
+builder.Services.AddOpenApi();
 builder.Services.AddSharedControllers();
-builder.Services.AddDbContext<CartSvcDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key configuration is missing")))
-        };
-        options.Events = new JwtBearerEvents
-        {
-            OnMessageReceived = context =>
-            {
-                context.Request.Cookies.TryGetValue("access_token", out var accessToken);
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    context.Token = accessToken;
-                }
-                return Task.CompletedTask;
-            }
-        };
-    });
+builder.Services.AddDbContext<CartSvcDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 
 builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(GetBasketQuery).Assembly);
-});
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
-{
-    o.Address = new Uri(builder.Configuration["GrpcProduct"] ?? throw new InvalidOperationException("GrpcProduct address is not configured"));
-});
-builder.Services.AddScoped<ExceptionMiddleware>();
+    o.Address = new Uri(builder.Configuration["GrpcProduct"]
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
-builder.Services.AddScoped<CartService.Services.GrpcProductClient>();
-builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>(); //chỉ đăng ký UnitOfWork, Repository sẽ được khởi tạo trong UnitOfWork
-// builder.Services.AddScoped<IBasketRepository, BasketRepository>();
-
+builder.Services.AddScoped<GrpcProductClient>();
+builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>();
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
 
+app.UseSharedMiddleware();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<CartSvcDbContext>();
+    await context.Database.MigrateAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
+}
 
 app.Run();
