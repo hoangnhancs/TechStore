@@ -36,11 +36,13 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
-        {
-            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
-            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
-        });
+        // cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        // {
+        //     h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+        //     h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        // });
+
+        cfg.Host(new Uri(builder.Configuration["RabbitMq:ConnectionString"] ?? throw new InvalidOperationException("'RabbitMq:ConnectionString' is not configured.")));
         cfg.ConfigureEndpoints(context);
     });
 });
