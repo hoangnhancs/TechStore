@@ -4,6 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Contract;
 using MassTransit;
+using Microsoft.Extensions.Options;
+using OrderService.SettingConfig;
+using static OrderService.Entities.Order;
 
 namespace OrderService.Saga
 {
@@ -19,7 +22,7 @@ namespace OrderService.Saga
     /// - Completed: Order confirmed, stock committed
     /// - Cancelled: Order cancelled due to stock/payment failure or timeout
     ///
-    /// Payment Retry: When PaymentFailed, saga stays in WaitingForPayment (up to MaxRetries)
+    /// Payment Retry: When PaymentFailed, saga stays in WaitingForPayment 
     ///   and publishes OrderPaymentFailed so FE can let user retry or change method.
     /// Auto-cancel: A scheduled message (OrderPaymentExpired) is sent after PaymentWindowMinutes.
     ///   It fires if user never pays. Re-scheduled on each retry.
@@ -28,8 +31,17 @@ namespace OrderService.Saga
     /// </summary>
     public class OrderSagaStateMachine : MassTransitStateMachine<OrderSagaState>
     {
-        private const int MaxPaymentRetries = 3;
-        private const int PaymentWindowMinutes = 1;
+        private readonly PaymentOptions _options;
+        private readonly ILogger<OrderSagaStateMachine> _logger;
+
+        public OrderSagaStateMachine(
+            ILogger<OrderSagaStateMachine> logger,
+            IOptions<PaymentOptions> options)
+        {
+            _logger = logger;
+            _options = options.Value;
+            ConfigureSaga();
+        }
 
         // States
         public State? WaitingForStockReservation { get; set; }
@@ -51,13 +63,6 @@ namespace OrderService.Saga
         // Scheduled events
         public Schedule<OrderSagaState, OrderPaymentExpired>? PaymentExpirySchedule { get; set; }
 
-        public ILogger<OrderSagaStateMachine> Logger { get; }
-
-        public OrderSagaStateMachine(ILogger<OrderSagaStateMachine> logger)
-        {
-            Logger = logger;
-            ConfigureSaga();
-        }
 
         private void ConfigureSaga()
         {
@@ -92,7 +97,7 @@ namespace OrderService.Saga
             // Schedule: auto-cancel if payment window expires
             Schedule(() => PaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
             {
-                s.Delay = TimeSpan.FromMinutes(PaymentWindowMinutes);
+                s.Delay = TimeSpan.FromMinutes(_options.PaymentWindowMinutes);
                 s.Received = r => r.CorrelateBy(
                     (state, ctx) => state.OrderId == ctx.Message.OrderId);
             });
@@ -110,7 +115,6 @@ namespace OrderService.Saga
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                         ctx.Saga.Currency = ctx.Message.Currency;
                         ctx.Saga.PaymentMethod = ctx.Message.PaymentMethod;
-                        ctx.Saga.PaymentRetryCount = 0;
                     })
                     .PublishAsync(ctx => ctx.Init<ReserveStock>(new
                     {
@@ -123,14 +127,15 @@ namespace OrderService.Saga
             // ── WaitingForStockReservation ────────────────────────────────────────
             During(WaitingForStockReservation,
                 When(StockReservedEvent)
-                    .Then(ctx =>
+                    .Then((Action<BehaviorContext<OrderSagaState, StockReserved>>)(ctx =>
                     {
-                        Logger.LogInformation("[SAGA] StockReserved for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        LoggerExtensions.LogInformation(this._logger, "[SAGA] StockReserved for OrderId: {OrderId}", (object)ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                    })
+                    }))
                     .IfElse(
-                        ctx => ctx.Saga.PaymentMethod == "CashOnDelivery",
-                        // COD: put order in WaitingForPayment — requires manual admin confirm, no expiry timer
+                        ctx => ctx.Saga.PaymentMethod == PaymentMethod.CashOnDelivery.ToString(),
+                        // COD: put order in WaitingForPayment — requires manual admin confirm, no expiry timer. 
+                        // Payment will be created only after admin confirms (to avoid ghost payments if user never confirms).
                         cod => cod
                             .PublishAsync(ctx => ctx.Init<SetOrderWaitingForPayment>(new
                             {
@@ -174,7 +179,7 @@ namespace OrderService.Saga
                 When(PaymentSucceededEvent)
                     .Then(ctx =>
                     {
-                        Logger.LogInformation("[SAGA] PaymentCompleted for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        _logger.LogInformation("[SAGA] PaymentCompleted for OrderId: {OrderId}", ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
                     .Unschedule(PaymentExpirySchedule)
@@ -189,30 +194,14 @@ namespace OrderService.Saga
                     .Then(ctx =>
                     {
                         ctx.Saga.FailureReason = ctx.Message.ErrorMessage;
-                        ctx.Saga.PaymentRetryCount++;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        Logger.LogWarning("[SAGA] PaymentFailed for OrderId: {OrderId}, attempt {Count}", ctx.Saga.OrderId, ctx.Saga.PaymentRetryCount);
                     })
-                    .IfElse(
-                        ctx => ctx.Saga.PaymentRetryCount >= MaxPaymentRetries,
-                        // Too many retries → cancel
-                        tooMany => tooMany
-                            .Unschedule(PaymentExpirySchedule)
-                            .PublishAsync(ctx => ctx.Init<CancelOrder>(new
-                            {
-                                OrderId = ctx.Saga.OrderId,
-                                Reason = $"Payment failed after {MaxPaymentRetries} attempts: {ctx.Saga.FailureReason}"
-                            }))
-                            .TransitionTo(Cancelled),
-                        // Still within retries → notify FE, stay in WaitingForPayment
-                        canRetry => canRetry
-                            .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
-                            {
-                                OrderId = ctx.Saga.OrderId,
-                                UserId = ctx.Saga.UserId,
-                                ErrorMessage = ctx.Saga.FailureReason,
-                                RetryCount = ctx.Saga.PaymentRetryCount
-                            }))
+                    .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        UserId = ctx.Saga.UserId,
+                        ErrorMessage = ctx.Saga.FailureReason,
+                    })
                         // Stays in WaitingForPayment — no TransitionTo
                     ),
 
@@ -223,7 +212,7 @@ namespace OrderService.Saga
                         ctx.Saga.PaymentMethod = ctx.Message.PaymentMethod;
                         ctx.Saga.Currency = ctx.Message.Currency;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        Logger.LogInformation("[SAGA] RetryPayment for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        _logger.LogInformation("[SAGA] RetryPayment for OrderId: {OrderId}", ctx.Saga.OrderId);
                     })
                     // Reset expiry window on retry
                     .Unschedule(PaymentExpirySchedule)
@@ -245,33 +234,43 @@ namespace OrderService.Saga
                     .Then(ctx =>
                     {
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        Logger.LogInformation("[SAGA] ConfirmCodOrder for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        _logger.LogInformation("[SAGA] ConfirmCodOrder for OrderId: {OrderId}", ctx.Saga.OrderId);
                     })
+                    .PublishAsync(ctx => ctx.Init<CreatePayment>(new
+                    {
+                        UserId = ctx.Saga.UserId,
+                        OrderId = ctx.Saga.OrderId,
+                        Amount = ctx.Saga.Total,
+                        Currency = ctx.Saga.Currency,
+                        PaymentMethod = ctx.Saga.PaymentMethod
+                    })) //tao payment truoc
                     .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
                     {
                         OrderId = ctx.Saga.OrderId
-                    }))
+                    })) //confirm order sau
                     .TransitionTo(Processing),
 
                 // Payment window expired → auto-cancel
                 When(PaymentExpirySchedule!.Received)
-                    .Then(ctx =>
-                    {
-                        ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
-                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        Logger.LogWarning("[SAGA] PaymentExpired for OrderId: {OrderId}", ctx.Saga.OrderId);
-                    })
-                    .PublishAsync(ctx => ctx.Init<CancelOrder>(new
-                    {
-                        OrderId = ctx.Saga.OrderId,
-                        Reason = ctx.Saga.FailureReason
-                    }))
-                    .PublishAsync(ctx => ctx.Init<ReleaseStock>(new
-                    {
-                        OrderId = ctx.Saga.OrderId,
-                        Items = ctx.Saga.Items
-                    }))
-                    .TransitionTo(Cancelled)
+                    .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
+                        .Then(ctx =>
+                        {
+                            ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
+                            ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                            _logger.LogWarning("[SAGA] PaymentExpired for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        })
+                        .PublishAsync(ctx => ctx.Init<CancelOrder>(new
+                        {
+                            OrderId = ctx.Saga.OrderId,
+                            Reason = ctx.Saga.FailureReason
+                        }))
+                        .PublishAsync(ctx => ctx.Init<ReleaseStock>(new
+                        {
+                            OrderId = ctx.Saga.OrderId,
+                            Items = ctx.Saga.Items
+                        }))
+                        .TransitionTo(Cancelled)
+                    )
             );
 
             // ── Processing ───────────────────────────────────────────────────────

@@ -58,11 +58,6 @@ namespace OrderService.Saga
         public string? FailureReason { get; set; }
 
         /// <summary>
-        /// Number of payment retries attempted
-        /// </summary>
-        public int PaymentRetryCount { get; set; } = 0;
-
-        /// <summary>
         /// Token used to cancel the scheduled payment expiry message
         /// </summary>
         public Guid? PaymentExpiryTokenId { get; set; }

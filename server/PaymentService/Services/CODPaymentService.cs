@@ -53,10 +53,10 @@ namespace PaymentService.Services
             //{
             //    context.SetRoutingKey("payment.created");
             //});
-            await _publishEndpoint.Publish(new PaymentCompleted
-            {
-                OrderId = createPaymentDto.OrderId
-            });
+            // await _publishEndpoint.Publish(new PaymentCompleted
+            // {
+            //     OrderId = createPaymentDto.OrderId
+            // });
             await _unitOfWork.CommitAsync();
             var paymentDto = _mapper.Map<PaymentDto>(payment);
             await _hubContext.Clients
