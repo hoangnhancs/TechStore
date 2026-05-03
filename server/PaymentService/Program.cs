@@ -44,11 +44,12 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
-        {
-            h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
-            h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
-        });
+        // cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        // {
+        //     h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+        //     h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        // });
+        cfg.Host(builder.Configuration["RabbitMq:ConnectionString"]);
         cfg.ConfigureEndpoints(context);
     });
 });
