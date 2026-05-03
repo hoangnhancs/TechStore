@@ -186,10 +186,10 @@ namespace OrderService.Saga
                         _logger.LogInformation("[SAGA] COD Order Confirmed for OrderId: {OrderId}", ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
-                    {
-                        OrderId = ctx.Saga.OrderId
-                    }))
+                    //.PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
+                    //{
+                    //    OrderId = ctx.Saga.OrderId
+                    //}))
                     .PublishAsync(ctx => ctx.Init<CreatePayment>(new
                     {
                         UserId = ctx.Saga.UserId,
@@ -198,7 +198,7 @@ namespace OrderService.Saga
                         Currency = ctx.Saga.Currency,
                         PaymentMethod = ctx.Saga.PaymentMethod
                     }))
-                    .TransitionTo(Processing)
+                    .TransitionTo(WaitingForPaymentCreated)
             );
 
             // ── WaitingForPaymentCreated ────────────────────────────────────────────────
@@ -214,9 +214,16 @@ namespace OrderService.Saga
                     .Then(ctx =>
                     {
                         _logger.LogWarning("[SAGA] PaymentFailed for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        ctx.Saga.FailureReason = ctx.Message.ErrorMessage;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    .TransitionTo(WaitingForPayment)
+                    .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        UserId = ctx.Saga.UserId,
+                        ErrorMessage = ctx.Saga.FailureReason,
+                    }))
+                    //.TransitionTo(WaitingForPayment)
             );
 
 
@@ -275,7 +282,8 @@ namespace OrderService.Saga
                         Amount = ctx.Saga.Total,
                         Currency = ctx.Saga.Currency,
                         PaymentMethod = ctx.Saga.PaymentMethod
-                    })),
+                    }))
+                    .TransitionTo(WaitingForPaymentCreated),
 
                 // Payment window expired → auto-cancel
                 When(PaymentExpirySchedule!.Received) //PaymentExpirySchedule!.Received chinh la Event<Scheduled<OrderPaymentExpired>>
