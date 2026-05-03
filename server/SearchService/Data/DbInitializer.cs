@@ -14,8 +14,8 @@ namespace SearchService.Data
         public static async Task SeedData(WebApplication app)
         {
             await DB.InitAsync("SearchDb", MongoClientSettings
-            .FromConnectionString(app.Configuration.GetConnectionString("MongoDbConnection")));
-
+                .FromConnectionString(app.Configuration.GetConnectionString("MongoDbConnection")));
+            // MongoDB already initialized in Program.cs, just create indexes and seed data
             await DB.Index<ProductItem>()
                 .Key(x => x.CategoryId, KeyType.Ascending)
                 .Key(x => x.BrandId, KeyType.Ascending)

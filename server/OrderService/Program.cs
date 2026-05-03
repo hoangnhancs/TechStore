@@ -47,7 +47,7 @@ builder.Services.AddMassTransit(x =>
 
     x.AddConsumer<ConfirmOrderConsumer>();
     x.AddConsumer<CancelOrderConsumer>();
-    x.AddConsumer<SetOrderWaitingForPaymentConsumer>();
+    x.AddConsumer<SetOrderWaitingForConfirmationConsumer>();
     x.AddConsumer<ConfirmCodOrderConsumer>();
     x.AddConsumer<RetryPaymentConsumer>();
 

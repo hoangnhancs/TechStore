@@ -216,11 +216,11 @@ namespace OrderService.Migrations
 
                     b.Property<string>("PmtMethod")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("PmtStatus")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<string>("RecipientName")
                         .IsRequired()
@@ -238,7 +238,7 @@ namespace OrderService.Migrations
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<long>("SubTotal")
                         .HasColumnType("bigint");
@@ -339,7 +339,7 @@ namespace OrderService.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("FromStatus")
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
@@ -353,7 +353,7 @@ namespace OrderService.Migrations
 
                     b.Property<string>("ToStatus")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(30)");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -460,9 +460,6 @@ namespace OrderService.Migrations
                     b.Property<string>("PaymentMethod")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<int>("PaymentRetryCount")
-                        .HasColumnType("integer");
 
                     b.Property<long>("Total")
                         .HasColumnType("bigint");

@@ -46,6 +46,7 @@ namespace OrderService.Saga
         // States
         public State? WaitingForStockReservation { get; set; }
         public State? WaitingForPayment { get; set; }
+        public State? WaitingForConfirmation { get; set; }
         public State? Processing { get; set; }
         public State? Completed { get; set; }
         public State? Cancelled { get; set; }
@@ -57,7 +58,7 @@ namespace OrderService.Saga
         public Event<OrderConfirmed>? OrderConfirmedEvent { get; set; }
         public Event<PaymentCompleted>? PaymentSucceededEvent { get; set; }
         public Event<PaymentFailed>? PaymentFailedEvent { get; set; }
-        public Event<RetryPayment>? RetryPaymentEvent { get; set; }
+        public Event<RetryPayment>? RetryPaymentEvent { get; set; } //sử dụng khi payment 1 method nào đó thất bại, muốn đổi method khác
         public Event<ConfirmCodOrder>? ConfirmCodOrderEvent { get; set; }
 
         // Scheduled events
@@ -127,21 +128,21 @@ namespace OrderService.Saga
             // ── WaitingForStockReservation ────────────────────────────────────────
             During(WaitingForStockReservation,
                 When(StockReservedEvent)
-                    .Then((Action<BehaviorContext<OrderSagaState, StockReserved>>)(ctx =>
+                    .Then(ctx =>
                     {
                         LoggerExtensions.LogInformation(this._logger, "[SAGA] StockReserved for OrderId: {OrderId}", (object)ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                    }))
+                    })
                     .IfElse(
                         ctx => ctx.Saga.PaymentMethod == PaymentMethod.CashOnDelivery.ToString(),
-                        // COD: put order in WaitingForPayment — requires manual admin confirm, no expiry timer. 
+                        // COD: put order in WaitingForConfirmation — requires manual admin confirm, no expiry timer. 
                         // Payment will be created only after admin confirms (to avoid ghost payments if user never confirms).
                         cod => cod
-                            .PublishAsync(ctx => ctx.Init<SetOrderWaitingForPayment>(new
+                            .PublishAsync(ctx => ctx.Init<SetOrderWaitingForConfirmation>(new
                             {
                                 OrderId = ctx.Saga.OrderId
                             }))
-                            .TransitionTo(WaitingForPayment),
+                            .TransitionTo(WaitingForConfirmation),
                         // Online payment: create payment intent + start expiry countdown
                         online => online
                             .PublishAsync(ctx => ctx.Init<CreatePayment>(new
@@ -171,6 +172,29 @@ namespace OrderService.Saga
                         Reason = ctx.Saga.FailureReason
                     }))
                     .TransitionTo(Cancelled)
+            );
+
+            // ── WaitingForConfirmation (for COD) ────────────────────────────────────────
+            During(WaitingForConfirmation,
+                When(ConfirmCodOrderEvent)
+                    .Then(ctx =>
+                    {
+                        _logger.LogInformation("[SAGA] COD Order Confirmed for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                    })
+                    .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
+                    {
+                        OrderId = ctx.Saga.OrderId
+                    }))
+                    .PublishAsync(ctx => ctx.Init<CreatePayment>(new
+                    {
+                        UserId = ctx.Saga.UserId,
+                        OrderId = ctx.Saga.OrderId,
+                        Amount = ctx.Saga.Total,
+                        Currency = ctx.Saga.Currency,
+                        PaymentMethod = ctx.Saga.PaymentMethod
+                    }))
+                    .TransitionTo(Processing)
             );
 
             // ── WaitingForPayment ────────────────────────────────────────────────
@@ -229,29 +253,9 @@ namespace OrderService.Saga
                         Currency = ctx.Saga.Currency,
                         PaymentMethod = ctx.Saga.PaymentMethod
                     })),
-                // COD manual confirm by admin
-                When(ConfirmCodOrderEvent)
-                    .Then(ctx =>
-                    {
-                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        _logger.LogInformation("[SAGA] ConfirmCodOrder for OrderId: {OrderId}", ctx.Saga.OrderId);
-                    })
-                    .PublishAsync(ctx => ctx.Init<CreatePayment>(new
-                    {
-                        UserId = ctx.Saga.UserId,
-                        OrderId = ctx.Saga.OrderId,
-                        Amount = ctx.Saga.Total,
-                        Currency = ctx.Saga.Currency,
-                        PaymentMethod = ctx.Saga.PaymentMethod
-                    })) //tao payment truoc
-                    .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
-                    {
-                        OrderId = ctx.Saga.OrderId
-                    })) //confirm order sau
-                    .TransitionTo(Processing),
 
                 // Payment window expired → auto-cancel
-                When(PaymentExpirySchedule!.Received)
+                When(PaymentExpirySchedule!.Received) //PaymentExpirySchedule!.Received chinh la Event<Scheduled<OrderPaymentExpired>>
                     .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
                         .Then(ctx =>
                         {

@@ -1,5 +1,6 @@
 using MassTransit;
 using MediatR;
+using OrderService.Persistence;
 using Shared.Core.EF.Application;
 
 namespace OrderService.Services.Order;
@@ -15,11 +16,13 @@ public class ConfirmCodOrderHandler : IRequestHandler<ConfirmCodOrderCommand, Ap
 {
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly ILogger<ConfirmCodOrderHandler> _logger;
+    private readonly IOrderUnitOfWork _unitOfWork;
 
-    public ConfirmCodOrderHandler(IPublishEndpoint publishEndpoint, ILogger<ConfirmCodOrderHandler> logger)
+    public ConfirmCodOrderHandler(IPublishEndpoint publishEndpoint, ILogger<ConfirmCodOrderHandler> logger, IOrderUnitOfWork unitOfWork)
     {
         _publishEndpoint = publishEndpoint;
         _logger = logger;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AppResult<Unit>> Handle(ConfirmCodOrderCommand request, CancellationToken cancellationToken)
@@ -32,6 +35,8 @@ public class ConfirmCodOrderHandler : IRequestHandler<ConfirmCodOrderCommand, Ap
         {
             OrderId = request.OrderId
         }, cancellationToken);
+
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         _logger.LogInformation("ConfirmCodOrder published for OrderId: {OrderId} by admin", request.OrderId);
         return AppResult<Unit>.Success(Unit.Value);

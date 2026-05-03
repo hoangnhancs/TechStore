@@ -9,18 +9,18 @@ namespace OrderService.Consumers;
 /// Sets order status to WaitingForPayment — triggered for COD orders after stock is reserved.
 /// The order stays here until admin/user confirms via ConfirmCodOrder.
 /// </summary>
-public class SetOrderWaitingForPaymentConsumer : IConsumer<SetOrderWaitingForPayment>
+public class SetOrderWaitingForConfirmationConsumer : IConsumer<SetOrderWaitingForConfirmation>
 {
     private readonly OrderSvcDbContext _context;
-    private readonly ILogger<SetOrderWaitingForPaymentConsumer> _logger;
+    private readonly ILogger<SetOrderWaitingForConfirmationConsumer> _logger;
 
-    public SetOrderWaitingForPaymentConsumer(OrderSvcDbContext context, ILogger<SetOrderWaitingForPaymentConsumer> logger)
+    public SetOrderWaitingForConfirmationConsumer(OrderSvcDbContext context, ILogger<SetOrderWaitingForConfirmationConsumer> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    public async Task Consume(ConsumeContext<SetOrderWaitingForPayment> context)
+    public async Task Consume(ConsumeContext<SetOrderWaitingForConfirmation> context)
     {
         var message = context.Message;
         _logger.LogInformation("SetOrderWaitingForPayment for OrderId: {OrderId}", message.OrderId);
@@ -32,7 +32,7 @@ public class SetOrderWaitingForPaymentConsumer : IConsumer<SetOrderWaitingForPay
             return;
         }
 
-        order.WaitForPayment();
+        order.WaitForConfirmation();
         await _context.SaveChangesAsync();
 
         _logger.LogInformation("Order {OrderId} is now WaitingForPayment", message.OrderId);
