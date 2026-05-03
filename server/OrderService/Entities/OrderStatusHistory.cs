@@ -11,9 +11,9 @@ namespace OrderService.Entities
     public class OrderStatusHistory : BaseEntity<int>
     {
         public required string OrderId { get; set; }
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "varchar(30)")]
         public OrderStatus? FromStatus { get; set; }
-        [Column(TypeName = "varchar(20)")]
+        [Column(TypeName = "varchar(30)")]
         public OrderStatus ToStatus { get; set; }
         public string? Note { get; set; }
         public string ChangedBy { get; set; } = string.Empty;

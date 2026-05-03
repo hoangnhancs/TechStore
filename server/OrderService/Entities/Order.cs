@@ -14,7 +14,7 @@ public class Order : BaseEntity<string>
     public required string RecipientPhone { get; set; }
     public required string OrderNo { get; set; }
     public List<OrderItem> Items { get; set; } = [];
-    [Column(TypeName = "varchar(20)")]
+    [Column(TypeName = "varchar(30)")]
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
 
     public string? ShippingAddress { get; set; }
@@ -25,9 +25,9 @@ public class Order : BaseEntity<string>
     public long Discount { get; set; } = 0;
     public long Total { get; set; }
     public Shipment? Shipment { get; set; }
-    [Column(TypeName = "varchar(20)")]
+    [Column(TypeName = "varchar(30)")]
     public required PaymentMethod PmtMethod { get; set; }
-    [Column(TypeName = "varchar(20)")]
+    [Column(TypeName = "varchar(30)")]
     public PaymentStatus PmtStatus { get; private set; } = PaymentStatus.Pending;
     public List<OrderStatusHistory> StatusHistories { get; set; } = [];
 
@@ -107,12 +107,12 @@ public class Order : BaseEntity<string>
     //     CalculateTotals();
     //     UpdatedAt = DateTime.UtcNow;
     // }
-    public void WaitForPayment()
+    public void WaitForConfirmation()
     {
         if (Status != OrderStatus.Pending)
-            throw new InvalidOperationException($"Cannot set WaitingForPayment from status {Status}");
+            throw new InvalidOperationException($"Cannot set WaitingForConfirmation from status {Status}");
 
-        UpdateOrderStatus(OrderStatus.WaitingForPayment);
+        UpdateOrderStatus(OrderStatus.WaitingForConfirmation);
     }
 
     public void RetryPayment()
@@ -132,7 +132,7 @@ public class Order : BaseEntity<string>
 
     public void Process()
     {
-        if (Status != OrderStatus.Pending && Status != OrderStatus.WaitingForPayment)
+        if (Status != OrderStatus.Pending && Status != OrderStatus.WaitingForPayment && Status != OrderStatus.WaitingForConfirmation)
             throw new InvalidOperationException($"Cannot process order with status {Status}");
 
         UpdateOrderStatus(OrderStatus.Processing);
@@ -141,7 +141,7 @@ public class Order : BaseEntity<string>
 
     public void ManualProcess()
     {
-        if (Status != OrderStatus.WaitingForPayment)
+        if (Status != OrderStatus.WaitingForConfirmation)
             throw new InvalidOperationException($"Cannot manually process order with status {Status}");
         if (PmtMethod != PaymentMethod.CashOnDelivery)
             throw new InvalidOperationException("Only CashOnDelivery orders can be manually processed");
@@ -286,6 +286,7 @@ public class Order : BaseEntity<string>
     {
         // Created,
         Pending,
+        WaitingForConfirmation, // for COD: waiting for admin/user confirmation to process
         WaitingForPayment,
         Processing,
         HandedOverToCarrier,
