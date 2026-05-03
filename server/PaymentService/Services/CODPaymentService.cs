@@ -33,37 +33,39 @@ namespace PaymentService.Services
         }
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto createPaymentDto)
         {
-            var payment = new Entities.Payment
+            try
             {
-                UserId = createPaymentDto.UserId,
-                OrderId = createPaymentDto.OrderId,
-                Amount = createPaymentDto.Amount,
-                PaymentMethod = Enum.Parse<PaymentMethodType>(createPaymentDto.PaymentMethod.ToString()),
-                Status = PaymentStatus.Pending
-            };
-            await _unitOfWork.PaymentRepository.AddAsync(payment);
-            //await _publishEndpoint.Publish(new
-            //{
-            //    UserId = payment.UserId,
-            //    OrderId = payment.OrderId,
-            //    Amount = payment.Amount,
-            //    PaymentMethod = payment.PaymentMethod.ToString(),
-            //    Status = payment.Status.ToString()
-            //}, context =>
-            //{
-            //    context.SetRoutingKey("payment.created");
-            //});
-            // await _publishEndpoint.Publish(new PaymentCompleted
-            // {
-            //     OrderId = createPaymentDto.OrderId
-            // });
-            await _unitOfWork.CommitAsync();
-            var paymentDto = _mapper.Map<PaymentDto>(payment);
-            await _hubContext.Clients
-                    .Group(paymentDto.OrderId)
-                    .SendAsync("ReceivePayment", paymentDto);
+                var payment = new Entities.Payment
+                {
+                    UserId = createPaymentDto.UserId,
+                    OrderId = createPaymentDto.OrderId,
+                    Amount = createPaymentDto.Amount,
+                    PaymentMethod = Enum.Parse<PaymentMethodType>(createPaymentDto.PaymentMethod.ToString()),
+                    Status = PaymentStatus.Pending
+                };
+                await _unitOfWork.PaymentRepository.AddAsync(payment);
+                await _publishEndpoint.Publish(new PaymentCreated
+                {
+                    OrderId = payment.OrderId,
+                });
 
-            return paymentDto;
+                await _unitOfWork.CommitAsync();
+                var paymentDto = _mapper.Map<PaymentDto>(payment);
+                await _hubContext.Clients
+                        .Group(paymentDto.OrderId)
+                        .SendAsync("ReceivePayment", paymentDto);
+
+                return paymentDto;
+            }
+            catch (Exception ex)
+            {
+                await _publishEndpoint.Publish(new PaymentFailed
+                {
+                    OrderId = createPaymentDto.OrderId,
+                    ErrorMessage = ex.Message
+                });
+                throw;
+            }
         }
     }
 }

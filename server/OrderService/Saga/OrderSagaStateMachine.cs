@@ -45,6 +45,7 @@ namespace OrderService.Saga
 
         // States
         public State? WaitingForStockReservation { get; set; }
+        public State? WaitingForPaymentCreated { get; set; } 
         public State? WaitingForPayment { get; set; }
         public State? WaitingForConfirmation { get; set; }
         public State? Processing { get; set; }
@@ -56,6 +57,7 @@ namespace OrderService.Saga
         public Event<StockReserved>? StockReservedEvent { get; set; }
         public Event<StockReservationFailed>? StockReservationFailedEvent { get; set; }
         public Event<OrderConfirmed>? OrderConfirmedEvent { get; set; }
+        public Event<PaymentCreated>? PaymentCreatedEvent { get; set; }
         public Event<PaymentCompleted>? PaymentSucceededEvent { get; set; }
         public Event<PaymentFailed>? PaymentFailedEvent { get; set; }
         public Event<RetryPayment>? RetryPaymentEvent { get; set; } //sử dụng khi payment 1 method nào đó thất bại, muốn đổi method khác
@@ -82,6 +84,8 @@ namespace OrderService.Saga
 
             Event(() => OrderConfirmedEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
+
+
 
             Event(() => PaymentSucceededEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
@@ -158,7 +162,7 @@ namespace OrderService.Saga
                                 OrderId = ctx.Saga.OrderId,
                                 UserId = ctx.Saga.UserId
                             }))
-                            .TransitionTo(WaitingForPayment)
+                            .TransitionTo(WaitingForPaymentCreated)
                     ),
                 When(StockReservationFailedEvent)
                     .Then(ctx =>
@@ -196,6 +200,25 @@ namespace OrderService.Saga
                     }))
                     .TransitionTo(Processing)
             );
+
+            // ── WaitingForPaymentCreated ────────────────────────────────────────────────
+            During(WaitingForPaymentCreated,
+                When(PaymentCreatedEvent)
+                    .Then(ctx =>
+                    {
+                        _logger.LogInformation("[SAGA] PaymentCreated for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                    })
+                    .TransitionTo(WaitingForPayment),
+                When(PaymentFailedEvent)
+                    .Then(ctx =>
+                    {
+                        _logger.LogWarning("[SAGA] PaymentFailed for OrderId: {OrderId}", ctx.Saga.OrderId);
+                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                    })
+                    .TransitionTo(WaitingForPayment)
+            );
+
 
             // ── WaitingForPayment ────────────────────────────────────────────────
             During(WaitingForPayment,

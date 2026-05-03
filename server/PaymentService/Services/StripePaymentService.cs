@@ -55,7 +55,7 @@ namespace PaymentService.Services
 
                     _logger.LogInformation("Payment succeeded for OrderId: {OrderId}", orderId);
 
-                    await _publishEndpoint.Publish(new PaymentCompleted
+                    await _publishEndpoint.Publish(new PaymentCreated
                     {
                         OrderId = orderId
                     }, cancellationToken);
@@ -137,22 +137,39 @@ namespace PaymentService.Services
 
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto createPaymentDto)
         {
-            var intent = await CreatePaymentIntentAsync(createPaymentDto.UserId, createPaymentDto.OrderId, createPaymentDto.Amount);
+            try
+            {
+                var intent = await CreatePaymentIntentAsync(createPaymentDto.UserId, createPaymentDto.OrderId, createPaymentDto.Amount);
 
-            var payment = Entities.Payment.CreatePayment(
-                userId: createPaymentDto.UserId,
-                orderId: createPaymentDto.OrderId,
-                amount: createPaymentDto.Amount,
-                paymentMethod: Enum.Parse<PaymentMethodType>(createPaymentDto.PaymentMethod)
-            );
+                var payment = Entities.Payment.CreatePayment(
+                    userId: createPaymentDto.UserId,
+                    orderId: createPaymentDto.OrderId,
+                    amount: createPaymentDto.Amount,
+                    paymentMethod: Enum.Parse<PaymentMethodType>(createPaymentDto.PaymentMethod)
+                );
 
-            payment.PaymentIntentId = intent.Id;
-            payment.ClientSecret = intent.ClientSecret;
+                payment.PaymentIntentId = intent.Id;
+                payment.ClientSecret = intent.ClientSecret;
 
-            await _unitOfWork.PaymentRepository.AddAsync(payment);
-            await _unitOfWork.CommitAsync();
+                await _unitOfWork.PaymentRepository.AddAsync(payment);
+                await _publishEndpoint.Publish(new PaymentCreated
+                {
+                    OrderId = createPaymentDto.OrderId
+                });
+                await _unitOfWork.CommitAsync();
 
-            return _mapper.Map<PaymentDto>(payment);
+                return _mapper.Map<PaymentDto>(payment);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while creating payment for OrderId: {OrderId}", createPaymentDto.OrderId);
+                await _publishEndpoint.Publish(new PaymentFailed
+                {
+                    OrderId = createPaymentDto.OrderId,
+                    ErrorMessage = ex.Message
+                });
+                throw;
+            }
         }
     }
 }
