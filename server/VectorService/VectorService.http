@@ -1,0 +1,47 @@
+### VectorService - Pure ML API
+### Stateless embedding generation service
+@baseUrl = http://localhost:8000
+
+### Health Check
+GET {{baseUrl}}/
+Accept: application/json
+
+### Generate Embedding from Text
+POST {{baseUrl}}/embed
+Content-Type: application/json
+
+{
+  "text": "Smart Tivi Samsung 4K 55 inch"
+}
+
+### Generate Product Embedding
+POST {{baseUrl}}/products/embed
+Content-Type: application/json
+
+{
+  "id": "test-product-001",
+  "name": "Smart Tivi LG LED 4K 43 inch",
+  "description": "Bo xu ly AI, man hinh 4K, HDR10+",
+  "old_price": 11990000,
+  "discount_percentage": 31,
+  "category_name": "Tivi",
+  "brand_name": "LG",
+  "tags": [
+    {"name": "Kich co", "value": "43 inch"},
+    {"name": "Do phan giai", "value": "4K"}
+  ]
+}
+
+### Batch Embed Multiple Texts
+POST {{baseUrl}}/batch/embed
+Content-Type: application/json
+
+[
+  "Smart Tivi Samsung 4K",
+  "Laptop Gaming ASUS ROG",
+  "iPhone 15 Pro Max"
+]
+
+### Health Check (detailed)
+GET {{baseUrl}}/health
+Accept: application/json

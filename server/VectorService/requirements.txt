@@ -1,0 +1,17 @@
+# Minimal dependencies for pure ML VectorService
+# No database, no RabbitMQ - just FastAPI + ML model
+
+# Web Framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+
+# ML Model
+sentence-transformers>=5.0.0
+torch>=2.9.0
+
+# Data Validation
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Note: Removed psycopg, psycopg-pool, aio-pika
+# This service is now stateless - no DB or message queue
