@@ -41,6 +41,8 @@ namespace ProductService.Services.Product
                 q => q.Include(p => p.DetailImages)
                     .Include(p => p.Attributes)
                     .Include(p => p.ProductFilterTagValues)
+                        .ThenInclude(pftv => pftv.FilterTagValue)
+                            .ThenInclude(ftv => ftv!.FilterTag)
             );
             if (existingProduct == null) return AppResult<ProductDto>.Failure("Product not found", 404);
 

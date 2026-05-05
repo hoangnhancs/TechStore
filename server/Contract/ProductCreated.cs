@@ -7,7 +7,7 @@ namespace Contract
 {
     public class ProductCreated
     {
-                public string Id { get; set; } = string.Empty;
+        public string Id { get; set; } = string.Empty;
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
         public required long OldPrice { get; set; }
@@ -48,6 +48,9 @@ namespace Contract
         public int FilterTagId { get; set; }
         public required int FilterTagValueId { get; set; }
         public string ProductId { get; set; } = string.Empty;
+        // Added for VectorService embedding
+        public string? FilterTagName { get; set; }
+        public string? Value { get; set; }
     }
 
     public class ProductAttr

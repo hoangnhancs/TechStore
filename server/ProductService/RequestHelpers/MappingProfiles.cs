@@ -99,7 +99,15 @@ namespace ProductService.RequestHelpers
             CreateMap<Product, ProductCreated>();
             CreateMap<Product, ProductUpdated>();
             CreateMap<ProductAttribute, ProductAttr>(); //product to contract
-            CreateMap<ProductFilterTagValue, ProductFTV>(); //product to contract
+            CreateMap<ProductFilterTagValue, ProductFTV>()
+                .ForMember(dest => dest.FilterTagName, 
+                    opt => opt.MapFrom(src => src.FilterTagValue != null && src.FilterTagValue.FilterTag != null 
+                        ? src.FilterTagValue.FilterTag.Name 
+                        : null))
+                .ForMember(dest => dest.Value, 
+                    opt => opt.MapFrom(src => src.FilterTagValue != null 
+                        ? src.FilterTagValue.Value 
+                        : null)); //product to contract with filter tag details
 #endregion
 
 #region Brand and BrandDto

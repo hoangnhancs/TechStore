@@ -6,6 +6,7 @@ using AutoMapper;
 using Contract;
 using MassTransit;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using PhotoService;
 using PhotoService.DTOs;
 using ProductService.DTOs;
@@ -77,14 +78,27 @@ namespace ProductService.Services.Product
                 product.Attributes[i].DisplayOrder = i;
             }
 
-            var productCreated = _mapper.Map<ProductCreated>(product);
-
             await _unitOfWork.ProductRepository.AddAsync(product, cancellationToken);
-            await _publishEndpoint.Publish(productCreated, cancellationToken);
             
             var result = await _unitOfWork.CommitAsync();
             if (result)
             {
+                // Reload product with navigation properties for event publishing
+                var savedProduct = await _unitOfWork.ProductRepository.GetByIdAsync(
+                    newProductId,
+                    q => q.Include(p => p.DetailImages)
+                        .Include(p => p.Attributes)
+                        .Include(p => p.ProductFilterTagValues)
+                            .ThenInclude(pftv => pftv.FilterTagValue)
+                                .ThenInclude(ftv => ftv!.FilterTag)
+                );
+
+                if (savedProduct != null)
+                {
+                    var productCreated = _mapper.Map<ProductCreated>(savedProduct);
+                    await _publishEndpoint.Publish(productCreated, cancellationToken);
+                }
+
                 var productDtoResult = _mapper.Map<ProductDto>(product);
                 return AppResult<ProductDto>.Success(productDtoResult);
             }
