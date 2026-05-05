@@ -55,7 +55,7 @@ namespace PaymentService.Services
 
                     _logger.LogInformation("Payment succeeded for OrderId: {OrderId}", orderId);
 
-                    await _publishEndpoint.Publish(new PaymentCreated
+                    await _publishEndpoint.Publish(new PaymentCompleted
                     {
                         OrderId = orderId
                     }, cancellationToken);
