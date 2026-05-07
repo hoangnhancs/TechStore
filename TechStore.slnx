@@ -11,6 +11,7 @@
     <Project Path="server/PaymentService/PaymentService.csproj" />
     <Project Path="server/PhotoService/PhotoService.csproj" />
     <Project Path="server/ProductService/ProductService.csproj" />
+    <Project Path="server/RecommendationService/RecommendationService.csproj" />
     <Project Path="server/ReviewService/ReviewService.csproj" />
     <Project Path="server/SearchService/SearchService.csproj" />
   </Folder>

@@ -1,4 +1,3 @@
-using IdentityService;
 using IdentityService.Data;
 using IdentityService.Entities;
 using IdentityService.Persistence;
