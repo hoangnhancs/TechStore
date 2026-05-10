@@ -57,6 +57,7 @@ namespace OrderService.Saga
         public State? Processing { get; set; }
         public State? Completed { get; set; }
         public State? Cancelled { get; set; }
+        public State? WaitingForCodPaymentConfirmation { get; set; }
 
         // Events
         public Event<OrderCreated>? OrderCreated { get; set; }
@@ -170,11 +171,11 @@ namespace OrderService.Saga
                                 Currency = ctx.Saga.Currency,
                                 PaymentMethod = ctx.Saga.PaymentMethod
                             }))
-                            .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
-                            {
-                                OrderId = ctx.Saga.OrderId,
-                                UserId = ctx.Saga.UserId
-                            }))
+                            // .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            // {
+                            //     OrderId = ctx.Saga.OrderId,
+                            //     UserId = ctx.Saga.UserId
+                            // })) //ignore schedule for create payment row step, only start schedule when payment created successfully in WaitingForPaymentCreated state
                             .TransitionTo(WaitingForPaymentCreated)
                     ),
                 When(StockReservationFailedEvent)
@@ -222,7 +223,22 @@ namespace OrderService.Saga
                         _logger.LogInformation("[SAGA] PaymentCreated for OrderId: {OrderId}", ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    .TransitionTo(WaitingForPayment),
+                    .IfElse(
+                        ctx => ctx.Saga.PaymentMethod == PaymentMethod.CashOnDelivery.ToString(),
+                        cod => cod
+                            .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
+                            {
+                                OrderId = ctx.Saga.OrderId
+                            }))
+                            .TransitionTo(WaitingForCodPaymentConfirmation),
+                        online => online
+                            .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            {
+                                OrderId = ctx.Saga.OrderId,
+                                UserId = ctx.Saga.UserId
+                            }))
+                            .TransitionTo(WaitingForPayment)
+                    ),
                 When(PaymentFailedEvent)
                     .Then(ctx =>
                     {

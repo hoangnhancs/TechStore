@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+        
         {
             "name": ".NET Core Attach",
             "type": "coreclr",
@@ -17,8 +18,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/ProductService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-ProductService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "IdentityService",
@@ -28,8 +28,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/IdentityService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-IdentityService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "CartService",
@@ -39,8 +38,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/CartService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-CartService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "OrderService",
@@ -50,8 +48,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/OrderService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-OrderService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "PaymentService",
@@ -61,8 +58,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/PaymentService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-PaymentService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "ReviewService",
@@ -72,8 +68,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/ReviewService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-ReviewService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "CommentService",
@@ -83,8 +78,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/CommentService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-CommentService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "SearchService",
@@ -94,8 +88,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/SearchService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-SearchService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "NotificationService",
@@ -105,8 +98,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/NotificationService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-NotificationService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         },
         {
             "name": "GatewayService",
@@ -116,8 +108,7 @@
             "args": [],
             "cwd": "${workspaceFolder}/server/GatewayService",
             "stopAtEntry": false,
-            "env": { "ASPNETCORE_ENVIRONMENT": "Development" },
-            "preLaunchTask": "build-GatewayService"
+            "env": { "ASPNETCORE_ENVIRONMENT": "Development" }
         }
     ],
     "compounds": [

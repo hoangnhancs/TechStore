@@ -132,7 +132,7 @@ public class Order : BaseEntity<string>
 
     public void Process()
     {
-        if (Status != OrderStatus.Pending && Status != OrderStatus.WaitingForPayment && Status != OrderStatus.WaitingForConfirmation)
+        if (Status != OrderStatus.Pending && Status != OrderStatus.WaitingForPayment )
             throw new InvalidOperationException($"Cannot process order with status {Status}");
 
         UpdateOrderStatus(OrderStatus.Processing);

@@ -22,19 +22,22 @@ public class ConfirmCodOrderConsumer : IConsumer<ConfirmCodOrder>
 
     public async Task Consume(ConsumeContext<ConfirmCodOrder> context)
     {
-        var message = context.Message;
-        _logger.LogInformation("ConfirmCodOrder for OrderId: {OrderId}", message.OrderId);
+        //ignore consume change state to processing when publish ConfirmCodOrder, istatus will be changed after create payment rơ successfully, and publish ConfirmOrder, then change state to processing in ConfirmOrderConsumer
 
-        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == message.OrderId);
-        if (order == null)
-        {
-            _logger.LogWarning("Order not found: {OrderId}", message.OrderId);
-            return;
-        }
+        
+        // var message = context.Message;
+        // _logger.LogInformation("ConfirmCodOrder for OrderId: {OrderId}", message.OrderId);
 
-        order.ManualProcess();
-        await _context.SaveChangesAsync();
+        // var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == message.OrderId);
+        // if (order == null)
+        // {
+        //     _logger.LogWarning("Order not found: {OrderId}", message.OrderId);
+        //     return;
+        // }
 
-        _logger.LogInformation("COD Order {OrderId} manually confirmed and set to Processing", message.OrderId);
+        // order.ManualProcess();
+        // await _context.SaveChangesAsync();
+
+        // _logger.LogInformation("COD Order {OrderId} manually confirmed and set to Processing", message.OrderId);
     }
 }

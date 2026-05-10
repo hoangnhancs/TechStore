@@ -7,6 +7,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;
 using OrderService.Entities;
+using static OrderService.Entities.Order;
 
 namespace OrderService.Consumers
 {
@@ -43,9 +44,14 @@ namespace OrderService.Consumers
                 }
 
                 // Update order status to Processing
-                order.Process();
-
-                await _context.SaveChangesAsync();
+                if (order.PmtMethod == PaymentMethod.CashOnDelivery)
+                {
+                    order.ManualProcess(); // For COD, we can directly mark as Processing without waiting for payment confirmation
+                }
+                else
+                {
+                    order.Process();
+                }
 
                 await context.Publish(new OrderConfirmed
                 {
@@ -71,6 +77,8 @@ namespace OrderService.Consumers
                     Discount = order.Discount,
                     Total = order.Total
                 });
+
+                await _context.SaveChangesAsync();
 
                 _logger.LogInformation("Order confirmed and marked as Processing: {OrderId}", message.OrderId);
             }
