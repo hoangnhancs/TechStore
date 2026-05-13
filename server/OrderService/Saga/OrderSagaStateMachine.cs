@@ -13,26 +13,24 @@ namespace OrderService.Saga
     /// <summary>
     /// Saga orchestrator for order processing workflow
     /// Flow: Stock Reservation → Payment Creation → Payment Completion → Order Confirmation → Stock Commit
-    /// 
+    ///
     /// States:
     /// - WaitingForStockReservation: Wait for ProductService to reserve stock
     /// - WaitingForConfirmation: COD orders waiting for admin confirmation
     /// - WaitingForPaymentCreated: Waiting for PaymentService to create payment intent
-    /// - PaymentCreationFailed: Payment creation failed, allow retry via RetryCreatePayment command
-    /// - WaitingForPayment: Payment intent created, waiting for user to complete payment (online) or admin to confirm (COD)
+    /// - WaitingForPayment: Payment intent created, waiting for Stripe webhook (online only)
     /// - Processing: Payment completed / COD confirmed, confirming order
     /// - Completed: Order confirmed, stock committed
     /// - Cancelled: Order cancelled due to stock/payment failure or timeout
     ///
-    /// Payment Creation Retry: When PaymentFailed in WaitingForPaymentCreated state,
-    ///   saga moves to PaymentCreationFailed and publishes OrderPaymentFailed.
-    ///   Admin/User can retry via RetryCreatePayment command (e.g., COD after admin confirm).
-    /// Payment Retry: When PaymentFailed in WaitingForPayment, saga stays and allows
-    ///   RetryPayment command to change payment method or retry.
-    /// Auto-cancel: A scheduled message (OrderPaymentExpired) is sent after PaymentWindowMinutes
-    ///   for online payments. Re-scheduled on each retry.
-    /// COD Flow: Stock reserved → WaitingForConfirmation → admin confirms → WaitingForPaymentCreated
-    ///   → PaymentCreated → WaitingForPayment → admin confirms payment received → Processing
+    /// Online Flow: Stock reserved → WaitingForPaymentCreated
+    ///   → PaymentCreated → WaitingForPayment (Quartz timeout starts)
+    ///   → PaymentCompleted → Processing → Completed
+    ///   → PaymentFailed | Timeout → Cancelled + ReleaseStock
+    ///
+    /// COD Flow: Stock reserved → WaitingForConfirmation (admin confirms)
+    ///   → WaitingForPaymentCreated → PaymentCreated → Processing → Completed
+    ///   → PaymentFailed → back to WaitingForConfirmation (admin retries)
     /// </summary>
     public class OrderSagaStateMachine : MassTransitStateMachine<OrderSagaState>
     {
@@ -50,14 +48,12 @@ namespace OrderService.Saga
 
         // States
         public State? WaitingForStockReservation { get; set; }
-        public State? WaitingForPaymentCreated { get; set; } 
-        public State? PaymentCreationFailed { get; set; }
+        public State? WaitingForPaymentCreated { get; set; }
         public State? WaitingForPayment { get; set; }
         public State? WaitingForConfirmation { get; set; }
         public State? Processing { get; set; }
         public State? Completed { get; set; }
         public State? Cancelled { get; set; }
-        public State? WaitingForCodPaymentConfirmation { get; set; }
 
         // Events
         public Event<OrderCreated>? OrderCreated { get; set; }
@@ -67,8 +63,6 @@ namespace OrderService.Saga
         public Event<PaymentCreated>? PaymentCreatedEvent { get; set; }
         public Event<PaymentCompleted>? PaymentSucceededEvent { get; set; }
         public Event<PaymentFailed>? PaymentFailedEvent { get; set; }
-        public Event<RetryPayment>? RetryPaymentEvent { get; set; } //sử dụng khi payment 1 method nào đó thất bại, muốn đổi method khác
-        public Event<RetryCreatePayment>? RetryCreatePaymentEvent { get; set; } //sử dụng khi tạo payment thất bại (admin/user retry)
         public Event<ConfirmCodOrder>? ConfirmCodOrderEvent { get; set; }
 
         // Scheduled events
@@ -101,13 +95,7 @@ namespace OrderService.Saga
             Event(() => PaymentFailedEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
 
-            Event(() => RetryPaymentEvent, x => x.CorrelateBy(
-                (state, context) => state.OrderId == context.Message.OrderId));
-
             Event(() => ConfirmCodOrderEvent, x => x.CorrelateBy(
-                (state, context) => state.OrderId == context.Message.OrderId));
-
-            Event(() => RetryCreatePaymentEvent, x => x.CorrelateBy(
                 (state, context) => state.OrderId == context.Message.OrderId));
 
             Event(() => PaymentCreatedEvent, x => x.CorrelateBy(
@@ -230,7 +218,7 @@ namespace OrderService.Saga
                             {
                                 OrderId = ctx.Saga.OrderId
                             }))
-                            .TransitionTo(WaitingForCodPaymentConfirmation),
+                            .TransitionTo(Processing),
                         online => online
                             .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
                             {
@@ -242,7 +230,7 @@ namespace OrderService.Saga
                 When(PaymentFailedEvent)
                     .Then(ctx =>
                     {
-                        _logger.LogWarning("[SAGA] Payment creation failed for OrderId: {OrderId}, Reason: {Reason}", 
+                        _logger.LogWarning("[SAGA] Payment creation failed for OrderId: {OrderId}, Reason: {Reason}",
                             ctx.Saga.OrderId, ctx.Message.ErrorMessage);
                         ctx.Saga.FailureReason = ctx.Message.ErrorMessage;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
@@ -253,28 +241,26 @@ namespace OrderService.Saga
                         UserId = ctx.Saga.UserId,
                         ErrorMessage = ctx.Saga.FailureReason,
                     }))
-                    .TransitionTo(PaymentCreationFailed)
+                    .IfElse(
+                        ctx => ctx.Saga.PaymentMethod == PaymentMethod.CashOnDelivery.ToString(),
+                        // COD: payment creation failed → notify admin, allow retry by re-confirming
+                        cod => cod.TransitionTo(WaitingForConfirmation),
+                        // Online: no retry — cancel immediately and release stock
+                        online => online
+                            .PublishAsync(ctx => ctx.Init<CancelOrder>(new
+                            {
+                                OrderId = ctx.Saga.OrderId,
+                                Reason = ctx.Saga.FailureReason
+                            }))
+                            .PublishAsync(ctx => ctx.Init<ReleaseStock>(new
+                            {
+                                OrderId = ctx.Saga.OrderId,
+                                Items = ctx.Saga.Items
+                            }))
+                            .TransitionTo(Cancelled)
+                    )
             );
 
-            // ── PaymentCreationFailed ─────────────────────────────────────────────────
-            // Payment creation failed - allow admin/user to retry
-            During(PaymentCreationFailed,
-                When(RetryCreatePaymentEvent)
-                    .Then(ctx =>
-                    {
-                        _logger.LogInformation("[SAGA] Retrying payment creation for OrderId: {OrderId}", ctx.Saga.OrderId);
-                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                    })
-                    .PublishAsync(ctx => ctx.Init<CreatePayment>(new
-                    {
-                        UserId = ctx.Saga.UserId,
-                        OrderId = ctx.Saga.OrderId,
-                        Amount = ctx.Saga.Total,
-                        Currency = ctx.Saga.Currency,
-                        PaymentMethod = ctx.Saga.PaymentMethod
-                    }))
-                    .TransitionTo(WaitingForPaymentCreated)
-            );
 
 
             // ── WaitingForPayment ────────────────────────────────────────────────
@@ -293,51 +279,37 @@ namespace OrderService.Saga
                     }))
                     .TransitionTo(Processing),
 
-                // Online payment failed — allow retry up to MaxRetries
+                // Online payment failed — cancel immediately, user returns to checkout to create new order
                 When(PaymentFailedEvent)
                     .Then(ctx =>
                     {
                         ctx.Saga.FailureReason = ctx.Message.ErrorMessage;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                        _logger.LogWarning("[SAGA] PaymentFailed for OrderId: {OrderId}, Reason: {Reason}",
+                            ctx.Saga.OrderId, ctx.Saga.FailureReason);
                     })
+                    .Unschedule(PaymentExpirySchedule)
                     .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
                     {
                         OrderId = ctx.Saga.OrderId,
                         UserId = ctx.Saga.UserId,
                         ErrorMessage = ctx.Saga.FailureReason,
-                    })
-                        // Stays in WaitingForPayment — no TransitionTo
-                    ),
-
-                // User retries with same or different payment method
-                When(RetryPaymentEvent)
-                    .Then(ctx =>
-                    {
-                        ctx.Saga.PaymentMethod = ctx.Message.PaymentMethod;
-                        ctx.Saga.Currency = ctx.Message.Currency;
-                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
-                        _logger.LogInformation("[SAGA] RetryPayment for OrderId: {OrderId}", ctx.Saga.OrderId);
-                    })
-                    // Reset expiry window on retry
-                    .Unschedule(PaymentExpirySchedule)
-                    .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                    }))
+                    .PublishAsync(ctx => ctx.Init<CancelOrder>(new
                     {
                         OrderId = ctx.Saga.OrderId,
-                        UserId = ctx.Saga.UserId
+                        Reason = ctx.Saga.FailureReason
                     }))
-                    .PublishAsync(ctx => ctx.Init<CreatePayment>(new
+                    .PublishAsync(ctx => ctx.Init<ReleaseStock>(new
                     {
-                        UserId = ctx.Saga.UserId,
                         OrderId = ctx.Saga.OrderId,
-                        Amount = ctx.Saga.Total,
-                        Currency = ctx.Saga.Currency,
-                        PaymentMethod = ctx.Saga.PaymentMethod
+                        Items = ctx.Saga.Items
                     }))
-                    .TransitionTo(WaitingForPaymentCreated),
+                    .TransitionTo(Cancelled),
 
                 // Payment window expired → auto-cancel
                 When(PaymentExpirySchedule!.Received) //PaymentExpirySchedule!.Received chinh la Event<Scheduled<OrderPaymentExpired>>
-                    .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
+                    // .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
                         .Then(ctx =>
                         {
                             ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
@@ -355,7 +327,7 @@ namespace OrderService.Saga
                             Items = ctx.Saga.Items
                         }))
                         .TransitionTo(Cancelled)
-                    )
+                    // )
             );
 
             // ── Processing ───────────────────────────────────────────────────────
