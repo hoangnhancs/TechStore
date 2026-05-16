@@ -66,7 +66,8 @@ namespace OrderService.Saga
         public Event<ConfirmCodOrder>? ConfirmCodOrderEvent { get; set; }
 
         // Scheduled events
-        public Schedule<OrderSagaState, OrderPaymentExpired>? PaymentExpirySchedule { get; set; }
+        public Schedule<OrderSagaState, OrderPaymentExpired>? OnlinePaymentExpirySchedule { get; set; }
+        public Schedule<OrderSagaState, OrderPaymentExpired>? CodPaymentExpirySchedule { get; set; }
 
 
         private void ConfigureSaga()
@@ -102,9 +103,16 @@ namespace OrderService.Saga
                 (state, context) => state.OrderId == context.Message.OrderId));
 
             // Schedule: auto-cancel if payment window expires
-            Schedule(() => PaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
+            Schedule(() => OnlinePaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
             {
-                s.Delay = TimeSpan.FromMinutes(_options.PaymentWindowMinutes);
+                s.Delay = TimeSpan.FromMinutes(_options.OnlinePaymentWindowMinutes);
+                s.Received = r => r.CorrelateBy(
+                    (state, ctx) => state.OrderId == ctx.Message.OrderId);
+            });
+
+            Schedule(() => CodPaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
+            {
+                s.Delay = TimeSpan.FromMinutes(_options.CodPaymentWindowMinutes);
                 s.Received = r => r.CorrelateBy(
                     (state, ctx) => state.OrderId == ctx.Message.OrderId);
             });
@@ -148,6 +156,11 @@ namespace OrderService.Saga
                             {
                                 OrderId = ctx.Saga.OrderId
                             }))
+                            .Schedule(CodPaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            {
+                                OrderId = ctx.Saga.OrderId,
+                                UserId = ctx.Saga.UserId
+                            })) //start expiry timer immediately for COD as well to prevent infinite waiting if user never confirms
                             .TransitionTo(WaitingForConfirmation),
                         // Online payment: create payment intent + start expiry countdown
                         online => online
@@ -200,7 +213,26 @@ namespace OrderService.Saga
                         Currency = ctx.Saga.Currency,
                         PaymentMethod = ctx.Saga.PaymentMethod
                     }))
-                    .TransitionTo(WaitingForPaymentCreated)
+                    .TransitionTo(WaitingForPaymentCreated),
+
+                When(CodPaymentExpirySchedule!.Received)
+                    .Then(ctx =>
+                    {
+                        ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
+                        ctx.Saga.UpdatedAt = DateTime.UtcNow;
+                        _logger.LogWarning("[SAGA] COD PaymentExpired for OrderId: {OrderId}", ctx.Saga.OrderId);
+                    })
+                    .PublishAsync(ctx => ctx.Init<CancelOrder>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        Reason = ctx.Saga.FailureReason
+                    }))
+                    .PublishAsync(ctx => ctx.Init<ReleaseStock>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        Items = ctx.Saga.Items
+                    }))
+                    .TransitionTo(Cancelled)
             );
 
             // ── WaitingForPaymentCreated ────────────────────────────────────────────────
@@ -220,7 +252,7 @@ namespace OrderService.Saga
                             }))
                             .TransitionTo(Processing),
                         online => online
-                            .Schedule(PaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            .Schedule(OnlinePaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
                             {
                                 OrderId = ctx.Saga.OrderId,
                                 UserId = ctx.Saga.UserId
@@ -273,7 +305,7 @@ namespace OrderService.Saga
                         _logger.LogInformation("[SAGA] PaymentCompleted for OrderId: {OrderId}", ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    .Unschedule(PaymentExpirySchedule)
+                    .Unschedule(OnlinePaymentExpirySchedule)
                     .PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
                     {
                         OrderId = ctx.Saga.OrderId
@@ -289,7 +321,7 @@ namespace OrderService.Saga
                         _logger.LogWarning("[SAGA] PaymentFailed for OrderId: {OrderId}, Reason: {Reason}",
                             ctx.Saga.OrderId, ctx.Saga.FailureReason);
                     })
-                    .Unschedule(PaymentExpirySchedule)
+                    .Unschedule(OnlinePaymentExpirySchedule)
                     .PublishAsync(ctx => ctx.Init<OrderNotification>(new
                     {
                         OrderId = ctx.Saga.OrderId,
@@ -310,7 +342,7 @@ namespace OrderService.Saga
                     .TransitionTo(Cancelled),
 
                 // Payment window expired → auto-cancel
-                When(PaymentExpirySchedule!.Received) //PaymentExpirySchedule!.Received chinh la Event<Scheduled<OrderPaymentExpired>>
+                When(OnlinePaymentExpirySchedule!.Received) //PaymentExpirySchedule!.Received chinh la Event<Scheduled<OrderPaymentExpired>>
                     // .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
                         .Then(ctx =>
                         {
