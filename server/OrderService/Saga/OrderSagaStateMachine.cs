@@ -235,10 +235,11 @@ namespace OrderService.Saga
                         ctx.Saga.FailureReason = ctx.Message.ErrorMessage;
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
+                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
                     {
                         OrderId = ctx.Saga.OrderId,
                         UserId = ctx.Saga.UserId,
+                        IsSuccess = false,
                         ErrorMessage = ctx.Saga.FailureReason,
                     }))
                     .IfElse(
@@ -289,10 +290,11 @@ namespace OrderService.Saga
                             ctx.Saga.OrderId, ctx.Saga.FailureReason);
                     })
                     .Unschedule(PaymentExpirySchedule)
-                    .PublishAsync(ctx => ctx.Init<OrderPaymentFailed>(new
+                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
                     {
                         OrderId = ctx.Saga.OrderId,
                         UserId = ctx.Saga.UserId,
+                        IsSuccess = false,
                         ErrorMessage = ctx.Saga.FailureReason,
                     }))
                     .PublishAsync(ctx => ctx.Init<CancelOrder>(new
@@ -341,6 +343,12 @@ namespace OrderService.Saga
                     {
                         OrderId = ctx.Saga.OrderId,
                         Items = ctx.Saga.Items
+                    }))
+                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        UserId = ctx.Saga.UserId,
+                        IsSuccess = true
                     }))
                     .TransitionTo(Completed)
             );

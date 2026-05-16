@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "OrderService.Grpc";
+
+service GrpcOrder {
+    rpc GetOrder (GetOrderRequest) returns (GrpcOrderResponse);
+}
+
+message GetOrderRequest {
+    string id = 1;
+} 
+
+message GrpcOrderResponse {
+    string id = 1;
+    string status = 2;
+}
+
+

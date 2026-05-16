@@ -6,6 +6,7 @@ using ProductService.Entities;
 using ProductService.Persistence;
 using ProductService.Repositories.Interface;
 using Shared.Core.EF.Application;
+using System.Data.SqlTypes;
 
 namespace ProductService.Services.Product;
 
@@ -43,6 +44,10 @@ public class GetProductListHandler : IRequestHandler<GetProductListQuery, AppRes
                 lastUpdatedDate = parsedDate.ToUniversalTime();
             }
         }
+        else
+        {
+            lastUpdatedDate = SqlDateTime.MinValue.Value; // Set to minimum value to fetch all products
+        }    
 
         var products = await _unitOfWork.ProductRepository.GetListAsync(
             p => p.IsActive && !p.IsDeleted && (!lastUpdatedDate.HasValue || p.UpdatedAt > lastUpdatedDate.Value),
