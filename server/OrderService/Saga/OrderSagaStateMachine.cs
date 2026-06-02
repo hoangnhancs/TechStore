@@ -46,6 +46,9 @@ namespace OrderService.Saga
             ConfigureSaga();
         }
 
+        public record OrderOnlinePaymentExpired : OrderPaymentExpired; 
+        public record OrderCodPaymentExpired : OrderPaymentExpired;
+
         // States
         public State? WaitingForStockReservation { get; set; }
         public State? WaitingForPaymentCreated { get; set; }
@@ -66,8 +69,8 @@ namespace OrderService.Saga
         public Event<ConfirmCodOrder>? ConfirmCodOrderEvent { get; set; }
 
         // Scheduled events
-        public Schedule<OrderSagaState, OrderPaymentExpired>? OnlinePaymentExpirySchedule { get; set; }
-        public Schedule<OrderSagaState, OrderPaymentExpired>? CodPaymentExpirySchedule { get; set; }
+        public Schedule<OrderSagaState, OrderOnlinePaymentExpired>? OnlinePaymentExpirySchedule { get; set; }
+        public Schedule<OrderSagaState, OrderCodPaymentExpired>? CodPaymentExpirySchedule { get; set; }
 
 
         private void ConfigureSaga()
@@ -103,14 +106,14 @@ namespace OrderService.Saga
                 (state, context) => state.OrderId == context.Message.OrderId));
 
             // Schedule: auto-cancel if payment window expires
-            Schedule(() => OnlinePaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
+            Schedule(() => OnlinePaymentExpirySchedule, x => x.OnlinePaymentExpiryTokenId, s =>
             {
                 s.Delay = TimeSpan.FromMinutes(_options.OnlinePaymentWindowMinutes);
                 s.Received = r => r.CorrelateBy(
                     (state, ctx) => state.OrderId == ctx.Message.OrderId);
             });
 
-            Schedule(() => CodPaymentExpirySchedule, x => x.PaymentExpiryTokenId, s =>
+            Schedule(() => CodPaymentExpirySchedule, x => x.CodPaymentExpiryTokenId, s =>
             {
                 s.Delay = TimeSpan.FromMinutes(_options.CodPaymentWindowMinutes);
                 s.Received = r => r.CorrelateBy(
@@ -156,7 +159,7 @@ namespace OrderService.Saga
                             {
                                 OrderId = ctx.Saga.OrderId
                             }))
-                            .Schedule(CodPaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            .Schedule(CodPaymentExpirySchedule, ctx => ctx.Init<OrderCodPaymentExpired>(new
                             {
                                 OrderId = ctx.Saga.OrderId,
                                 UserId = ctx.Saga.UserId
@@ -252,7 +255,7 @@ namespace OrderService.Saga
                             }))
                             .TransitionTo(Processing),
                         online => online
-                            .Schedule(OnlinePaymentExpirySchedule, ctx => ctx.Init<OrderPaymentExpired>(new
+                            .Schedule(OnlinePaymentExpirySchedule, ctx => ctx.Init<OrderOnlinePaymentExpired>(new
                             {
                                 OrderId = ctx.Saga.OrderId,
                                 UserId = ctx.Saga.UserId

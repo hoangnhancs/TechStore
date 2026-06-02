@@ -1,16 +1,41 @@
 services:
-  gateway:
-    image: thaihoangnhantk/gateway-svc:latest
+  # postgres:
+  #   image: postgres:latest
+  #   environment:
+  #     - POSTGRES_USER=postgres
+  #     - POSTGRES_PASSWORD=postgrespw
+  #     - POSTGRES_DB=products
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql
+  #     # - /var/lib/postgresql
+  # mongodb:
+  #   image: mongo:latest
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: mongopw
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodata:/data/db
+  # rabbitmq:
+  #   image: rabbitmq:3-management-alpine
+  #   ports:
+  #     - 5672:5672
+  #     - 15672:15672 
+  mailpit:
+    image: axllent/mailpit
+    container_name: mailpit
     ports:
-      - "8080:8080"
-    environment:
-      - ClientApp=http://localhost:3000
-      - IdentityServerUrl=http://identity-service:8080
-      - ReverseProxy__Clusters__identity__Destinations__identityApi__Address=http://identity-service:8080/
-
-  identity-service:
-    image: thaihoangnhantk/identity-svc:latest
-    ports:
-      - "5003:8080"
-    environment:
-      - ConnectionStrings__DefaultConnection=Host=ep-flat-frost-aogh49jw-pooler.c-2.ap-southeast-1.aws.neon.tech;Database=identity;Username=neondb_owner;Password=npg_XP1nItYZu0kw;SSL Mode=Require;Trust Server Certificate=true
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # UI
+    restart: unless-stopped
+  # product-svc:
+  #   image: thaihoangnhantk/product-svc:latest
+  #   build:
+  #     context: .
+  #     dockerfile: server/ProductService
+# volumes:
+  # pgdata:
+  # mongodata:

@@ -58,9 +58,14 @@ namespace OrderService.Saga
         public string? FailureReason { get; set; }
 
         /// <summary>
-        /// Token used to cancel the scheduled payment expiry message
+        /// Token used to cancel the scheduled online payment expiry message
         /// </summary>
-        public Guid? PaymentExpiryTokenId { get; set; }
+        public Guid? OnlinePaymentExpiryTokenId { get; set; }
+
+        /// <summary>
+        /// Token used to cancel the scheduled online payment expiry message
+        /// </summary>
+        public Guid? CodPaymentExpiryTokenId { get; set; }
 
         /// <summary>
         /// Currency code (e.g. "VND")
