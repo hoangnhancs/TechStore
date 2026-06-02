@@ -17,11 +17,13 @@ namespace NotificationService.Data
                 {
                     Name = "admin-notifications",
                     CreatedAt = DateTime.UtcNow,
+                    Type = NotificationGroupType.Admin,
                 };
                 var userNotiGr = new NotificationGroup
                 {
                     Name = "user-notifications",
                     CreatedAt = DateTime.UtcNow,
+                    Type = NotificationGroupType.AllUsers,
                 };
                 var allUsers = await grpcIdentityClient.GetAllUsers();
                 adminNotiGr.Members = allUsers.Where(u => u.IsAdmin == true)
