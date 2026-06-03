@@ -89,6 +89,11 @@ namespace Infrastructure.EF.Repositories
         {
             entity.MarkAsDeleted();
             DbSet.Update(entity);
-        } 
+        }
+
+        public IQueryable<T> GetAllAsync()
+        {
+            return DbSet.AsNoTracking().AsQueryable();
+        }
     }
 }

@@ -13,9 +13,9 @@ namespace NotificationService.Entities
         [Column(TypeName = "varchar(20)")]
         public NotificationGroupType Type { get; set; }
     
-        // Chỉ dùng khi Type = ProductFollowers
-        public string? ReferenceId { get; set; }       // productId
-        public string? ReferenceType { get; set; }     // "Product"
+        // Chỉ dùng khi Type = Subscriptions
+        public string? ReferenceId { get; set; }       // productId, flashSaleId, ...
+        public string? ReferenceType { get; set; }     // "Product", FlashSale, ...
         public List<NotificationGroupMember> Members { get; set; } = [];
         public NotificationGroup() : base(Guid.NewGuid().ToString())
         {
@@ -38,8 +38,8 @@ namespace NotificationService.Entities
 
     public enum NotificationGroupType
     {
-        Admin,
-        AllUsers,
-        ProductFollowers,
+        Admins,
+        Users,
+        Subscriptions,
     }
 }

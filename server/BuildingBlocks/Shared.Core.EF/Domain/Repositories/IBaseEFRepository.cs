@@ -12,7 +12,7 @@ namespace Shared.Core.EF.Domain.Repositories
         // Query operations
         Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
         Task<T?> GetByIdAsync(TId id, Func<IQueryable<T>, IQueryable<T>>? query, CancellationToken cancellationToken = default);
-        
+        IQueryable<T> GetAllAsync();
         Task<IEnumerable<T>> GetListAsync(
             Expression<Func<T, bool>>? predicate = null,
             Func<IQueryable<T>, IQueryable<T>>? query = null,

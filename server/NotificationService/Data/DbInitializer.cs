@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Entities;
+using NotificationService.RequestHelpers;
 using NotificationService.Services;
 
 namespace NotificationService.Data
@@ -15,15 +16,15 @@ namespace NotificationService.Data
             {
                 var adminNotiGr = new NotificationGroup
                 {
-                    Name = "admin-notifications",
+                    Name = NotificationGroups.AllAdminsNotiGroupName,
                     CreatedAt = DateTime.UtcNow,
-                    Type = NotificationGroupType.Admin,
+                    Type = NotificationGroupType.Admins,
                 };
                 var userNotiGr = new NotificationGroup
                 {
-                    Name = "user-notifications",
+                    Name = NotificationGroups.AllUsersNotiGroupName,
                     CreatedAt = DateTime.UtcNow,
-                    Type = NotificationGroupType.AllUsers,
+                    Type = NotificationGroupType.Users,
                 };
                 var allUsers = await grpcIdentityClient.GetAllUsers();
                 adminNotiGr.Members = allUsers.Where(u => u.IsAdmin == true)
