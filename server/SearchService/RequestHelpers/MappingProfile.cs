@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Contract;
+using Contract.Product;
 using SearchService.Entities;
 
 namespace SearchService.RequestHelpers

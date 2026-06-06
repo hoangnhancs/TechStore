@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Contract
+namespace Contract.Payment
 {
     /// <summary>
     /// Command to retry payment creation after it failed

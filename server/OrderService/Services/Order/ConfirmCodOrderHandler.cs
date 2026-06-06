@@ -31,7 +31,7 @@ public class ConfirmCodOrderHandler : IRequestHandler<ConfirmCodOrderCommand, Ap
         if (!request.IsAdmin)
             return AppResult<Unit>.Failure("Only admins can confirm COD orders", 403);
 
-        await _publishEndpoint.Publish(new Contract.ConfirmCodOrder
+        await _publishEndpoint.Publish(new Contract.Order.ConfirmCodOrder
         {
             OrderId = request.OrderId
         }, cancellationToken);

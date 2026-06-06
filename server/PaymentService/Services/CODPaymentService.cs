@@ -44,7 +44,7 @@ namespace PaymentService.Services
                     Status = PaymentStatus.Pending
                 };
                 await _unitOfWork.PaymentRepository.AddAsync(payment);
-                await _publishEndpoint.Publish(new PaymentCreated
+                await _publishEndpoint.Publish(new Contract.Payment.PaymentCreated
                 {
                     OrderId = payment.OrderId,
                 });
@@ -59,7 +59,7 @@ namespace PaymentService.Services
             }
             catch (Exception ex)
             {
-                await _publishEndpoint.Publish(new PaymentFailed
+                await _publishEndpoint.Publish(new Contract.Payment.PaymentFailed
                 {
                     OrderId = createPaymentDto.OrderId,
                     ErrorMessage = ex.Message

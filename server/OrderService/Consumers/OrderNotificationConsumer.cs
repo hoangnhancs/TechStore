@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Contract;
+using Contract.Order;
 using Microsoft.AspNetCore.SignalR;
 using OrderService.SignalR;
 

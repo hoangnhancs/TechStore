@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Command: Confirm order (mark as confirmed after all steps complete)

@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using AutoMapper;
-using Contract;
+using Contract.Order;
 using MassTransit;
 using MediatR;
 using OrderService.DTOs;
@@ -145,7 +145,7 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, AppResult<
             {
                 OrderId = order.Id,
                 UserId = order.UserId,
-                Items = order.Items.Select(item => new OrderItemEvent
+                Items = order.Items.Select(item => new Contract.Order.OrderItemEvent
                 {
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,

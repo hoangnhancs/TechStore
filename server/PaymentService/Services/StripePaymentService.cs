@@ -55,7 +55,7 @@ namespace PaymentService.Services
 
                     _logger.LogInformation("Payment succeeded for OrderId: {OrderId}", orderId);
 
-                    await _publishEndpoint.Publish(new PaymentCompleted
+                    await _publishEndpoint.Publish(new Contract.Payment.PaymentCompleted
                     {
                         OrderId = orderId
                     }, cancellationToken);
@@ -79,7 +79,7 @@ namespace PaymentService.Services
 
                     _logger.LogWarning("Payment failed for OrderId: {OrderId}, Reason: {Reason}", orderId, errorMessage);
 
-                    await _publishEndpoint.Publish(new PaymentFailed
+                    await _publishEndpoint.Publish(new Contract.Payment.PaymentFailed
                     {
                         OrderId = orderId,
                         ErrorMessage = errorMessage
@@ -152,7 +152,7 @@ namespace PaymentService.Services
                 payment.ClientSecret = intent.ClientSecret;
 
                 await _unitOfWork.PaymentRepository.AddAsync(payment);
-                await _publishEndpoint.Publish(new PaymentCreated
+                await _publishEndpoint.Publish(new Contract.Payment.PaymentCreated
                 {
                     OrderId = createPaymentDto.OrderId
                 });
@@ -163,7 +163,7 @@ namespace PaymentService.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating payment for OrderId: {OrderId}", createPaymentDto.OrderId);
-                await _publishEndpoint.Publish(new PaymentFailed
+                await _publishEndpoint.Publish(new Contract.Payment.PaymentFailed
                 {
                     OrderId = createPaymentDto.OrderId,
                     ErrorMessage = ex.Message

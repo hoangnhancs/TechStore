@@ -1,4 +1,4 @@
-using Contract;
+using Contract.Payment;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;

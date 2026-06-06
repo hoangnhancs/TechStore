@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Contract;
+using Contract.Order;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Data;

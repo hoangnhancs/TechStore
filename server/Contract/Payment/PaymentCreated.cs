@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Contract
+namespace Contract.Payment
 {
-    public class PaymentCompleted
+    public class PaymentCreated
     {
         public required string OrderId { get; set; }
     }

@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Scheduled event: auto-cancel order when payment window expires

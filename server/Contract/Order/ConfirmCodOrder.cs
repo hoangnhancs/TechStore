@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Command: confirm COD order manually (from admin/user on FE)

@@ -1,4 +1,6 @@
-namespace Contract;
+using Contract.Order;
+
+namespace Contract.Product;
 
 /// <summary>
 /// Command: Reserve stock for a list of products

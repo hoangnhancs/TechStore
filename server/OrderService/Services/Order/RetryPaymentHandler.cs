@@ -46,7 +46,7 @@ public class RetryPaymentHandler : IRequestHandler<RetryPaymentCommand, AppResul
             return AppResult<Unit>.Failure($"Invalid payment method: {request.PaymentMethod}", 400);
 
         // Publish to Saga — Saga will re-schedule expiry and call CreatePayment
-        await _publishEndpoint.Publish(new Contract.RetryPayment
+        await _publishEndpoint.Publish(new Contract.Payment.RetryPayment
         {
             OrderId = request.OrderId,
             UserId = request.UserId,

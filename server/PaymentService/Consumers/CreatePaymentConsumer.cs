@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Contract;
+using Contract.Payment;
 using MassTransit;
 using Microsoft.AspNetCore.SignalR;
 using PaymentService.Data;

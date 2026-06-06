@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Contract
+namespace Contract.Payment
 {
-    public class StockReserved
+    public class PaymentFailed
     {
         public required string OrderId { get; set; }
-        public List<OrderItemEvent> Items { get; set; } = [];
+        public string? ErrorMessage { get; set; }
     }
 }

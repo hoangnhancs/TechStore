@@ -1,4 +1,4 @@
-﻿using Contract;
+﻿using Contract.Order;
 using EmailService.Interfaces;
 using EmailService.Services.Interface;
 using MassTransit;

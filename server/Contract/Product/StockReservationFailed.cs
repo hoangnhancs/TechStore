@@ -1,4 +1,6 @@
-namespace Contract;
+using Contract.Order;
+
+namespace Contract.Product;
 
 /// <summary>
 /// Event: Stock reservation failed for an order

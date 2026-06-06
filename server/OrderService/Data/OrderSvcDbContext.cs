@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Contract.Order;
 using Infrastructure.EF.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -41,14 +42,14 @@ namespace OrderService.Data
                 entity.Property(s => s.Items)
                     .HasConversion(
                         v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
-                        v => System.Text.Json.JsonSerializer.Deserialize<List<Contract.OrderItemEvent>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<Contract.OrderItemEvent>()
+                        v => System.Text.Json.JsonSerializer.Deserialize<List<OrderItemEvent>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new List<OrderItemEvent>()
                     )
                     .HasColumnType("jsonb")
                     .Metadata.SetValueComparer(
-                        new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<Contract.OrderItemEvent>>(
+                        new Microsoft.EntityFrameworkCore.ChangeTracking.ValueComparer<List<OrderItemEvent>>(
                             (c1, c2) => System.Text.Json.JsonSerializer.Serialize(c1, (System.Text.Json.JsonSerializerOptions?)null) == System.Text.Json.JsonSerializer.Serialize(c2, (System.Text.Json.JsonSerializerOptions?)null),
                             c => c == null ? 0 : System.Text.Json.JsonSerializer.Serialize(c, (System.Text.Json.JsonSerializerOptions?)null).GetHashCode(),
-                            c => System.Text.Json.JsonSerializer.Deserialize<List<Contract.OrderItemEvent>>(System.Text.Json.JsonSerializer.Serialize(c, (System.Text.Json.JsonSerializerOptions?)null), (System.Text.Json.JsonSerializerOptions?)null) ?? new List<Contract.OrderItemEvent>()
+                            c => System.Text.Json.JsonSerializer.Deserialize<List<OrderItemEvent>>(System.Text.Json.JsonSerializer.Serialize(c, (System.Text.Json.JsonSerializerOptions?)null), (System.Text.Json.JsonSerializerOptions?)null) ?? new List<OrderItemEvent>()
                         )
                     );
             });

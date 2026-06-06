@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Event published when a new order is created

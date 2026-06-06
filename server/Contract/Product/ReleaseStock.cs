@@ -1,4 +1,6 @@
-namespace Contract;
+using Contract.Order;
+
+namespace Contract.Product;
 
 /// <summary>
 /// Command: Release/compensate reserved stock

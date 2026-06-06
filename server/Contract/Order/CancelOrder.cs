@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Command: Cancel order (compensating transaction)

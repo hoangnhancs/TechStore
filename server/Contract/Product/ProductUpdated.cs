@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace Contract
+namespace Contract.Product
 {
     public class ProductUpdated
     {

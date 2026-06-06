@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Contract;
+using Contract.Product;
 using ProductService.DTOs;
 using ProductService.Entities;
 

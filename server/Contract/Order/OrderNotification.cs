@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Order;
 
 /// <summary>
 /// Event published by OrderSaga to notify FE of order outcome (success or failure).

@@ -1,4 +1,4 @@
-namespace Contract;
+namespace Contract.Payment;
 
 /// <summary>
 /// Command: retry payment with a new payment method
