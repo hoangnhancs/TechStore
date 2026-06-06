@@ -23,7 +23,7 @@ namespace NotificationService.Services.NotificationGroup
         }
         public async Task<AppResult<NotificationGroupDto>> Handle(GetAllAdminNotiGroupQuery request, CancellationToken cancellationToken)
         {
-            var query = _unitOfWork.NotificationGroupRepository.GetAllAsync();
+            var query = _unitOfWork.NotificationGroupRepository.GetAll();
             var result = await query.FirstOrDefaultAsync(x => x.Name == NotificationGroups.AllAdminsNotiGroupName, cancellationToken);
             if (result == null)
             {

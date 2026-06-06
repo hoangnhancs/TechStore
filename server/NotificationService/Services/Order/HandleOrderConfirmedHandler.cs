@@ -1,15 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using EmailService.Interfaces;
 using EmailService.Services.Interface;
 using MediatR;
 using NotificationService.DTOs;
+using NotificationService.RequestHelpers;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
 using NotificationService.Services.Sender;
 using Shared.Core.EF.Application;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NotificationService.Services.Order
 {
@@ -70,7 +71,7 @@ namespace NotificationService.Services.Order
             //publish signalR notification to admin and user
             // Admin notification
             var systemUser = await _grpcIdentityClient.GetSystemUser();
-            var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = "admin-notifications" })).Value;
+            var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName })).Value;
             if (adminGroup == null)
             {
                 throw new ArgumentNullException(nameof(adminGroup), "Admin notification group not found");
@@ -108,17 +109,19 @@ namespace NotificationService.Services.Order
                     SenderImageUrl = systemUser?.ImageUrl,
                 }
             };
+
+            //send notification email will be implemented in create notification handler, here we just create notification
             var adminNotiResult = await _mediator.Send(adminNotificationCommand);
-            if (adminNotiResult.IsSuccess && adminNotiResult.Value != null)
-            {
-                await _notificationSender.SendToGroupAsync(adminGroup.Name, adminNotiResult.Value);
-            }
+            //if (adminNotiResult.IsSuccess && adminNotiResult.Value != null)
+            //{
+            //    await _notificationSender.SendToGroupAsync(adminGroup.Name, adminNotiResult.Value);
+            //}
 
             var userNotiResult = await _mediator.Send(userNotificationCommand);
-            if (userNotiResult.IsSuccess && userNotiResult.Value != null)
-            {
-                await _notificationSender.SendToUserAsync(message.UserId, userNotiResult.Value);
-            }
+            //if (userNotiResult.IsSuccess && userNotiResult.Value != null)
+            //{
+            //    await _notificationSender.SendToUserAsync(message.UserId, userNotiResult.Value);
+            //}
 
             return AppResult<Unit>.Success(Unit.Value);
         }

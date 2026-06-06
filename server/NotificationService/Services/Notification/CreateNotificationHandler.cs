@@ -1,15 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
+using MassTransit.Mediator;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.DTOs;
 using NotificationService.Entities;
 using NotificationService.Persistence;
 using NotificationService.Repositories.Interfaces;
+using NotificationService.RequestHelpers;
+using NotificationService.Services.NotificationGroup;
+using NotificationService.Services.Sender;
 using Shared.Core.EF.Application;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NotificationService.Services.Notification
 {
@@ -18,11 +22,13 @@ namespace NotificationService.Services.Notification
         private readonly INotificationUnitOfWork _notificationUnitOfWork;
         private readonly IMapper _mapper;
         private readonly GrpcIdentityClient _grpcIdentityClient;
-        public CreateNotificationHandler(INotificationUnitOfWork notificationUnitOfWork, IMapper mapper, GrpcIdentityClient grpcIdentityClient)
+        private readonly INotificationServiceSender _notificationServiceSender;
+        public CreateNotificationHandler(INotificationUnitOfWork notificationUnitOfWork, IMapper mapper, GrpcIdentityClient grpcIdentityClient, INotificationServiceSender notificationServiceSender)
         {
             _notificationUnitOfWork = notificationUnitOfWork;
             _mapper = mapper;
             _grpcIdentityClient = grpcIdentityClient;
+            _notificationServiceSender = notificationServiceSender;
         }
         public async Task<AppResult<NotificationDto>> Handle(CreateNotificationCommand request, CancellationToken cancellationToken)
         {
@@ -61,7 +67,20 @@ namespace NotificationService.Services.Notification
             var senderInfo = (await _grpcIdentityClient.GetUsersByIds(new List<string> { request.CreateNotificationDto.SenderId })).FirstOrDefault();
             notificationDto.SenderId = senderInfo?.UserId ?? request.CreateNotificationDto.SenderId;
             notificationDto.SenderName = senderInfo?.UserName;
-            
+
+            if (!string.IsNullOrEmpty(request.CreateNotificationDto.GroupId))
+            {
+                var adminGroup = await _notificationUnitOfWork.NotificationGroupRepository.GetAll().FirstOrDefaultAsync(g => g.Name == NotificationGroups.AllAdminsNotiGroupName);
+                if (adminGroup != null)
+                {
+                    await _notificationServiceSender.SendToGroupAsync(adminGroup.Name, notificationDto);
+                }
+            }
+            if (!string.IsNullOrEmpty(request.CreateNotificationDto.ReceiverId))
+            {
+                await _notificationServiceSender.SendToUserAsync(request.CreateNotificationDto.ReceiverId, notificationDto);
+            }
+
             return AppResult<NotificationDto>.Success(notificationDto);
         }
     }
