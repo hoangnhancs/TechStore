@@ -17,7 +17,7 @@ namespace CommentService.SignalR
             _mediator = mediator;
         }
 
-        public async Task<string?> SendComment(string productId, string content, string? parrentCommentId = null)
+        public async Task<string?> SendComment(string referenceId, string referenceType, string content, string? parrentCommentId = null)
         {
             var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
             var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
@@ -29,7 +29,8 @@ namespace CommentService.SignalR
             }
             var command = new CreateCommentCommand
             {
-                ProductId = productId,
+                ReferenceId = referenceId,
+                ReferenceType = referenceType,
                 UserId = userId,
                 UserName = userName,
                 UserImageUrl = userImageUrl,
@@ -40,7 +41,7 @@ namespace CommentService.SignalR
             var result = await _mediator.Send(command);
             if (result.IsSuccess && result.Value != null)
             {
-                await Clients.Group(productId).SendAsync("ReceiveComment", result.Value);
+                await Clients.Group(referenceId).SendAsync("ReceiveComment", result.Value);
                 return result.Value.Id;
             }
             else

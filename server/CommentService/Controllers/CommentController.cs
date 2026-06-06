@@ -24,7 +24,8 @@ namespace CommentService.Controllers
             }
             return HandleAppResult(await Mediator.Send(new CreateCommentCommand
             {
-                ProductId = commentDto.ProductId,
+                ReferenceId = commentDto.ReferenceId,
+                ReferenceType = commentDto.ReferenceType,
                 UserId = userId,
                 ParentCommentId = commentDto.ParentCommentId,
                 Content = commentDto.Content

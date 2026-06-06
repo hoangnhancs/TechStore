@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Contract.Comment
+{
+    public class CommentCreated
+    {
+        public required string Content { get; set; }
+        public string? Title { get; set; }
+        public required string ReferenceType { get; set; }
+        public required string ReferenceId { get; set; }
+        public string? ParentCommentId { get; set; } = null;
+    }
+}

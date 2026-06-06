@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using CommentService.DTOs;
+using CommentEntity = CommentService.Entities.Comment;
 using CommentService.Persistence;
 using MediatR;
 using Shared.Core.EF.Application;
@@ -24,7 +25,7 @@ namespace CommentService.Services.Comment
         public async Task<AppResult<List<CommentDto>>> Handle(GetListCommentsByProductIdQuery request, CancellationToken cancellationToken)
         {
             var comments = (await _unitOfWork.CommentRepository.GetListAsync(
-                predicate: c => c.ProductId == request.ProductId,
+                predicate: c => c.ReferenceId == request.ProductId && c.ReferenceType == CommentEntity.ReferenceTypes.Product.ToString(),
                 cancellationToken: cancellationToken
             )).OrderByDescending(c => c.CreatedAt).ToList();
 

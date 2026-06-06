@@ -9,6 +9,7 @@ namespace CommentService.DTOs
     {
         public required string Content { get; set; }
         public string? ParentCommentId { get; set; } = null;
-        public required string ProductId { get; set; } = string.Empty;
+        public required string ReferenceId { get; set; } = string.Empty;
+        public required string ReferenceType { get; set; } = string.Empty;
     }
 }

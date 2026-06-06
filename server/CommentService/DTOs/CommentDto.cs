@@ -16,7 +16,9 @@ namespace CommentService.DTOs
         public required string UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserImageUrl { get; set; }
-        public required string ProductId { get; set; }
+        //public required string ProductId { get; set; }
+        public required string ReferenceId { get; set; }
+        public required string ReferenceType { get; set; }
         public string? ParentCommentId { get; set; }
         public List<CommentDto> Replies { get; set; } = [];
         public bool IsAdminComment { get; set; } = false;

@@ -25,7 +25,8 @@ namespace CommentService.Services.Comment
         {
             var comment = new Entities.Comment
             {
-                ProductId = request.ProductId,
+                ReferenceId = request.ReferenceId,
+                ReferenceType = request.ReferenceType,
                 UserId = request.UserId,
                 Content = request.Content,
                 CreatedAt = DateTime.UtcNow,

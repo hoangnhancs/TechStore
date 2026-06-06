@@ -23,9 +23,9 @@ namespace NotificationService.Entities
         public string? ReferenceId { get; set; } 
         [Column(TypeName = "varchar(20)")]    // orderId, commentId, reviewId...
         public NotificationReferenceType? ReferenceType { get; set; }   // Order, Comment, Review
-        public string? ParentReferenceId { get; set; } 
+        public string? ParentReferenceId { get; set; }
         [Column(TypeName = "varchar(20)")]    // orderId, commentId, reviewId...
-        public NotificationReferenceType? ParentReferenceType { get; set; }   // Order, Comment, Review
+        public NotificationReferenceType? ParentReferenceType => ReferenceType;   // Order, Comment, Review //same as ReferenceType, but used for replies (e.g. comment reply sẽ có ParentReferenceType = Comment)
         public List<NotificationRecipient> Recipients { get; set; } = [];
         // Sender: null nếu là System
         public string? SenderId { get; set; }

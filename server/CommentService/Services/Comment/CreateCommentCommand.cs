@@ -10,7 +10,8 @@ namespace CommentService.Services.Comment
 {
     public class CreateCommentCommand : IRequest<AppResult<CommentDto>>
     {
-        public required string ProductId { get; set; } = string.Empty;
+        public required string ReferenceId { get; set; } = string.Empty;
+        public required string ReferenceType { get; set; } = string.Empty;
         public required string UserId { get; set; } = string.Empty;
         public string? UserName { get; set; }
         public string? UserImageUrl { get; set; }
