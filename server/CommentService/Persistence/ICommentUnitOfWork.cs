@@ -10,5 +10,6 @@ namespace CommentService.Persistence
     public interface ICommentUnitOfWork : IUnitOfWork
     {
         public ICommentRepository CommentRepository { get; }
+        public IUserInformationRepository UserInformationRepository { get; }
     }
 }

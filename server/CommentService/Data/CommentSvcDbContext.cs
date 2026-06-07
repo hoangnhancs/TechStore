@@ -15,6 +15,7 @@ namespace CommentService.Data
         {
         }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<UserInformation> UserInformations { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

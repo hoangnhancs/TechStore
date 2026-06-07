@@ -14,6 +14,9 @@ namespace CommentService.Persistence
         private ICommentRepository? _commentRepository;
         public ICommentRepository CommentRepository => 
             _commentRepository ??= new CommentRepository(_dbContext);
+        private IUserInformationRepository? _userInformationRepository;
+        public IUserInformationRepository UserInformationRepository => 
+            _userInformationRepository ??= new UserInformationRepository(_dbContext);
         public CommentUnitOfWork(CommentSvcDbContext context) : base(context)
         {
         }
