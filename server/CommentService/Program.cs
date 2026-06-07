@@ -3,6 +3,7 @@ using CommentService.Persistence;
 using CommentService.RequestHelpers;
 using CommentService.Services;
 using CommentService.SignalR;
+using CommentService.Workers;
 using IdentityService.Grpc;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +54,8 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
 
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>();
+// builder.Services.AddScoped<IUserSyncService, UserSyncService>();
+builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();

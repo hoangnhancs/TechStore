@@ -33,6 +33,7 @@ namespace IdentityService.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
+                    DisplayName = user.DisplayName
                 };
 
                 if (user.Image?.Url != null)
@@ -57,6 +58,7 @@ namespace IdentityService.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
+                    DisplayName = user.DisplayName
                 };
 
                 if (user.Image?.Url != null)
@@ -83,6 +85,7 @@ namespace IdentityService.Services
                 UserName = systemUser.UserName,
                 UserEmail = systemUser.Email,
                 IsAdmin = systemUser.IsAdmin,
+                DisplayName = systemUser.DisplayName
             };
 
             if (systemUser.Image?.Url != null)
@@ -91,6 +94,32 @@ namespace IdentityService.Services
             }
 
             return userInfo;
+        }
+
+        public override async Task<GetUserByLastUpdatedResponse> GetUserByLastUpdated(GetUserByLastUpdatedRequest request, ServerCallContext context)
+        {
+            var response = new GetUserByLastUpdatedResponse();
+            var users = await _dbContext.Users.Where(u => u.UpdatedAt > request.LastUpdated.ToDateTime())
+                .Include(u => u.Image).ToListAsync();
+            foreach (var user in users)
+            {
+                var userInfo = new UserInfo
+                {
+                    UserId = user.Id,
+                    UserName = user.UserName,
+                    UserEmail = user.Email,
+                    IsAdmin = user.IsAdmin,
+                    DisplayName = user.DisplayName
+                };
+
+                if (user.Image?.Url != null)
+                {
+                    userInfo.ImageUrl = user.Image.Url;
+                }
+
+                response.Users.Add(userInfo);
+            }
+            return response;
         }
     }
 }
