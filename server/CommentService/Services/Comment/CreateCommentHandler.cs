@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using AutoMapper;
 using CommentService.DTOs;
 using CommentService.Persistence;
+using Contract.Comment;
+using MassTransit;
 using MediatR;
 using Shared.Core.EF.Application;
 
@@ -14,12 +16,12 @@ namespace CommentService.Services.Comment
     {
         private readonly ICommentUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        private readonly GrpcIdentityClient _grpcIdentityClient;
-        public CreateCommentHandler(ICommentUnitOfWork unitOfWork, IMapper mapper, GrpcIdentityClient grpcIdentityClient)
+        private readonly IPublishEndpoint _publishEndpoint;
+        public CreateCommentHandler(ICommentUnitOfWork unitOfWork, IMapper mapper, IPublishEndpoint publishEndpoint)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
-            _grpcIdentityClient = grpcIdentityClient;
+            _publishEndpoint = publishEndpoint;
         }
         public async Task<AppResult<CommentDto>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
         {
@@ -35,6 +37,16 @@ namespace CommentService.Services.Comment
             await _unitOfWork.CommentRepository.AddAsync(comment);
             var userIds = new List<string> { comment.UserId };
             // var users = await _grpcIdentityClient.GetUsersByIds(userIds);
+            await _publishEndpoint.Publish(new CommentCreated
+            {
+                Title = comment.Content,
+                ReferenceId = comment.ReferenceId,
+                ReferenceType = comment.ReferenceType,
+                UserId = comment.UserId,
+                Content = comment.Content,
+                CreatedAt = comment.CreatedAt,
+                ParentCommentId = comment.ParentCommentId
+            });
             var result = await _unitOfWork.CommitAsync();
             if (!result)
             {
