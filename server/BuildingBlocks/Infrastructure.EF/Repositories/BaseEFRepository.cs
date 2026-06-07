@@ -95,5 +95,10 @@ namespace Infrastructure.EF.Repositories
         {
             return DbSet.AsNoTracking().AsQueryable();
         }
+
+        public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)
+        {
+            await DbSet.AddRangeAsync(entities, cancellationToken);
+        }
     }
 }
