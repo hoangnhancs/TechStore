@@ -15,6 +15,7 @@ namespace ReviewService.Data
         {
         }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<UserInformation> UserInformations { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

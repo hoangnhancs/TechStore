@@ -8,6 +8,7 @@ using ReviewService.Repositories.Interface;
 using ReviewService.RequestHelpers;
 using ReviewService.Services;
 using ReviewService.SignalR;
+using ReviewService.Workers;
 using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,8 +50,10 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
         ?? throw new InvalidOperationException("'GrpcIdentity' address is not configured.")));
 
 builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();
-builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
+// builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<GrpcIdentityClient>();
+// builder.Services.AddScoped<IUserInformationRepository, UserInformationRepository>();
+builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 
 var app = builder.Build();

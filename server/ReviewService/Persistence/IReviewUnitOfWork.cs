@@ -10,5 +10,6 @@ namespace ReviewService.Persistence
     public interface IReviewUnitOfWork : IUnitOfWork
     {
         public IReviewRepository ReviewRepository { get; }
+        public IUserInformationRepository UserInformationRepository { get; }
     }
 }
