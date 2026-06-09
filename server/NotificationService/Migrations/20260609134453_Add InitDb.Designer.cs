@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NotificationService.Migrations
 {
     [DbContext(typeof(NotificationSvcDbContext))]
-    [Migration("20260428013514_UpdateNotificationService20260428_083509")]
-    partial class UpdateNotificationService20260428_083509
+    [Migration("20260609134453_Add InitDb")]
+    partial class AddInitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -52,9 +52,6 @@ namespace NotificationService.Migrations
 
                     b.Property<string>("ParentReferenceId")
                         .HasColumnType("text");
-
-                    b.Property<string>("ParentReferenceType")
-                        .HasColumnType("varchar(20)");
 
                     b.Property<string>("ReferenceId")
                         .HasColumnType("text");

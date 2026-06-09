@@ -50,9 +50,6 @@ namespace NotificationService.Migrations
                     b.Property<string>("ParentReferenceId")
                         .HasColumnType("text");
 
-                    b.Property<string>("ParentReferenceType")
-                        .HasColumnType("varchar(20)");
-
                     b.Property<string>("ReferenceId")
                         .HasColumnType("text");
 
@@ -203,6 +200,45 @@ namespace NotificationService.Migrations
                     b.HasIndex("NotificationId");
 
                     b.ToTable("NotificationRecipient");
+                });
+
+            modelBuilder.Entity("NotificationService.Entities.UserInformation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserInformations");
                 });
 
             modelBuilder.Entity("NotificationService.Entities.NotificationGroupMember", b =>

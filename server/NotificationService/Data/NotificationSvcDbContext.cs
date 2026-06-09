@@ -16,5 +16,6 @@ namespace NotificationService.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<NotificationGroup> NotificationGroups { get; set; }
         public DbSet<NotificationGroupMember> NotificationGroupMembers { get; set; }
+        public DbSet<UserInformation> UserInformations { get; set; }
     }
 }

@@ -14,10 +14,13 @@ namespace NotificationService.Persistence
 
         private INotificationRepository? _notificationRepository;
         private INotificationGroupRepository? _notificationGroupRepository;
+        private IUserInformationRepository? _userInformationRepository;
         public INotificationRepository NotificationRepository =>
             _notificationRepository ??= new NotificationRepository(_dbContext);
         public INotificationGroupRepository NotificationGroupRepository =>
             _notificationGroupRepository ??= new NotificationGroupRepository(_dbContext);
+        public IUserInformationRepository UserInformationRepository =>
+            _userInformationRepository ??= new UserInformationRepository(_dbContext);
         public NotificationUnitOfWork(NotificationSvcDbContext dbContext) : base(dbContext)
         {
 

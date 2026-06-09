@@ -11,5 +11,6 @@ namespace NotificationService.Persistence
     {
         public INotificationRepository NotificationRepository { get; }
         public INotificationGroupRepository NotificationGroupRepository { get; }
+        public IUserInformationRepository UserInformationRepository { get; }
     }
 }

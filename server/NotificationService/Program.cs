@@ -8,6 +8,7 @@ using NotificationService.Persistence;
 using NotificationService.RequestHelpers;
 using NotificationService.Services;
 using NotificationService.SignalR;
+using NotificationService.Workers;
 using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +51,7 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<INotificationUnitOfWork, NotificationUnitOfWork>();
 builder.Services.AddScoped<NotificationService.Services.Sender.INotificationServiceSender, NotificationService.Services.Sender.NotificationServiceSender>();
-
+builder.Services.AddHostedService<UserInforSyncWorker>();
 
 builder.Services.AddEmailServices(builder.Configuration);
 builder.Services.AddSignalR();
