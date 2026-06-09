@@ -91,7 +91,7 @@ namespace Infrastructure.EF.Repositories
             DbSet.Update(entity);
         }
 
-        public IQueryable<T> GetAll()
+        public virtual IQueryable<T> GetAll()
         {
             return DbSet.AsNoTracking().AsQueryable();
         }
