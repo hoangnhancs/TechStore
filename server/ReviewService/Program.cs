@@ -8,6 +8,7 @@ using ReviewService.Repositories.Interface;
 using ReviewService.RequestHelpers;
 using ReviewService.Services;
 using ReviewService.SignalR;
+using ReviewService.Workers;
 using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,7 @@ builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();
 builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<UserInforSyncWorker>();
 
 var app = builder.Build();
 

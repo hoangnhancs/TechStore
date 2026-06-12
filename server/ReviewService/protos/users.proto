@@ -1,16 +1,27 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 option csharp_namespace = "IdentityService.Grpc";
 
 service GrpcIdentity {
     rpc GetUsersByIds (GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+    rpc GetUserByLastUpdated (GetUserByLastUpdatedRequest) returns (GetUserByLastUpdatedResponse);
 }
 
 message GetUsersByIdsRequest {
     repeated string userIds = 1;
 }
 
+message GetUserByLastUpdatedRequest {
+    google.protobuf.Timestamp last_updated = 1;
+}
+
 message GetUsersByIdsResponse {
+    repeated UserInfo users = 1;
+}
+
+message GetUserByLastUpdatedResponse {
     repeated UserInfo users = 1;
 }
 
@@ -20,4 +31,5 @@ message UserInfo {
     optional string imageUrl = 3;
     optional bool isAdmin = 4;
     string userEmail = 5;
+    optional string displayName = 6;
 }
