@@ -42,13 +42,14 @@ namespace ReviewService.Services
 
         public async Task SyncUserInformation()
         {
-            var lastUpdated =
-                (await _unitOfWork.UserInformationRepository
-                    .GetAll()
-                    .OrderByDescending(u => u.UpdatedAt)
-                    .Select(u => (DateTime?)u.UpdatedAt)
-                    .FirstOrDefaultAsync())
-                ?? DateTime.MinValue;
+            // var lastUpdated =
+            //     (await _unitOfWork.UserInformationRepository
+            //         .GetAll()
+            //         .OrderByDescending(u => u.UpdatedAt)
+            //         .Select(u => (DateTime?)u.UpdatedAt)
+            //         .FirstOrDefaultAsync())
+            //     ?? DateTime.MinValue;
+            var lastUpdated = DateTime.MinValue; // Sync all users 
 
             var users = (await GetUserByLastUpdated(lastUpdated))
                 .ToDictionary(u => u.UserId);
@@ -74,6 +75,7 @@ namespace ReviewService.Services
                 existingUser.DisplayName = sourceUser.DisplayName;
                 existingUser.ImageUrl = sourceUser.ImageUrl;
                 existingUser.UpdatedAt = DateTime.UtcNow;
+                existingUser.PhoneNumber = sourceUser.PhoneNumber;
             }
 
             var newUsers = users.Values
@@ -83,6 +85,7 @@ namespace ReviewService.Services
                     UserId = u.UserId,
                     DisplayName = u.DisplayName,
                     ImageUrl = u.ImageUrl,
+                    PhoneNumber = u.PhoneNumber,
                     CreatedAt = DateTime.UtcNow
                 })
                 .ToList();

@@ -32,4 +32,5 @@ message UserInfo {
     optional bool isAdmin = 4;
     string userEmail = 5;
     optional string displayName = 6;
+    optional string phoneNumber = 7;
 }
