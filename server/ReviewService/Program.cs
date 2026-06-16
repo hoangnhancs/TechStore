@@ -55,6 +55,7 @@ builder.Services.AddScoped<GrpcIdentityClient>();
 // builder.Services.AddScoped<IUserInformationRepository, UserInformationRepository>();
 builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
+builder.Services.AddHostedService<UserInforSyncWorker>();
 
 var app = builder.Build();
 

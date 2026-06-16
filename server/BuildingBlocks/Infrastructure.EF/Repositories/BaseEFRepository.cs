@@ -93,7 +93,7 @@ namespace Infrastructure.EF.Repositories
 
         public virtual IQueryable<T> GetAll()
         {
-            return DbSet.AsNoTracking().AsQueryable();
+            return DbSet.AsQueryable();
         }
 
         public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)

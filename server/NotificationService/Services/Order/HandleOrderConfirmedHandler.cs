@@ -2,6 +2,7 @@ using EmailService.Interfaces;
 using EmailService.Services.Interface;
 using MediatR;
 using NotificationService.DTOs;
+using NotificationService.Persistence;
 using NotificationService.RequestHelpers;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
@@ -21,13 +22,20 @@ namespace NotificationService.Services.Order
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
         private readonly INotificationServiceSender _notificationSender;
-        public HandleOrderConfirmedHandler(IEmailService emailService, IEmailTemplateBuilder templateBuilder, GrpcIdentityClient grpcIdentityClient, IMediator mediator, INotificationServiceSender notificationSender)
+        private readonly INotificationUnitOfWork _unitOfWork;
+        public HandleOrderConfirmedHandler(IEmailService emailService, 
+            IEmailTemplateBuilder templateBuilder, 
+            GrpcIdentityClient grpcIdentityClient, 
+            IMediator mediator, 
+            INotificationServiceSender notificationSender,
+            INotificationUnitOfWork unitOfWork)
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
             _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
             _notificationSender = notificationSender;
+            _unitOfWork = unitOfWork;
         }
         public async Task<AppResult<Unit>> Handle(HandleOrderConfirmedCommand request, CancellationToken cancellationToken)
         {
@@ -35,10 +43,11 @@ namespace NotificationService.Services.Order
             string userOrderUrl = $"http://localhost:3000/my-orders/{request.Message.OrderId}";
             string adminOrderUrl = $"http://localhost:3000/admin/orders/{request.Message.OrderId}";
             var message = request.Message;
+            var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
             var body = await _templateBuilder.BuildAsync("OrderConfirmation", new
             {
                 OrderNo = message.OrderNo,
-                CustomerName = message.UserName,
+                CustomerName = user?.DisplayName,
 
                 OrderDate = message.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 Address = message.Address ?? "N/A",
@@ -61,7 +70,8 @@ namespace NotificationService.Services.Order
             });
             try
             {
-                await _emailService.SendEmailAsync(message.UserEmail ?? throw new ArgumentNullException(nameof(message.UserEmail)), "Xác nhận đơn hàng", body);
+                var recipientEmail = user?.UserEmail ?? throw new ArgumentNullException(nameof(user.UserEmail));
+                await _emailService.SendEmailAsync(recipientEmail, "Xác nhận đơn hàng", body);
             }
             catch (Exception ex)
             {
@@ -82,7 +92,7 @@ namespace NotificationService.Services.Order
                 CreateNotificationDto = new CreateNotificationDto
                 {
                     Title = $"Đơn hàng mới: {message.OrderNo}",
-                    Message = $"Đơn hàng {message.OrderNo} vừa được đặt bởi {message.UserName}.",
+                    Message = $"Đơn hàng {message.OrderNo} vừa được đặt bởi {user?.DisplayName}.",
                     Category = "Order",
                     Type = "NewOrder",
                     ReferenceId = message.OrderId,

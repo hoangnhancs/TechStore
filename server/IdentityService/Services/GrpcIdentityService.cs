@@ -33,7 +33,8 @@ namespace IdentityService.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName
+                    DisplayName = user.DisplayName,
+                    PhoneNumber = user.PhoneNumber 
                 };
 
                 if (user.Image?.Url != null)
@@ -58,7 +59,8 @@ namespace IdentityService.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName
+                    DisplayName = user.DisplayName,
+                    PhoneNumber = user.PhoneNumber
                 };
 
                 if (user.Image?.Url != null)
@@ -85,7 +87,8 @@ namespace IdentityService.Services
                 UserName = systemUser.UserName,
                 UserEmail = systemUser.Email,
                 IsAdmin = systemUser.IsAdmin,
-                DisplayName = systemUser.DisplayName
+                DisplayName = systemUser.DisplayName,
+                PhoneNumber = systemUser.PhoneNumber
             };
 
             if (systemUser.Image?.Url != null)
@@ -109,7 +112,8 @@ namespace IdentityService.Services
                     UserName = user.UserName,
                     UserEmail = user.Email,
                     IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName
+                    DisplayName = user.DisplayName,
+                    PhoneNumber = user.PhoneNumber
                 };
 
                 if (user.Image?.Url != null)
