@@ -12,7 +12,8 @@ namespace Contract.Comment
         public string? Title { get; set; }
         public required string ReferenceType { get; set; }
         public required string ReferenceId { get; set; }
-        public string? ParentCommentId { get; set; } = null;
+        //public string? ParentCommentId { get; set; } = null;
+        public string? ParantCommentUserId { get; set; } = null;
         public DateTime CreatedAt { get; set; }
         public required string UserId { get; set; }
     }

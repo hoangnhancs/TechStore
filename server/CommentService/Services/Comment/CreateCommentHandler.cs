@@ -74,7 +74,7 @@ namespace CommentService.Services.Comment
                         UserId = comment.UserId,
                         Content = comment.Content,
                         CreatedAt = comment.CreatedAt,
-                        ParentCommentId = comment.ParentCommentId
+                        ParantCommentUserId = parentCommentUserId
                     },
                     cancellationToken);
             }

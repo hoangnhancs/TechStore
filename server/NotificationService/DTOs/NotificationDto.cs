@@ -13,7 +13,7 @@ namespace NotificationService.DTOs
         public string? Link { get; set; }
 
         // Phân loại cao
-        public string? Category { get; set; }  // System | Order | Payment | Interaction | Promotion
+        public string? Category { get; set; }  // System | Order | Payment | Interaction (tương tác như review, comment) | Promotion (khuyến mãi)
         public string? Type { get; set; }           // chi tiết hơn
 
         // Reference đến entity liên quan
