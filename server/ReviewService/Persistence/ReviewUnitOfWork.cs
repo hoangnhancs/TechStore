@@ -15,7 +15,6 @@ namespace ReviewService.Persistence
         private IUserInformationRepository? _userInformationRepository;
         public IReviewRepository ReviewRepository => 
             _reviewRepository ??= new ReviewRepository(_dbContext);
-        private IUserInformationRepository? _userInformationRepository;
         public IUserInformationRepository UserInformationRepository =>
             _userInformationRepository ??= new UserInformationRepository(_dbContext);
         public ReviewUnitOfWork(ReviewSvcDbContext context) : base(context)

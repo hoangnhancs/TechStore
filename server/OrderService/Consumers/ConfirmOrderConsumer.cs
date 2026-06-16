@@ -60,10 +60,10 @@ namespace OrderService.Consumers
                     OrderNo = order.OrderNo,
                     CreatedDate = order.CreatedAt,
                     UserId = order.UserId,
-                    UserName = order.RecipientName,
-                    UserEmail = order.UserEmail,
-                    UserPhone = order.RecipientPhone,
-                    UserImageUrl = order.UserImageUrl,
+                    // UserName = order.RecipientName,
+                    // UserEmail = order.UserEmail,
+                    // UserPhone = order.RecipientPhone,
+                    // UserImageUrl = order.UserImageUrl,
                     Items = order.Items.Select(i => new OrderItemEvent
                     {
                         ProductId = i.ProductId,

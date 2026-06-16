@@ -76,11 +76,13 @@ namespace NotificationService.Services.Notification
                     await _notificationServiceSender.SendToGroupAsync(adminGroup.Name, notificationDto);
                 }
             }
-            if (!string.IsNullOrEmpty(request.CreateNotificationDto.ReceiverId))
+            else
             {
-                await _notificationServiceSender.SendToUserAsync(request.CreateNotificationDto.ReceiverId, notificationDto);
+                if (!string.IsNullOrEmpty(request.CreateNotificationDto.ReceiverId))
+                {
+                    await _notificationServiceSender.SendToUserAsync(request.CreateNotificationDto.ReceiverId, notificationDto);
+                }
             }
-
             return AppResult<NotificationDto>.Success(notificationDto);
         }
     }
