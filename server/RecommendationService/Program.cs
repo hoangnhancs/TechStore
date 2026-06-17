@@ -1,6 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
-using Microsoft.EntityFrameworkCore;
+using ProductService.Grpc;
 using RecommendationService.Data;
 using RecommendationService.Services;
 
@@ -13,6 +14,12 @@ builder.Services.AddOpenApi();
 // Add DbContext for storing embeddings
 builder.Services.AddDbContext<RecommandationSvcDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
+    o.Address = new Uri(builder.Configuration["GrpcProduct"]
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
+
+builder.Services.AddScoped<GrpcProductClient>();
 
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
 

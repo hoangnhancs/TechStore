@@ -4,36 +4,13 @@ import "google/protobuf/timestamp.proto";
 
 option csharp_namespace = "ProductService.Grpc";
 
+
 service GrpcProduct {
-    rpc GetUpdatedProduct (GetUpdatedProductRequest) returns (GrpcUpdatedProductResponse);
-    rpc GetProduct (GetProductRequest) returns (GrpcProductResponse);
-    rpc GetProducts (GetProductsRequest) returns (GrpcProductsResponse);
-    rpc ReserveStock (ReserveStockRequest) returns (ReserveStockResponse);
     rpc GetTop10SoldProduct (GetTop10SoldProductRequest) returns (GrpcProductsResponse);
-}
-
-message GetUpdatedProductRequest {
-    google.protobuf.Timestamp lastUpdated = 1;
-}
-
-message GetProductRequest {
-    string id = 1;
-} 
-
-message GetProductsRequest {
-    repeated string ids = 1;
 }
 
 message GetTop10SoldProductRequest {
 
-}
-
-message GrpcUpdatedProductResponse {
-    repeated GrpcProductModel product = 1;
-}
-
-message GrpcProductResponse {
-    GrpcProductModel product = 1;
 }
 
 message GrpcProductsResponse {
@@ -102,27 +79,3 @@ message GrpcProductAttributeDto {
   int64 display_order = 4;
 }
 
-// Reserve stock messages
-message ReserveStockRequest {
-  repeated ReserveStockItem items = 1;
-}
-
-message ReserveStockItem {
-  string product_id = 1;
-  int32 quantity = 2;
-}
-
-message ReserveStockResponse {
-  bool success = 1;
-  repeated StockReservationResult results = 2;
-  string error_message = 3;
-}
-
-message StockReservationResult {
-  string product_id = 1;
-  string product_name = 2;
-  bool success = 3;
-  int32 requested_quantity = 4;
-  int32 available_quantity = 5;
-  string error_message = 6;
-}

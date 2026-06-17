@@ -14,6 +14,7 @@ namespace RecommendationService.Data
         {
         }
         public DbSet<ProductVectorEmbedding> ProductVectorEmbeddings { get; set; }
+        public DbSet<UserActionTracking> UserActionTrackings { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

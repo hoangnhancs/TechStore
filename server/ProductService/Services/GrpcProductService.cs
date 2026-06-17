@@ -1,12 +1,13 @@
+using Google.Protobuf.WellKnownTypes;
+using Grpc.Core;
+using Microsoft.EntityFrameworkCore;
+using ProductService.Data;
+using ProductService.Grpc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using Grpc.Core;
-using ProductService.Data;
-using Microsoft.EntityFrameworkCore;
-using Google.Protobuf.WellKnownTypes;
-using ProductService.Grpc;
 
 namespace ProductService.Services
 {
@@ -368,6 +369,76 @@ namespace ProductService.Services
 
             return response;
         }
+        public async override Task<GrpcProductsResponse> GetTop10SoldProduct(GetTop10SoldProductRequest request, ServerCallContext context)
+        {
+            var products = await _dbContext.Products.Where(p => p.IsActive)
+            .OrderByDescending(p => p.UnitSold)
+            .Take(10)
+            .ToListAsync();
 
+            var response = new GrpcProductsResponse();
+
+            foreach (var p in products)
+            {
+                var grpcProduct = new GrpcProductModel
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Description = p.Description,
+                    Price = (long)p.Price,
+                    OldPrice = (long)p.OldPrice,
+                    DiscountPercentage = (float)p.DiscountPercentage,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category?.Name ?? string.Empty,
+                    CategoryDisplayName = p.Category?.DisplayName ?? string.Empty,
+                    BrandId = p.BrandId,
+                    BrandName = p.Brand?.Name ?? string.Empty,
+                    MainImageUrl = p.MainImageUrl,
+                    UrlSlung = p.UrlSlug,
+                    IsActive = p.IsActive,
+                    IsFeatured = p.IsFeatured,
+                    IsNewArrival = p.IsNewArrival,
+                    IsOnSale = p.IsOnSale,
+                    AverageRating = (double)p.AverageRating,
+                    RatingCount = p.RatingCount,
+                    TotalRatingStar = p.TotalRatingStar,
+                    UnitSold = p.UnitSold,
+                    CreatedAt = Timestamp.FromDateTime(p.CreatedAt.ToUniversalTime()),
+                    UpdatedAt = Timestamp.FromDateTime(p.UpdatedAt.ToUniversalTime()),
+                    QuantityInStock = p.QuantityInStock
+                };
+
+                // Add Attributes (read-only collection)
+                if (p.Attributes != null)
+                {
+                    grpcProduct.Attributes.AddRange(p.Attributes.Select(a => new GrpcProductAttributeDto
+                    {
+                        Name = a.Name,
+                        Value = a.Value,
+                        AttributeType = a.AttributeType,
+                        DisplayOrder = a.DisplayOrder
+                    }));
+                }
+
+                // Add DisplayTags (read-only collection)
+                if (p.DisplayTags != null)
+                {
+                    grpcProduct.DisplayTags.AddRange(p.DisplayTags.Select(dt => dt.DisplayTag));
+                }
+
+                if (p.ProductFilterTagValues != null)
+                {
+                    grpcProduct.ProductFilterTagValues.AddRange(p.ProductFilterTagValues.Select(pftv => new GrpcProductFilterTagValueDto
+                    {
+                        Id = pftv.Id,
+                        FilterTagValueId = pftv.FilterTagValueId,
+                        FilterTagId = pftv.FilterTagValue == null ? 0 : pftv.FilterTagValue.FilterTagId,
+                        ProductId = pftv.ProductId
+                    }));
+                }
+                response.Products.Add(grpcProduct);
+            }
+            return response;
+        }
     }
 }
