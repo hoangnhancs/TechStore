@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Infrastructure.EF.Data;
 using Microsoft.EntityFrameworkCore;
 using NotificationService.Entities;
 
 namespace NotificationService.Data
 {
-    public class NotificationSvcDbContext : DbContext
+    public class NotificationSvcDbContext : BaseDbContext
     {
         public NotificationSvcDbContext(DbContextOptions<NotificationSvcDbContext> options) : base(options)
         {
