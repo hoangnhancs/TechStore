@@ -19,7 +19,7 @@ namespace NotificationService.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAdminNotificationGroup()
         {
-            return HandleAppResult(await Mediator.Send(new GetAllAdminNotiGroupQuery()));
+            return HandleAppResult(await Mediator.Send(new GetNotiGroupAllAdminQuery()));
         }
     }
 }

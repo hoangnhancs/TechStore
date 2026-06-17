@@ -5,6 +5,7 @@ using NotificationService.DTOs;
 using NotificationService.Services;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
+using static NotificationService.Entities.Notification;
 
 namespace NotificationService.Consumers
 {
@@ -22,23 +23,54 @@ namespace NotificationService.Consumers
             var message = context.Message;
             string? groupId = string.Empty;
             var parentCommentUserId = message.ParantCommentUserId;
-            var user = (await _identityClient.GetUsersByIds(new List<string> { message.UserId })).FirstOrDefault();
+            var isReply = !string.IsNullOrEmpty(message.ParentCommentId);
+
+            List<string> ids = new List<string> { message.UserId };
+
+            if (!string.IsNullOrEmpty(message.ParantCommentUserId)) 
+                ids.Add(message.ParantCommentUserId);
+
+            var users = await _identityClient.GetUsersByIds(ids);
+
+            var user = users.Where(x => x.UserId == message.UserId).FirstOrDefault();
+            var parentUser = users.Where(x => x.UserId == message.ParantCommentUserId).FirstOrDefault();
 
             if (user == null)
             {
                 return;
             }
-            if (user.IsAdmin)
+
+            var isSendToAdminGr = (isReply && (parentUser != null && parentUser.IsAdmin)) || !isReply; //isReply admin or new comment
+
+            if (isSendToAdminGr) //if reply admin or new comment, will get groupId to send notification to all admin
             {
-                groupId = (await _mediator.Send(new GetAllAdminNotiGroupQuery())).Value?.Id;
+                groupId = (await _mediator.Send(new GetNotiGroupAllAdminQuery())).Value?.Id;
             }
-  
-            _mediator.Send(new CreateNotificationCommand
+
+            string messageContent = string.IsNullOrEmpty(parentCommentUserId) 
+                ? $"{user.DisplayName} đã thêm bình luận mới:\n{message.Content}"
+                : $"{user.DisplayName} đã trả lời bình luận của bạn:\n{message.Content}";
+
+            await _mediator.Send(new CreateNotificationCommand
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
-                    ReceiverId = user.IsAdmin ? null : parentCommentUserId,
-                    GroupId = user.IsAdmin ? groupId : null,
+                    /*người nhận sẽ là người được reply hoặc admin*/
+                    ReceiverId = !isSendToAdminGr ? parentCommentUserId : null, 
+                    GroupId = isSendToAdminGr ? groupId : null,
+                    Title = "Bình luận mới",
+                    Message = messageContent,
+                    Link = message.Link,
+                    Category = NotificationCategory.Interaction.ToString(),
+                    Type = string.IsNullOrEmpty(parentCommentUserId) ? NotificationType.NewComment.ToString() : NotificationType.CommentReply.ToString(),
+                    ReferenceId = message.CommentId,
+                    ReferenceType = NotificationReferenceType.Comment.ToString(),
+                    ParentReferenceId = message.ParentCommentId,
+                    ParentReferenceType = string.IsNullOrEmpty(message.ParantCommentUserId) ? null : NotificationReferenceType.Comment.ToString(),
+                    SenderId = message.UserId,
+                    SenderName = user.UserName,
+                    SenderDisplayName = user.DisplayName,
+                    SenderImageUrl = user.ImageUrl
                 }
             });
         }

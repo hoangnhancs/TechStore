@@ -46,6 +46,7 @@ namespace CommentService.Services.Comment
 
             var isReply = !string.IsNullOrWhiteSpace(comment.ParentCommentId);
 
+            var user = _httpContextAccessor.HttpContext?.User;
             var isAdminNewComment = comment.ParentCommentId == null && (_httpContextAccessor.HttpContext?.User.IsInRole("Admin") ?? false);
 
             string? parentCommentUserId = null;
@@ -68,12 +69,14 @@ namespace CommentService.Services.Comment
                 await _publishEndpoint.Publish(
                     new CommentCreated
                     {
-                        Title = comment.Content,
-                        ReferenceId = comment.ReferenceId,
-                        ReferenceType = comment.ReferenceType,
+                        CommentId = comment.Id,
+                        //Title = comment.,
+                        //ReferenceId = comment.ReferenceId,
+                        //ReferenceType = comment.ReferenceType,
                         UserId = comment.UserId,
                         Content = comment.Content,
                         CreatedAt = comment.CreatedAt,
+                        ParentCommentId = comment.ParentCommentId,
                         ParantCommentUserId = parentCommentUserId
                     },
                     cancellationToken);
@@ -90,8 +93,8 @@ namespace CommentService.Services.Comment
 
             var dto = _mapper.Map<CommentDto>(comment);
 
-            dto.UserName = request.UserName;
-            dto.UserImageUrl = request.UserImageUrl;
+            dto.UserDisplayName = user?.FindFirst("display_name")?.Value ?? request.UserName;
+            dto.UserImageUrl = user?.FindFirst("image_url")?.Value ?? request.UserImageUrl;
 
             return AppResult<CommentDto>.Success(dto);
         }

@@ -57,6 +57,7 @@ builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>();
 // builder.Services.AddScoped<IUserSyncService, UserSyncService>();
 builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

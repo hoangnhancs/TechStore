@@ -1,12 +1,6 @@
-using Org.BouncyCastle.Bcpg.OpenPgp;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace NotificationService.DTOs
+﻿namespace NotificationService.DTOs
 {
-    public class NotificationDto
+    public class UserNotificationDto
     {
         public string? Id { get; set; }
         public required string Title { get; set; }
@@ -22,12 +16,13 @@ namespace NotificationService.DTOs
         public string? ReferenceType { get; set; }   // "Order", "Comment", "Review"
         public string? ParentReferenceId { get; set; }     // orderId, commentId, reviewId...
         public string? ParentReferenceType { get; set; }   // "Order", "
-        public List<NotificationRecipientDto> Recipients { get; set; } = [];
         // Sender: null nếu là System
         public required string SenderId { get; set; }
         public string? SenderName { get; set; }
         public string? SenderDisplayName { get; set; }
         public string? SenderImageUrl { get; set; }
-        public DateTime? CreatedAt { get; set; }
+        public bool IsRead { get; set; } = false;
+        public DateTime? ReadAt { get; set; }
+        public DateTime SentAt { get; set; } = DateTime.UtcNow;
     }
 }

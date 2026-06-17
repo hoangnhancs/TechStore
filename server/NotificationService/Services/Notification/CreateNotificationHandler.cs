@@ -66,8 +66,9 @@ namespace NotificationService.Services.Notification
             var notificationDto = _mapper.Map<NotificationDto>(noti);
             var senderInfo = (await _grpcIdentityClient.GetUsersByIds(new List<string> { request.CreateNotificationDto.SenderId })).FirstOrDefault();
             notificationDto.SenderId = senderInfo?.UserId ?? request.CreateNotificationDto.SenderId;
-            notificationDto.SenderName = senderInfo?.UserName;
-
+            notificationDto.SenderName = senderInfo?.UserName ?? request.CreateNotificationDto.SenderName;
+            notificationDto.SenderDisplayName = senderInfo?.DisplayName ?? request.CreateNotificationDto.SenderDisplayName;
+            notificationDto.CreatedAt = noti.CreatedAt;
             if (!string.IsNullOrEmpty(request.CreateNotificationDto.GroupId))
             {
                 var adminGroup = await _notificationUnitOfWork.NotificationGroupRepository.GetAll().FirstOrDefaultAsync(g => g.Name == NotificationGroups.AllAdminsNotiGroupName);

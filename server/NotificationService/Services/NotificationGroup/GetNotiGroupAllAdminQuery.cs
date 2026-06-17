@@ -8,7 +8,7 @@ using Shared.Core.EF.Application;
 
 namespace NotificationService.Services.NotificationGroup
 {
-    public class GetAllAdminNotiGroupQuery : IRequest<AppResult<NotificationGroupDto>>
+    public class GetNotiGroupAllAdminQuery : IRequest<AppResult<NotificationGroupDto>>
     {
         
     }

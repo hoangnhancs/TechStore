@@ -14,7 +14,7 @@ namespace CommentService.DTOs
         public bool IsVisible { get; set; } = true;
         public bool IsEdited { get; set; } = false;
         public required string UserId { get; set; }
-        public string? UserName { get; set; }
+        public string? UserDisplayName { get; set; }
         public string? UserImageUrl { get; set; }
         //public required string ProductId { get; set; }
         public required string ReferenceId { get; set; }

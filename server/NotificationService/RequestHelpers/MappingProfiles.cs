@@ -22,6 +22,8 @@ namespace NotificationService.RequestHelpers
                 .ForMember(dest => dest.Id, opt => opt.Ignore());
             CreateMap<NotificationGroupMember, NotificationGroupMemberDto>()
                 .ReverseMap();
+            CreateMap<NotificationRecipient, NotificationRecipientDto>()
+                .ReverseMap();
         }
     }
 }

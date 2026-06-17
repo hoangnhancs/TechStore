@@ -12,16 +12,16 @@ using Shared.Core.EF.Application;
 
 namespace NotificationService.Services.NotificationGroup
 {
-    public class GetAllAdminNotiGroupHandler : IRequestHandler<GetAllAdminNotiGroupQuery, AppResult<NotificationGroupDto>>
+    public class GetNotiGroupAllAdminHandler : IRequestHandler<GetNotiGroupAllAdminQuery, AppResult<NotificationGroupDto>>
     {
         private readonly INotificationUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
-        public GetAllAdminNotiGroupHandler(INotificationUnitOfWork unitOfWork, IMapper mapper)
+        public GetNotiGroupAllAdminHandler(INotificationUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
-        public async Task<AppResult<NotificationGroupDto>> Handle(GetAllAdminNotiGroupQuery request, CancellationToken cancellationToken)
+        public async Task<AppResult<NotificationGroupDto>> Handle(GetNotiGroupAllAdminQuery request, CancellationToken cancellationToken)
         {
             var query = _unitOfWork.NotificationGroupRepository.GetAll();
             var result = await query.FirstOrDefaultAsync(x => x.Name == NotificationGroups.AllAdminsNotiGroupName, cancellationToken);

@@ -44,7 +44,7 @@ namespace CommentService.Services.Comment
             {
                 if (userInfoDict.TryGetValue(commentDto.UserId, out var userInfo))
                 {
-                    commentDto.UserName = userInfo.UserName;
+                    commentDto.UserDisplayName = userInfo.DisplayName;
                     commentDto.UserImageUrl = userInfo.ImageUrl;
                 }
             }

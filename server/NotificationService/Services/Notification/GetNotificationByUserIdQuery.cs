@@ -8,7 +8,7 @@ using Shared.Core.EF.Application;
 
 namespace NotificationService.Services.Notification
 {
-    public class GetNotificationByUserIdQuery : IRequest<AppResult<List<NotificationDto>>>
+    public class GetNotificationByUserIdQuery : IRequest<AppResult<List<UserNotificationDto>>>
     {
         public required string UserId { get; set; }
     }

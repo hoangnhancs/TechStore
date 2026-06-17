@@ -37,6 +37,7 @@ namespace IdentityService.Services.OtherServices
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim("image_url", user.Image?.Url ?? string.Empty),
                 new Claim("security_stamp", await _userManager.GetSecurityStampAsync(user)),
+                new Claim("display_name", user.DisplayName ?? string.Empty)
                 //lay security stamp trong identity user(db user), 
                 // set vao claims de sau nay dung de so sanh, tao moi token sau khi reset pw
                 //boi vi reset pw se thay doi security stamp

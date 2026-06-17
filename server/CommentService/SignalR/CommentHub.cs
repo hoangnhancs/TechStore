@@ -16,12 +16,19 @@ namespace CommentService.SignalR
         {
             _mediator = mediator;
         }
-
+        /// <summary>
+        /// Note: userDisplayName and userImageUrl will be handled in handler
+        /// </summary>
+        /// <param name="referenceId"></param>
+        /// <param name="referenceType"></param>
+        /// <param name="content"></param>
+        /// <param name="parrentCommentId"></param>
+        /// <returns></returns>
         public async Task<string?> SendComment(string referenceId, string referenceType, string content, string? parrentCommentId = null)
         {
             var userId = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier);
-            var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
-            var userImageUrl = Context.User?.FindFirstValue("image_url");
+            //var userName = Context.User?.FindFirstValue(ClaimTypes.Name);
+            //var userImageUrl = Context.User?.FindFirstValue("image_url");
             if (string.IsNullOrEmpty(userId))
             {
                 await Clients.Caller.SendAsync("CommentError", "User not authenticated");
@@ -32,8 +39,8 @@ namespace CommentService.SignalR
                 ReferenceId = referenceId,
                 ReferenceType = referenceType,
                 UserId = userId,
-                UserName = userName,
-                UserImageUrl = userImageUrl,
+                //UserName = userName,
+                //UserImageUrl = userImageUrl,
                 ParentCommentId = parrentCommentId,
                 Content = content
             };
