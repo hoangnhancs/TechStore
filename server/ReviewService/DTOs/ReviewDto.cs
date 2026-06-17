@@ -11,6 +11,7 @@ namespace ReviewService.DTOs
         public required string ProductId { get; set; } = string.Empty;
         public required string UserId { get; set; } = string.Empty;
         public string? UserName { get; set; }
+        public string? UserDisplayName { get; set; }
         public string? UserImageUrl { get; set; }
         public required int Rating { get; set; }
         public string? Content { get; set; } = string.Empty;

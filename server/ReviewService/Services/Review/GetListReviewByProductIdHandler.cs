@@ -44,6 +44,7 @@ namespace ReviewService.Services.Review
                 if (userInfoDict.TryGetValue(reviewDto.UserId, out var userInfo))
                 {
                     reviewDto.UserName = userInfo.UserName;
+                    reviewDto.UserDisplayName = userInfo.DisplayName;
                     reviewDto.UserImageUrl = userInfo.ImageUrl;
                 }
             }

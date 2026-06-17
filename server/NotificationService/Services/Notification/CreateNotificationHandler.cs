@@ -33,6 +33,7 @@ namespace NotificationService.Services.Notification
         public async Task<AppResult<NotificationDto>> Handle(CreateNotificationCommand request, CancellationToken cancellationToken)
         {
             var noti = _mapper.Map<Entities.Notification>(request.CreateNotificationDto);
+
             if (string.IsNullOrEmpty(request.CreateNotificationDto.ReceiverId) && string.IsNullOrEmpty(request.CreateNotificationDto.GroupId))
             {
                 return AppResult<NotificationDto>.Failure("ReceiverId or GroupId must be provided", 400);
@@ -68,7 +69,7 @@ namespace NotificationService.Services.Notification
             notificationDto.SenderId = senderInfo?.UserId ?? request.CreateNotificationDto.SenderId;
             notificationDto.SenderName = senderInfo?.UserName ?? request.CreateNotificationDto.SenderName;
             notificationDto.SenderDisplayName = senderInfo?.DisplayName ?? request.CreateNotificationDto.SenderDisplayName;
-            notificationDto.CreatedAt = noti.CreatedAt;
+            notificationDto.CreatedAt = DateTime.UtcNow;
             if (!string.IsNullOrEmpty(request.CreateNotificationDto.GroupId))
             {
                 var adminGroup = await _notificationUnitOfWork.NotificationGroupRepository.GetAll().FirstOrDefaultAsync(g => g.Name == NotificationGroups.AllAdminsNotiGroupName);
