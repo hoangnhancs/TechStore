@@ -11,6 +11,7 @@ namespace RecommendationService.Entities
     public class ProductVectorEmbedding : BaseEntity<int>
     {
         public required string ProductId { get; set; }
+        public required bool IsProductDeleted { get; set; }
 
         [NotMapped]
         public List<float> Embedding { get; set; } = new();

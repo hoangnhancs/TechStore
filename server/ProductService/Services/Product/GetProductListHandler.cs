@@ -46,8 +46,8 @@ public class GetProductListHandler : IRequestHandler<GetProductListQuery, AppRes
         }
         else
         {
-            lastUpdatedDate = SqlDateTime.MinValue.Value; // Set to minimum value to fetch all products
-        }    
+            lastUpdatedDate = DateTime.MinValue; // Set to minimum value to fetch all products
+        }
 
         var products = await _unitOfWork.ProductRepository.GetListAsync(
             p => p.IsActive && !p.IsDeleted && (!lastUpdatedDate.HasValue || p.UpdatedAt > lastUpdatedDate.Value),
@@ -60,6 +60,20 @@ public class GetProductListHandler : IRequestHandler<GetProductListQuery, AppRes
                 .Include(p => p.DisplayTags),
             cancellationToken
         );
+        //    var products = await _unitOfWork.ProductRepository.GetListAsync(
+        //        p => p.IsActive
+        //&& !p.IsDeleted
+        //&& (!lastUpdatedDate.HasValue
+        //    || p.UpdatedAt > lastUpdatedDate.Value),
+        //        q => q
+        //            .Include(p => p.Category)
+        //            .Include(p => p.Brand)
+        //            .Include(p => p.Attributes)
+        //            .Include(p => p.ProductFilterTagValues)
+        //            .ThenInclude(pftv => pftv.FilterTagValue)
+        //            .Include(p => p.DisplayTags),
+        //        cancellationToken
+        //    );
 
         // var products = await _repository.GetAllProducts(cancellationToken);
 

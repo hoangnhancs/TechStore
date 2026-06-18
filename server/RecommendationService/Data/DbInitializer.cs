@@ -83,7 +83,9 @@ namespace RecommendationService.Data
                             embeddings.Add(new ProductVectorEmbedding
                             {
                                 ProductId = response.ProductId,
+                                IsProductDeleted = product.IsDeleted,
                                 Embedding = response.Embedding
+                                
                             });
 
                             processedCount++;

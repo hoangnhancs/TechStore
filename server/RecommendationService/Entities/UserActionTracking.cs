@@ -12,11 +12,11 @@ namespace RecommendationService.Entities
         public UserActionType ActionType { get; set; }
         public DateTime ActionTime { get; set; } = DateTime.UtcNow;
         public string? MetaData { get; set; }
-        public enum UserActionType
-        {
-            View,
-            AddToCart,
-            Purchase
-        }
+    }
+    public enum UserActionType
+    {
+        View,
+        AddToCart,
+        Purchase
     }
 }

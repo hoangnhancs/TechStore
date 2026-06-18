@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using RecommendationService.Entities;
 using RecommendationService.Persistence;
 using RecommendationService.Repositories;
 using RecommendationService.Repositories.Interface;
@@ -21,7 +22,7 @@ namespace RecommendationService.Services.UserActionTracking
             {
                 UserId = request.UserId,
                 ProductId = request.ProductId,
-                ActionType = Enum.Parse<Entities.UserActionTracking.UserActionType>(request.ActionType)
+                ActionType = Enum.Parse<UserActionType>(request.ActionType)
             };
             await _unitOfWork.UserActionTrackingRepository.AddAsync(newTracking, cancellationToken);
             var result = await _unitOfWork.CommitAsync(cancellationToken);

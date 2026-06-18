@@ -29,7 +29,10 @@ namespace ProductService.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
+
+            modelBuilder.Entity<Product>()
+                .HasIndex(p => p.UpdatedAt);
+
             modelBuilder.Entity<Product>()
                 .Property(p => p.AverageRating)
                 .HasPrecision(3, 2);

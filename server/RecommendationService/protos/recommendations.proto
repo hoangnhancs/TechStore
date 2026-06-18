@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option csharp_namespace = "Recommendations.Grpc";
+
+service GrpcProduct {
+    rpc GetSuggestProduct (GetSuggestProductRequest) returns (GrpcSuggestProductResponse);
+}
+
+message GetSuggestProductRequest {
+
+}
+
+message GrpcSuggestProductResponse {
+    repeated string productIds = 1;
+}

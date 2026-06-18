@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using RecommendationService.Data;
@@ -11,9 +12,11 @@ using RecommendationService.Data;
 namespace RecommendationService.Migrations
 {
     [DbContext(typeof(RecommandationSvcDbContext))]
-    partial class RecommandationSvcDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618094049_Add IsProductDeleted")]
+    partial class AddIsProductDeleted
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
