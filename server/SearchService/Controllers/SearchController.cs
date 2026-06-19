@@ -1,14 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using MongoDB.Entities;
 using SearchService.Entities;
 using SearchService.RequestHelpers;
+using SearchService.Services;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace SearchService.Controllers
 {
@@ -16,6 +18,12 @@ namespace SearchService.Controllers
     [ApiController]
     public class SearchController : ControllerBase
     {
+        private readonly GrpcRecommendationClient _grpcRecommendationClient;
+
+        public SearchController(GrpcRecommendationClient grpcRecommendationClient)
+        {
+            _grpcRecommendationClient = grpcRecommendationClient;
+        }
         [HttpGet("{categoryId?}/{brandId?}")]
         [AllowAnonymous]
         public async Task<IActionResult> SearchItems([FromRoute] int? categoryId, [FromRoute] int? brandId, [FromQuery] SearchParams searchParams)
@@ -89,6 +97,15 @@ namespace SearchService.Controllers
 
                 result.AddRange(topItems);
             }
+
+            return Ok(result);
+        }
+        [HttpGet("suggestion")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<ProductItem>>> GetSuggestProduct(int numberOfProduct = 10)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var result = await _grpcRecommendationClient.GetSuggestProduct(userId, numberOfProduct);
 
             return Ok(result);
         }

@@ -4,6 +4,7 @@ using MongoDB.Entities;
 using Polly;
 using Polly.Extensions.Http;
 using ProductService.Grpc;
+using Recommendations.Grpc;
 using SearchService.Consumers;
 using SearchService.Data;
 using SearchService.Services;
@@ -34,7 +35,12 @@ builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
         ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
+builder.Services.AddGrpcClient<GrpcRecommendation.GrpcRecommendationClient>(o =>
+    o.Address = new Uri(builder.Configuration["GrpcRecommendation"]
+        ?? throw new InvalidOperationException("'GrpcRecommendation' address is not configured.")));
+
 builder.Services.AddScoped<GrpcProductClient>();
+builder.Services.AddScoped<GrpcRecommendationClient>();
 
 var app = builder.Build();
 

@@ -1,8 +1,10 @@
 ﻿using Infrastructure.EF.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Polly;
 using RecommendationService.Data;
 using RecommendationService.Entities;
 using RecommendationService.Repositories.Interface;
+using System.Numerics;
 
 namespace RecommendationService.Repositories
 {
@@ -11,6 +13,14 @@ namespace RecommendationService.Repositories
         public ProductVectorEmbeddingRepository(RecommandationSvcDbContext dbContext) : base(dbContext)
         {
         }
+
+        public async Task<List<ProductVectorEmbedding>> GetActiveEmbeddingsAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.ProductVectorEmbeddings
+                .Where(x => !x.IsDeleted)
+                .ToListAsync(cancellationToken);
+        }
+
         public async Task<ProductVectorEmbedding?> GetProductVectorEmbeddingByProductId(string productId, CancellationToken cancellationToken)
         {
             return await _dbContext.ProductVectorEmbeddings.FirstOrDefaultAsync(p => p.ProductId == productId, cancellationToken);
@@ -21,53 +31,22 @@ namespace RecommendationService.Repositories
             return await _dbContext.ProductVectorEmbeddings.Where(p => productIds.Contains(p.ProductId)).ToListAsync(cancellationToken);
         }
 
-        public async Task<List<ProductVectorEmbedding>> GetTopRecommendedProductsAsync(string userId, int numberOfProducts, CancellationToken cancellationToken)
+        public async Task<List<string>> GetTopSimilarProductsAsync(List<float> avgVector, int top, CancellationToken cancellationToken)
         {
-            var productTrackingWeight = new Dictionary<string, float>();//weight of each product in the user tracking list
-            var hashSetProductId = new HashSet<string>();
-            var userTracking = await _dbContext.UserActionTrackings.Where(uat => uat.UserId == userId)
-                .OrderByDescending(uat => uat.ActionTime)
-                .Take(100)
+            var embeddings = await _dbContext.ProductVectorEmbeddings
+                .Where(x => !x.IsDeleted)
                 .ToListAsync(cancellationToken);
-            foreach (var item in userTracking)
-            {
-                float weight = item.ActionType switch
-                {
-                    UserActionType.View => 1f,
-                    UserActionType.AddToCart => 1.5f,
-                    UserActionType.Purchase => 2f,
-                    _ => 0f
-                };
-                if (weight == 0f) continue;
-                if (productTrackingWeight.ContainsKey(item.ProductId))
-                {
-                    productTrackingWeight[item.ProductId] += weight;
-                }
-                else
-                {
-                    productTrackingWeight.Add(item.ProductId, weight);
-                }
-                hashSetProductId.Add(item.ProductId);
-            }
 
-            var productEmbedVectors = await _unitOfWork.ProductVectorEmbeddingRepository.GetProductVectorEmbeddingsByProductIds(hashSetProductId, cancellationToken);
-            var inputVectors = new List<List<float>>();
-            foreach (var item in productEmbedVectors)
-            {
-                var tmpVector = MultiplyWithWeight(item.Embedding, productTrackingWeight[item.ProductId]);
-                inputVectors.Add(tmpVector);
-            }
-            var avgEmbedVector = ComputeAverageVector(inputVectors);
-            var allVectorsWithProduct = await _unitOfWork.ProductVectorEmbeddingRepository.GetAll().Where(p => p.IsDeleted == false).ToListAsync(cancellationToken);
-
-            var resultsVectors = allVectorsWithProduct
-                .Select(p => new
+            return embeddings
+                .Select(x => new
                 {
-                    ProductId = p.ProductId,
-                    Score = CosineSimilarity(avgEmbedVector, p.Embedding)
+                    x.ProductId,
+                    Score = CosineSimilarity(avgVector, x.Embedding)
                 })
                 .OrderByDescending(x => x.Score)
-                .Take(10);
+                .Take(top)
+                .Select(x => x.ProductId)
+                .ToList();
         }
 
         public async Task UpdateProductVectorEmbedding(string productId, string vector)
@@ -78,5 +57,25 @@ namespace RecommendationService.Repositories
                 product.EmbeddingJson = vector;
             }
         }
+
+        #region Helpers
+        public static float CosineSimilarity(List<float> a, List<float> b)
+        {
+            if (a.Count != b.Count) throw new ArgumentException("Vectors must have the same length");
+
+            float dot = 0f;
+            float normA = 0f;
+            float normB = 0f;
+
+            for (int i = 0; i < a.Count; i++)
+            {
+                dot += a[i] * b[i];
+                normA += a[i] * a[i];
+                normB += b[i] * b[i];
+            }
+
+            return (float)(dot / (Math.Sqrt(normA) * Math.Sqrt(normB)));
+        }
+        #endregion
     }
 }

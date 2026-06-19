@@ -24,7 +24,8 @@ namespace OrderService.Data
         
         // Saga State Machine persistence
         public DbSet<OrderSagaState> OrderSagaStates { get; set; }
-        
+        public DbSet<UserInformation> UserInformations { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

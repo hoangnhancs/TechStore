@@ -19,7 +19,7 @@ namespace RecommendationService.Services.ProductVectorEmbedding
 
         public async Task<AppResult<List<string>>> Handle(GetSuggestionProductQuery request, CancellationToken cancellationToken)
         {
-            if (request.UserId == null)
+            if (string.IsNullOrEmpty(request.UserId))
             {
                 var products = await _rpcProductClient.GetTop10SoldProduct();
                 return AppResult<List<string>>.Success(products.Select(x => x.Id).ToList());
@@ -64,18 +64,9 @@ namespace RecommendationService.Services.ProductVectorEmbedding
                 inputVectors.Add(tmpVector);
             }
             var avgEmbedVector = ComputeAverageVector(inputVectors);
-            var allVectorsWithProduct = await _unitOfWork.ProductVectorEmbeddingRepository.GetAll().Where(p => p.IsDeleted == false).ToListAsync(cancellationToken);    
+            var topSimilarProducts = await _unitOfWork.ProductVectorEmbeddingRepository.GetTopSimilarProductsAsync(avgEmbedVector, request.NumberTopProduct, cancellationToken);
 
-            var resultsVectors = allVectorsWithProduct
-                .Select(p => new
-                {
-                    ProductId = p.ProductId,
-                    Score = CosineSimilarity(avgEmbedVector, p.Embedding)
-                })
-                .OrderByDescending(x => x.Score)
-                .Take(10);
-
-            return AppResult<List<string>>.Success(resultsVectors.Select(x => x.ProductId).ToList());
+            return AppResult<List<string>>.Success(topSimilarProducts);
         }
 
         #region Helpers
@@ -106,24 +97,6 @@ namespace RecommendationService.Services.ProductVectorEmbedding
             }
 
             return result.ToList();
-        }
-
-        public static float CosineSimilarity(List<float> a, List<float> b)
-        {
-            if (a.Count != b.Count) throw new ArgumentException("Vectors must have the same length");
-
-            float dot = 0f;
-            float normA = 0f;
-            float normB = 0f;
-
-            for (int i = 0; i < a.Count; i++)
-            {
-                dot += a[i] * b[i];
-                normA += a[i] * a[i];
-                normB += b[i] * b[i];
-            }
-
-            return (float)(dot / (Math.Sqrt(normA) * Math.Sqrt(normB)));
         }
         #endregion
     }

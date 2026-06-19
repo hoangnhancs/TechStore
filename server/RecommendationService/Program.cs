@@ -3,14 +3,21 @@ using Polly;
 using Polly.Extensions.Http;
 using ProductService.Grpc;
 using RecommendationService.Data;
+using RecommendationService.Persistence;
 using RecommendationService.Services;
+using Shared.Web.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddGrpc();
 
+//builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 // Add DbContext for storing embeddings
 builder.Services.AddDbContext<RecommandationSvcDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -20,6 +27,7 @@ builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
         ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
 builder.Services.AddScoped<GrpcProductClient>();
+builder.Services.AddScoped<IRecommandationUnitOfWork, RecommandationUnitOfWork>();
 
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
 
@@ -30,6 +38,9 @@ builder.Services.AddHttpClient<VectorServiceClient>()
 var app = builder.Build();
 
 // Seed database with product embeddings
+
+app.MapGrpcService<GrpcRecommendationService>();
+
 await DbInitializer.SeedData(app);
 
 // Configure the HTTP request pipeline.
@@ -37,8 +48,6 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-app.UseHttpsRedirection();
 
 app.Run();
 

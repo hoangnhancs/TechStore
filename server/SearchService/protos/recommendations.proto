@@ -7,7 +7,7 @@ service GrpcRecommendation {
 }
 
 message GetSuggestProductRequest {
-    string userId = 1;
+    optional string userId = 1;
     int32 numberOfProducts = 2; 
 }
 
