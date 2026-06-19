@@ -47,6 +47,12 @@ namespace OrderService.RequestHelpers
             CreateMap<OrderStatusHistoryDto, OrderStatusHistory>()
                 .ForMember(dest => dest.FromStatus, opt => opt.Ignore()) // Status is managed by domain
                 .ForMember(dest => dest.ToStatus, opt => opt.Ignore()); // Status is managed
+
+            //User infor
+            CreateMap<Order, OrderWithUserInforDto>()
+                .ForMember(dest => dest.UserInfor, opt => opt.MapFrom(src => src.User));
+
+            CreateMap<UserInformation, UserInforDto>();
         }
     }
 }

@@ -1,3 +1,4 @@
+using IdentityService.Grpc;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Consumers;
@@ -8,6 +9,7 @@ using OrderService.Saga;
 using OrderService.Services;
 using OrderService.SettingConfig;
 using OrderService.SignalR;
+using OrderService.Workers;
 using ProductService.Grpc;
 using Quartz;
 using Shared.Web.Extensions;
@@ -114,12 +116,17 @@ builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
         ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
+builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
+    o.Address = new Uri(builder.Configuration["GrpcIdentity"]
+        ?? throw new InvalidOperationException("'GrpcIdentity' address is not configured.")));
 
 builder.Services.Configure<PaymentOptions>(
     builder.Configuration.GetSection("PaymentOptions"));
 
 builder.Services.AddScoped<GrpcProductClient>();
+builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
+builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 

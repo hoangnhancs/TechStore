@@ -10,6 +10,7 @@ namespace OrderService.Persistence
     public interface IOrderUnitOfWork : IUnitOfWork
     {
         IOrderRepository OrderRepository { get; }
-        
+        IUserInformationRepository UserInformationRepository { get; }
+
     }
 }

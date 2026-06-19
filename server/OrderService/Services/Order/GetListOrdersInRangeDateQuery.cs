@@ -8,7 +8,7 @@ using Shared.Core.EF.Application;
 
 namespace OrderService.Services.Order
 {
-    public class GetListOrdersInRangeDateQuery : IRequest<AppResult<List<OrderDto>>>
+    public class GetListOrdersInRangeDateQuery : IRequest<AppResult<List<OrderWithUserInforDto>>>
     {
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }

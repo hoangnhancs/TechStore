@@ -1,13 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Contract.Order;
 using Infrastructure.EF.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using OrderService.Entities;
 using OrderService.Saga;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
 using static OrderService.Entities.Order;
 
 namespace OrderService.Data
@@ -54,7 +55,15 @@ namespace OrderService.Data
                         )
                     );
             });
-            
+            builder.Entity<UserInformation>()
+                .HasIndex(x => x.UserId)
+                .IsUnique();
+
+            builder.Entity<Order>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .HasPrincipalKey(x => x.UserId);
             // MassTransit Outbox tables
             builder.AddInboxStateEntity();
             builder.AddOutboxMessageEntity();

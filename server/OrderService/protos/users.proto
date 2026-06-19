@@ -6,13 +6,22 @@ option csharp_namespace = "IdentityService.Grpc";
 
 service GrpcIdentity {
     rpc GetUsersByIds (GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+    rpc GetUserByLastUpdated (GetUserByLastUpdatedRequest) returns (GetUserByLastUpdatedResponse);
 }
 
 message GetUsersByIdsRequest {
     repeated string userIds = 1;
 }
 
+message GetUserByLastUpdatedRequest {
+    google.protobuf.Timestamp last_updated = 1;
+}
+
 message GetUsersByIdsResponse {
+    repeated UserInfo users = 1;
+}
+
+message GetUserByLastUpdatedResponse {
     repeated UserInfo users = 1;
 }
 

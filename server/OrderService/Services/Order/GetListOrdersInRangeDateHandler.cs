@@ -8,7 +8,7 @@ using Shared.Core.EF.Application;
 
 namespace OrderService.Services.Order;
 
-public class GetListOrdersInRangeDateHandler : IRequestHandler<GetListOrdersInRangeDateQuery, AppResult<List<OrderDto>>>
+public class GetListOrdersInRangeDateHandler : IRequestHandler<GetListOrdersInRangeDateQuery, AppResult<List<OrderWithUserInforDto>>>
 {
     private readonly IOrderUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
@@ -17,14 +17,10 @@ public class GetListOrdersInRangeDateHandler : IRequestHandler<GetListOrdersInRa
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
-    public async Task<AppResult<List<OrderDto>>> Handle(GetListOrdersInRangeDateQuery request, CancellationToken cancellationToken)
+    public async Task<AppResult<List<OrderWithUserInforDto>>> Handle(GetListOrdersInRangeDateQuery request, CancellationToken cancellationToken)
     {
-        var orders = await _unitOfWork.OrderRepository.GetListAsync(
-            p => p.CreatedAt >= request.StartDate && p.CreatedAt <= request.EndDate,
-            q => q.Include(o => o.Items),
-            cancellationToken
-        );
-        var ordersDto = orders.Select(_mapper.Map<OrderDto>).ToList();
-        return AppResult<List<OrderDto>>.Success(ordersDto);
+        var orders = await _unitOfWork.OrderRepository.GetListOrdersInDateRangeWithUserInfor(request.StartDate, request.EndDate);
+        var ordersDto = _mapper.Map<List<OrderWithUserInforDto>>(orders);
+        return AppResult<List<OrderWithUserInforDto>>.Success(ordersDto);
     }
 }

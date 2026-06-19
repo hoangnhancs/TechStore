@@ -27,6 +27,19 @@ namespace OrderService.Services
             return response.Users.ToList();
         }
 
+        public async Task<List<UserInfo>> GetUserByLastUpdated(DateTime lastUpdated)
+        {
+            var request = new GetUserByLastUpdatedRequest
+            {
+                LastUpdated = Google.Protobuf.WellKnownTypes.Timestamp
+                    .FromDateTime(lastUpdated.ToUniversalTime())
+            };
+
+            var response = await _client.GetUserByLastUpdatedAsync(request);
+
+            return response.Users.ToList();
+        }
+
         public async Task SyncUserInformation()
         {
             // var lastUpdated =

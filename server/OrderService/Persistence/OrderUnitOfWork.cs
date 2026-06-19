@@ -14,6 +14,9 @@ namespace OrderService.Persistence
         private IOrderRepository? _orderRepository;
         public IOrderRepository OrderRepository => 
             _orderRepository ??= new OrderRepository(_dbContext);
+        private IUserInformationRepository? _userInformationRepository;
+        public IUserInformationRepository UserInformationRepository => 
+            _userInformationRepository ??= new UserInformationRepository(_dbContext);
         public OrderUnitOfWork(
             OrderSvcDbContext context) : base(context)
         {

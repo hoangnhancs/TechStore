@@ -8,6 +8,7 @@ namespace OrderService.Entities;
 public class Order : BaseEntity<string>
 {
     public required string UserId { get; set; }
+    public UserInformation? User { get; set; }
     public required string RecipientName { get; set; }
     public string? UserEmail { get; set; }
     public string? UserImageUrl { get; set; }
