@@ -23,9 +23,10 @@ namespace IdentityService.Services.Address
         {
             if (request.Address.IsDefault == true)
             {
-                await _unitOfWork.AddressRepository.SetOtherAddressNotDefaultAsync(request.UserId, cancellationToken);
+                await _unitOfWork.AddressRepository.SetOtherAddressNotDefaultAsync(request.UserId, null, cancellationToken);
             }
             var addressEntity = _mapper.Map<Entities.Address>(request.Address);
+            addressEntity.Id = Guid.NewGuid().ToString();
             addressEntity.UserId = request.UserId;
             await _unitOfWork.AddressRepository.AddAsync(addressEntity, cancellationToken);
             var result = await _unitOfWork.CommitAsync(cancellationToken);

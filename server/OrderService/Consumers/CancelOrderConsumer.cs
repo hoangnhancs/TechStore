@@ -44,11 +44,21 @@ namespace OrderService.Consumers
 
                 // Update order status to Cancelled
                 order.Cancel(context.Message.Reason);
-                
+
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Order cancelled: {OrderId}, Reason: {Reason}", 
+                _logger.LogInformation("Order cancelled: {OrderId}, Reason: {Reason}",
                     message.OrderId, message.Reason);
+
+                await context.Publish<Contract.Order.OrderCancelled>(new
+                {
+                    OrderId = order.Id,
+                    OrderNo = order.OrderNo,
+                    UserId = order.UserId,
+                    Reason = message.Reason,
+                    PaymentMethod = order.PmtMethod.ToString(),
+                    CancelledAt = DateTime.UtcNow
+                });
             }
             catch (Exception ex)
             {

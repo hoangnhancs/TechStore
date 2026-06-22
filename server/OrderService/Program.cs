@@ -129,6 +129,7 @@ builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
 builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 

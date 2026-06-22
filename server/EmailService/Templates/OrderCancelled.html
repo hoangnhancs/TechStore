@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Đơn hàng đã bị hủy</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f4f6f8; font-family:Arial, sans-serif;">
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="padding:20px;">
+        <tr>
+            <td align="center">
+
+                <!-- CONTAINER -->
+                <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:10px; overflow:hidden;">
+
+                    <!-- HEADER -->
+                    <tr>
+                        <td style="background:#dc2626; color:#ffffff; padding:20px;">
+                            <h2 style="margin:0;">❌ Đơn hàng đã bị hủy</h2>
+                            <p style="margin:5px 0 0; font-size:14px;">
+                                Mã đơn: <b>#{{OrderNo}}</b>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- BODY -->
+                    <tr>
+                        <td style="padding:20px; color:#333;">
+
+                            <p>Xin chào <b>{{CustomerName}}</b>,</p>
+                            <p>Rất tiếc, đơn hàng của bạn đã bị hủy.</p>
+
+                            <!-- CANCEL REASON -->
+                            <table width="100%" style="margin:15px 0; background:#fef2f2; border:1px solid #fecaca; border-radius:6px; font-size:14px;">
+                                <tr>
+                                    <td style="padding:12px 16px;">
+                                        🔔 <b>Lý do hủy:</b><br>
+                                        <span style="color:#6b7280; margin-top:4px; display:block;">{{Reason}}</span>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <!-- ORDER INFO -->
+                            <table width="100%" style="margin-top:15px; font-size:14px;">
+                                <tr>
+                                    <td style="padding:4px 0;"><b>Ngày hủy:</b></td>
+                                    <td>{{CancelledAt}}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:4px 0;"><b>Phương thức thanh toán:</b></td>
+                                    <td>{{PaymentMethod}}</td>
+                                </tr>
+                            </table>
+
+                            <p style="margin-top:20px; color:#6b7280; font-size:14px;">
+                                Nếu bạn đã thanh toán, khoản tiền sẽ được hoàn trả trong vòng 3–5 ngày làm việc tùy theo phương thức thanh toán của bạn.
+                                Nếu bạn có thắc mắc, vui lòng liên hệ bộ phận hỗ trợ.
+                            </p>
+
+                            <!-- CTA BUTTON -->
+                            <div style="text-align:center; margin-top:30px;">
+                                <a href="{{ShopUrl}}"
+                                   style="background:#2563eb; color:#ffffff; padding:12px 24px; text-decoration:none; border-radius:6px; display:inline-block;">
+                                    Tiếp tục mua sắm
+                                </a>
+                            </div>
+
+                        </td>
+                    </tr>
+
+                    <!-- FOOTER -->
+                    <tr>
+                        <td style="background:#f9fafb; text-align:center; padding:15px; font-size:12px; color:#888;">
+                            <p style="margin:0;">© 2026 TechStore</p>
+                            <p style="margin:5px 0 0;">Email này được gửi tự động, vui lòng không trả lời.</p>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

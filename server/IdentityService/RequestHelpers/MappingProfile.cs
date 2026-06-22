@@ -12,7 +12,10 @@ namespace IdentityService.RequestHelpers
     {
         public MappingProfile()
         {
-            CreateMap<AddressDto, Address>().ReverseMap();
+            CreateMap<AddressDto, Address>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore());
+            CreateMap<Address, AddressDto>();
         }
     }
 }

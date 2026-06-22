@@ -29,6 +29,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<OrderConfirmedConsumer>();
+    x.AddConsumer<OrderCancelledConsumer>();
     x.AddConsumer<CommentCreatedConsumer>();
     x.AddConsumer<ReviewCreatedConsumer>();
 

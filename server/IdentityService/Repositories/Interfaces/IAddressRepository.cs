@@ -9,6 +9,6 @@ namespace IdentityService.Repositories.Interfaces
 {
     public interface IAddressRepository : IBaseEFRepository<Address, string>
     {
-        Task SetOtherAddressNotDefaultAsync(string userId, CancellationToken cancellationToken);
+        Task SetOtherAddressNotDefaultAsync(string userId, string? currentAddressId, CancellationToken cancellationToken);
     }
 }

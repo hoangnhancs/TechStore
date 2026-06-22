@@ -15,10 +15,10 @@ namespace IdentityService.Repositories
         {
         }
 
-        public async Task SetOtherAddressNotDefaultAsync(string userId, CancellationToken cancellationToken)
+        public async Task SetOtherAddressNotDefaultAsync(string userId, string? currentAddressId, CancellationToken cancellationToken)
         {
             var addresses = await GetListAsync(
-                predicate: a => a.UserId == userId && a.IsDefault == true,
+                predicate: a => a.UserId == userId && a.IsDefault == true && (string.IsNullOrEmpty(currentAddressId) || a.Id != currentAddressId),
                 cancellationToken: cancellationToken
             );
             foreach (var address in addresses)
