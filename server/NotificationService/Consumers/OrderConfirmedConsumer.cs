@@ -13,18 +13,9 @@ namespace NotificationService.Consumers
 {
     public class OrderConfirmedConsumer : IConsumer<OrderConfirmed>
     {
-        private readonly IEmailService _emailService;
-        private readonly IEmailTemplateBuilder _templateBuilder;
-        private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
-        public OrderConfirmedConsumer(IEmailService emailService, 
-            IEmailTemplateBuilder templateBuilder, 
-            GrpcIdentityClient grpcIdentityClient, 
-            IMediator mediator)
+        public OrderConfirmedConsumer(IMediator mediator)
         {
-            _emailService = emailService;
-            _templateBuilder = templateBuilder;
-            _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
         }
         public async Task Consume(ConsumeContext<OrderConfirmed> context)

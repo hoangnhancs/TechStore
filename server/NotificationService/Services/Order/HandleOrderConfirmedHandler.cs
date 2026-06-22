@@ -121,13 +121,16 @@ namespace NotificationService.Services.Order
             };
 
             //send notification email will be implemented in create notification handler, here we just create notification
-            var adminNotiResult = await _mediator.Send(adminNotificationCommand);
+      
+            var adminNotiResult = await _mediator.Send(adminNotificationCommand, cancellationToken);
+            
+
             //if (adminNotiResult.IsSuccess && adminNotiResult.Value != null)
             //{
             //    await _notificationSender.SendToGroupAsync(adminGroup.Name, adminNotiResult.Value);
             //}
 
-            var userNotiResult = await _mediator.Send(userNotificationCommand);
+            var userNotiResult = await _mediator.Send(userNotificationCommand, cancellationToken);
             //if (userNotiResult.IsSuccess && userNotiResult.Value != null)
             //{
             //    await _notificationSender.SendToUserAsync(message.UserId, userNotiResult.Value);
