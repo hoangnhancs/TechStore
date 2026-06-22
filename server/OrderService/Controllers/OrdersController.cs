@@ -145,6 +145,14 @@ public class OrdersController : BaseApiController
         }));
     }
 
+    [HttpGet("wait-confirm-order")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetOrdersWaitingForConfirmation()
+    {
+        var query = new GetListOrdersWaitingForConfirmationQuery();
+        return HandleAppResult(await Mediator.Send(query));
+    }
+
     /// <summary>
     /// User retries payment (optionally with a different payment method)
     /// </summary>

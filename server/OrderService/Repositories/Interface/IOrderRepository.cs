@@ -12,5 +12,6 @@ namespace OrderService.Repositories.Interface
     public interface IOrderRepository : IBaseEFRepository<Order, string>
     {
         Task<List<Order>> GetListOrdersInDateRangeWithUserInfor(DateTime startDate, DateTime endDate);
+        Task<List<Order>> GetListOrdersWaitingForConfirmation();
     }
 }

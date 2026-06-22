@@ -19,8 +19,21 @@ namespace OrderService.Repositories
 
         public async Task<List<Order>> GetListOrdersInDateRangeWithUserInfor(DateTime startDate, DateTime endDate)
         {
-            var orders = await _dbContext.Orders.Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate).Include(x=>x.User).ToListAsync();
+            var orders = await _dbContext.Orders
+                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+                .Include(x=>x.User)
+                .Include(x=>x.Items)
+                .ToListAsync();
             return orders;
+        }
+
+        public async Task<List<Order>> GetListOrdersWaitingForConfirmation()
+        {
+            return await _dbContext.Orders
+                .Where(o => o.Status == Order.OrderStatus.WaitingForConfirmation)
+                .Include(x => x.User)
+                .Include(x => x.Items)
+                .ToListAsync();
         }
     }
 }
