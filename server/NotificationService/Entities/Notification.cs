@@ -71,6 +71,7 @@ namespace NotificationService.Entities
             OrderPlaced,        // đặt hàng + thanh toán ok
             OrderShipping,      // admin cập nhật đang giao
             OrderDelivered,     // giao xong
+            OrderCancelled,     // huỷ xong
 
             // Order - Admin nhận
             NewOrder,           // có đơn mới

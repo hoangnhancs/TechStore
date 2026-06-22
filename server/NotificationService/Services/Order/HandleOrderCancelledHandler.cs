@@ -7,6 +7,7 @@ using NotificationService.RequestHelpers;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
 using Shared.Core.EF.Application;
+using static NotificationService.Entities.Notification;
 
 namespace NotificationService.Services.Order
 {
@@ -81,10 +82,10 @@ namespace NotificationService.Services.Order
                 {
                     Title = $"Đơn hàng bị hủy: #{message.OrderNo}",
                     Message = $"Đơn hàng #{message.OrderNo} đã bị hủy. Lý do: {message.Reason}",
-                    Category = "Order",
-                    Type = "OrderCancelled",
+                    Category = NotificationCategory.Order.ToString(),
+                    Type = NotificationType.OrderCancelled.ToString(),
                     ReferenceId = message.OrderId,
-                    ReferenceType = "Order",
+                    ReferenceType = NotificationReferenceType.Order.ToString(),
                     GroupId = adminGroup.Id,
                     SenderId = systemUser?.UserId ?? throw new ArgumentNullException(nameof(systemUser)),
                     SenderName = systemUser?.UserName ?? "System",
