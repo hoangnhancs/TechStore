@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using PaymentService.Consumers;
 using PaymentService.Data;
+using PaymentService.Jobs;
 using PaymentService.Persistence;
 using PaymentService.RequestHelpers;
 using PaymentService.Services;
@@ -62,6 +63,8 @@ builder.Services.AddScoped<MomoPaymentService>();
 builder.Services.AddScoped<VNPayPaymentService>();
 builder.Services.AddScoped<BankTransferPaymentService>();
 builder.Services.AddScoped<CODPaymentService>();
+
+builder.Services.AddHostedService<PaymentReconciliationJob>();
 
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
