@@ -52,6 +52,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<SetOrderWaitingForConfirmationConsumer>();
     x.AddConsumer<ConfirmCodOrderConsumer>();
     x.AddConsumer<RetryPaymentConsumer>();
+    x.AddConsumer<OrderNotificationConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("order", false)); // Use kebab-case for endpoint names, with "order" as the prefix
 

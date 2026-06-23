@@ -196,6 +196,13 @@ namespace OrderService.Saga
                         OrderId = ctx.Saga.OrderId,
                         Reason = ctx.Saga.FailureReason
                     }))
+                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        UserId = ctx.Saga.UserId,
+                        IsSuccess = false,
+                        ErrorMessage = ctx.Saga.FailureReason
+                    }))
                     .TransitionTo(Cancelled)
             );
 
@@ -237,6 +244,13 @@ namespace OrderService.Saga
                     {
                         OrderId = ctx.Saga.OrderId,
                         Items = ctx.Saga.Items
+                    }))
+                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                    {
+                        OrderId = ctx.Saga.OrderId,
+                        UserId = ctx.Saga.UserId,
+                        IsSuccess = false,
+                        ErrorMessage = ctx.Saga.FailureReason
                     }))
                     .TransitionTo(Cancelled)
             );
@@ -365,6 +379,13 @@ namespace OrderService.Saga
                         {
                             OrderId = ctx.Saga.OrderId,
                             Items = ctx.Saga.Items
+                        }))
+                        .PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                        {
+                            OrderId = ctx.Saga.OrderId,
+                            UserId = ctx.Saga.UserId,
+                            IsSuccess = false,
+                            ErrorMessage = ctx.Saga.FailureReason
                         }))
                         .TransitionTo(Cancelled)
                     // )

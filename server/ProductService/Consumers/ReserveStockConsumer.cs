@@ -61,7 +61,7 @@ namespace ProductService.Consumers
                     var product = products.First(p => p.Id == item.ProductId);
                     if (product.QuantityInStock < item.Quantity)
                     {
-                        _logger.LogWarning("Insufficient stock for ProductId {ProductId}. Requested: {Requested}, Available: {Available}",
+                        _logger.LogWarning("Đặt hàng không thành công: Insufficient stock for ProductId {ProductId}. Requested: {Requested}, Available: {Available}",
                             item.ProductId, item.Quantity, product.QuantityInStock);
                         
                         await context.Publish(new StockReservationFailed

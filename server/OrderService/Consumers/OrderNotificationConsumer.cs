@@ -1,14 +1,16 @@
+using Contract.Order;
+using MassTransit;
+using MediatR;
+using Microsoft.AspNetCore.SignalR;
+using OrderService.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Contract.Order;
-using Microsoft.AspNetCore.SignalR;
-using OrderService.SignalR;
 
 namespace OrderService.Consumers
 {
-    public class OrderNotificationConsumer
+    public class OrderNotificationConsumer : IConsumer<OrderNotification>
     {
         private readonly IHubContext<OrderHub> _hubContext;
 
@@ -17,16 +19,16 @@ namespace OrderService.Consumers
             _hubContext = hubContext;
         }
 
-        public async Task Consume(OrderNotification notification)
+        public async Task Consume(ConsumeContext<OrderNotification> context)
         {
-            // Send a SignalR message to the specific user about their order status
+            var message = context.Message;
             await _hubContext.Clients
-                .Group(notification.OrderId)
+                .Group(message.OrderId)
                 .SendAsync("ReceiveOrderNotification", new
                 {
-                    OrderId = notification.OrderId,
-                    IsSuccess = notification.IsSuccess,
-                    ErrorMessage = notification.ErrorMessage
+                    OrderId = message.OrderId,
+                    IsSuccess = message.IsSuccess,
+                    ErrorMessage = message.ErrorMessage
                 });
         }
     }
