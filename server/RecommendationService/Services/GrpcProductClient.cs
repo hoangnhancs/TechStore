@@ -22,7 +22,7 @@ namespace RecommendationService.Services
 
                 var response = await _client.GetTop10SoldProductAsync(
                     new GetTop10SoldProductRequest { },
-                    deadline: DateTime.UtcNow.AddSeconds(5), // Timeout 5 seconds
+                    deadline: DateTime.UtcNow.AddSeconds(30), // Timeout 5 seconds
                     cancellationToken: cancellationToken
                 );
 

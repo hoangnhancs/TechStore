@@ -13,7 +13,7 @@ public class PaymentReconciliationJob : BackgroundService
     private readonly IConfiguration _config;
     private readonly ILogger<PaymentReconciliationJob> _logger;
 
-    private static readonly TimeSpan RunInterval = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan RunInterval = TimeSpan.FromMinutes(5);
     private const int MinAgeMinutes = 2;    // chờ webhook ít nhất 2 phút trước khi check
     private const int MaxAgeHours = 48;     // bỏ qua payment quá cũ (48h)
 

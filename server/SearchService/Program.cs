@@ -17,6 +17,7 @@ builder.Services.AddSharedControllers();
 
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 
 builder.Services.AddMassTransit(x =>
 {

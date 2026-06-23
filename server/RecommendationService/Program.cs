@@ -6,15 +6,15 @@ using RecommendationService.Data;
 using RecommendationService.Persistence;
 using RecommendationService.Services;
 using Shared.Web.Extensions;
+using SharedWeb.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddSharedControllers();
 builder.Services.AddGrpc();
 
-//builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
+builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
@@ -39,15 +39,17 @@ var app = builder.Build();
 
 // Seed database with product embeddings
 
+app.UseSharedMiddleware();
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapGrpcService<GrpcRecommendationService>();
+app.MapControllers();
 
 await DbInitializer.SeedData(app);
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
-{
     app.MapOpenApi();
-}
 
 app.Run();
 

@@ -18,6 +18,7 @@ namespace RecommendationService.Services.UserActionTracking
        
         public async Task<AppResult<int>> Handle(CreateUserActionTrackingCommand request, CancellationToken cancellationToken)
         {
+            if (request.UserId == null) return AppResult<int>.Success(0);
             var newTracking = new Entities.UserActionTracking
             {
                 UserId = request.UserId,
