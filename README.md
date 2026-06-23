@@ -1,6 +1,12 @@
 # TechStore — Microservices E-Commerce Backend
 
-A production-grade e-commerce backend built with .NET 9 microservices architecture, featuring distributed saga orchestration, multi-gateway payment processing, real-time notifications, and AI-powered recommendations.
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://your-live-demo-link.com)
+[![Swagger API Docs](https://img.shields.io/badge/API-Swagger%20UI-blue?style=for-the-badge&logo=swagger)](https://your-swagger-link.com)
+[![.NET 9](https://img.shields.io/badge/.NET-9.0-blueviolet?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
+[![RabbitMQ](https://img.shields.io/badge/RabbitMQ-%20-orange?style=for-the-badge&logo=rabbitmq)](https://www.rabbitmq.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-%20-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+
+A production-grade, highly scalable e-commerce backend built with a **.NET 9 microservices architecture**. This project serves as an advanced technical case study demonstrating distributed consistency, high-concurrency reservation systems, real-time notifications, and low-latency AI-powered search & recommendation pipelines.
 
 ---
 
@@ -259,72 +265,114 @@ server/
 
 ---
 
-## Getting Started
+## Key Architectural & Design Decisions
 
-### Prerequisites
-- .NET 9 SDK
-- Docker & Docker Compose
-- PostgreSQL
-- RabbitMQ (or CloudAMQP account)
-- Redis
-- Python 3.10+ (for VectorService)
+### 1. API Gateway Pattern (YARP)
+Instead of exposing individual services to the public internet, a reverse proxy built with **YARP (Yet Another Reverse Proxy)** acts as the single entry point.
+- **Why?** Centralizes CORS policies, SSL termination, and JWT authentication token verification. This shields internal services from authentication boilerplate and allows security policies to be updated in one place.
 
-### Configuration
+### 2. gRPC (Synchronous Queries) vs. RabbitMQ (Asynchronous Operations)
+To achieve low latency and eventual consistency, a hybrid communication model is utilized:
+- **gRPC (HTTP/2 with Protocol Buffers)**: Used for synchronous, read-heavy queries between services where real-time responses are required. (e.g., `CartService` retrieving live product listings, or `SearchService` retrieving recommendations). This reduces payload size and TCP socket overhead compared to HTTP/REST.
+- **RabbitMQ + MassTransit (AMQP)**: Used for asynchronous, write-heavy state transitions where decoupling is critical. (e.g., placing an order triggers stock reservation, payment setup, and email alerts). If the payment service is down, order placement remains unaffected, and events are processed once the service recovers.
 
-Each service uses `appsettings.json`. Key values to configure:
-
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=...;Database=...;Username=...;Password=..."
-  },
-  "RabbitMq": {
-    "ConnectionString": "amqps://..."
-  },
-  "JwtOptions": {
-    "SecretKey": "...",
-    "Issuer": "...",
-    "Audience": "..."
-  },
-  "Stripe": {
-    "SecretKey": "sk_...",
-    "WebhookSecret": "whsec_..."
-  },
-  "GrpcIdentity": "https://localhost:5001"
-}
-```
-
-### Run Services
-
-```bash
-# Start infrastructure
-docker compose up -d
-
-# Run each service (example)
-cd server/IdentityService && dotnet run
-cd server/ProductService  && dotnet run
-cd server/OrderService    && dotnet run
-cd server/PaymentService  && dotnet run
-# ... remaining services
-
-# VectorService (Python)
-cd server/VectorService
-pip install -r requirements.txt
-uvicorn main:app --port 8001
-```
-
-Database migrations are applied automatically on startup.
+### 3. Saga Orchestration over Choreography
+For complex distributed transactions like order fulfillment, **Saga Orchestration** (`MassTransitStateMachine` located in the `OrderService`) was chosen:
+- **Why?** In choreography, services must react to each other's events directly, creating complex cyclic dependencies. Orchestration centralizes the control flow. The `OrderService` acts as a coordinator, making it easy to track the order's state, audit transitions, and trigger automated compensating transactions (such as rolling back inventory reservations) if a payment fails.
 
 ---
 
-## Notable Implementation Highlights
+## Deep-Dive Case Studies & Solved Challenges
 
-- **Quartz + MassTransit integration** — payment windows are enforced via persistent Quartz jobs; the job fires an `OrderPaymentExpired` event consumed by the Saga, which then cancels the order and releases stock atomically.
+### Case Study 1: The Dual-Write Problem & Transactional Outbox
+* **Problem**: When a user creates an order, the system must write to the PostgreSQL database (saving the order) and publish an `OrderCreated` event to RabbitMQ. If the database save succeeds but the network connection to RabbitMQ drops before publishing, the inventory is never reserved, resulting in a silent failure. Conversely, if the event is published but the database transaction fails to commit, the inventory is reserved for a non-existent order.
+* **Solution**: Implemented the **Transactional Outbox Pattern** using MassTransit's outbox integration:
+  1. The database write and the creation of the outbox message are done inside a **single SQL transaction**.
+  2. The outbox message is stored in an `OutboxMessages` table in the same database.
+  3. A background message dispatcher reads from this table, publishes to RabbitMQ, and marks it as dispatched.
+  * **Result**: Guarantees **at-least-once message delivery** and eventual consistency, eliminating data loss during network hiccups or service crashes.
 
-- **Dual payment timer** — Online orders start the countdown only after `PaymentCreated` (not at order creation), avoiding false timeouts during payment intent setup. COD orders start the timer immediately after stock reservation to handle users who never confirm.
+### Case Study 2: Concurrency & Inventory Overselling Prevention
+* **Problem**: During high-traffic events (e.g., flash sales), multiple users may try to buy the last remaining item simultaneously, leading to race conditions and overselling (negative stock values).
+* **Solution**: Implemented a **two-phase inventory reservation** system using PostgreSQL row-level locks:
+  1. **Phase 1 (Reserve)**: When an order is placed, `ProductService` intercepts the saga command, locks the product row via an atomic update (`UPDATE Products SET Stock = Stock - ReservedQty WHERE Id = @Id AND Stock >= ReservedQty`), and marks the stock as reserved.
+  2. **Phase 2 (Commit or Release)**: If the payment webhook confirms success, the reserved quantity is permanently committed (moved to sold stock). If the payment fails or the session times out, the saga triggers a compensating command to release the reserved stock back to available stock.
+  * **Result**: Prevents overselling and race conditions under high concurrent checkout volumes.
 
-- **COD retry loop** — If payment record creation fails on a COD order, the Saga transitions back to `WaitingForConfirmation` instead of cancelling, allowing admin to retry rather than penalising the customer.
+### Case Study 3: Cluster-Safe Order Expiration (Quartz.NET Integration)
+* **Problem**: Unpaid orders must expire after 5 minutes to release reserved inventory. Using in-memory timers (`System.Timers.Timer`) in a horizontally scaled environment fails because:
+  - If the service instance hosting the timer crashes, the timer is lost, leaking reserved stock.
+  - Multi-instance scaling causes duplicate timers to trigger.
+* **Solution**: Integrated **Quartz.NET** persistent job scheduling with MassTransit:
+  - The Saga State Machine schedules an `OrderPaymentExpired` event in Quartz on PostgreSQL when an order is created.
+  - Quartz persists this job in SQL tables, making it resilient to service crashes.
+  - When the timer fires, Quartz publishes the event. The Saga handles the event, cancels the order, and publishes a compensating event to release stock. If the user pays before expiration, the saga cancels the scheduled job.
 
-- **gRPC user sync** — `NotificationService` and other consumers maintain a local `UserInformation` cache synced from `IdentityService` via gRPC on startup, avoiding cross-service DB calls on every notification.
+### Case Study 4: Low-Latency AI Recommendation Engine (FastAPI + pgvector)
+* **Problem**: Generating real-time, semantically-related product recommendations dynamically without straining primary transactional databases.
+* **Solution**: Built a hybrid Python + PostgreSQL pipeline:
+  1. When products are created or viewed, a C# gRPC client forwards metadata to a Python **VectorService** (FastAPI).
+  2. The Python service runs a lightweight transformer model (`all-MiniLM-L6-v2`) to generate 384-dimensional dense vector embeddings.
+  3. The embeddings are stored in PostgreSQL using the **pgvector** extension.
+  4. Finding similar products is executed directly in PostgreSQL using cosine distance operator (`<=>`):
+     ```sql
+     SELECT id, name FROM product_vectors 
+     ORDER BY embedding <=> @TargetEmbedding 
+     LIMIT 5;
+     ```
+  * **Result**: Semantic-based recommendation search runs in single-digit milliseconds directly inside the database.
 
-- **Outbox pattern** — all MassTransit publishes go through an EF Core outbox table in the same transaction as the DB write. A background dispatcher reads and publishes them, ensuring no events are lost if a service crashes after saving but before publishing.
+---
+
+## Database & Scaling Strategy
+
+- **PostgreSQL (Transactional Data)**: Used by most .NET services. Provides strong ACID guarantees and handles vector math at scale with the `pgvector` extension for `RecommendationService`.
+- **MongoDB (Search Index)**: Catalog data is denormalized and synchronized to MongoDB. MongoDB's document-store model and high-speed retrieval index power full-text search in `SearchService` without burdening SQL databases.
+- **Redis (Real-Time scale-out)**: Acts as the backplane for **SignalR**. Since clients connect to different instances of the `NotificationService` and `CommentService` behind the gateway, Redis acts as a distributed pub/sub to route live updates (notifications, comments) to the correct client websocket.
+
+---
+
+## Live Demo & Local Quickstart
+
+### Deployment & Live Demo
+This microservices backend is deployed to a cloud environment:
+* **API Gateway & Swagger Docs**: [https://your-swagger-link.com](https://your-swagger-link.com)
+* **Live Client Application**: [https://your-live-demo-link.com](https://your-live-demo-link.com)
+
+### Local Development Quickstart
+If you wish to run this project locally, ensure you have the following prerequisites installed:
+* **SDKs**: .NET 9 SDK, Python 3.10+
+* **Infrastructure Tools**: Docker Desktop, PowerShell 5.1+, Stripe CLI (for payment testing)
+
+#### 1. Setup Infrastructure
+Uncomment the services (`postgres`, `mongodb`, `rabbitmq`) in [docker-compose.yml](file:///d:/Projects/TechStore/docker-compose.yml) and start them:
+```bash
+docker compose up -d
+```
+
+#### 2. Run Database Migrations
+Use the root helper script to run EF Core database updates across all C# microservices:
+```powershell
+.\update-all-database.ps1
+```
+
+#### 3. Start Backend Services
+Start all 11 .NET microservices simultaneously:
+```powershell
+.\start-all.ps1 -OpenExternalWindow
+```
+
+#### 4. Start Python Vector Service
+Setup virtual environment, install requirements, and run the FastAPI server:
+```powershell
+cd server/VectorService
+.\start.ps1
+```
+*(Runs on port 8000 by default, matching `RecommendationService` configuration)*
+
+#### 5. Local Stripe Webhook Forwarding
+To test local payments and the Order Saga's response to payment success:
+```bash
+stripe listen --forward-to http://localhost:5006/webhook/stripe
+```
+

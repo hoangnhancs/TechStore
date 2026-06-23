@@ -60,6 +60,7 @@ $services = @(
     "PaymentService",
     "ReviewService",
     "CommentService",
+    "RecommendationService",
     "NotificationService"
 )
 

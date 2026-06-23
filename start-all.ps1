@@ -12,6 +12,7 @@ $services = @(
     "ReviewService",
     "CommentService",
     "SearchService",
+    "RecommendationService",
     "NotificationService",
     "GatewayService"
 )
