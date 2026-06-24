@@ -32,6 +32,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<OrderCancelledConsumer>();
     x.AddConsumer<CommentCreatedConsumer>();
     x.AddConsumer<ReviewCreatedConsumer>();
+    x.AddConsumer<OrderCreatedConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("notification", false));
 

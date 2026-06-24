@@ -12,9 +12,9 @@ namespace RecommendationService.Services
         private readonly RecommandationSvcDbContext _dbContext;
         private readonly ILogger<GrpcRecommendationService> _logger;
         private readonly IMediator _mediator;
-        private readonly IRecommandationUnitOfWork _unitOfWork;
+        private readonly IRecommendationUnitOfWork _unitOfWork;
 
-        public GrpcRecommendationService(RecommandationSvcDbContext dbContext, ILogger<GrpcRecommendationService> logger, IMediator mediator, IRecommandationUnitOfWork unitOfWork)
+        public GrpcRecommendationService(RecommandationSvcDbContext dbContext, ILogger<GrpcRecommendationService> logger, IMediator mediator, IRecommendationUnitOfWork unitOfWork)
         {
             _dbContext = dbContext;
             _logger = logger;

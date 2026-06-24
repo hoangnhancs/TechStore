@@ -5,7 +5,7 @@ using RecommendationService.Repositories.Interface;
 
 namespace RecommendationService.Persistence
 {
-    public class RecommandationUnitOfWork : UnitOfWork<RecommandationSvcDbContext>, IRecommandationUnitOfWork
+    public class RecommendationUnitOfWork : UnitOfWork<RecommandationSvcDbContext>, IRecommendationUnitOfWork
     {
         private IProductVectorEmbeddingRepository? _productVectorEmbeddingRepository;
         private IUserActionTrackingRepository? _userActionTrackingRepository;
@@ -13,7 +13,7 @@ namespace RecommendationService.Persistence
             _productVectorEmbeddingRepository ??= new ProductVectorEmbeddingRepository(_dbContext);
         public IUserActionTrackingRepository UserActionTrackingRepository =>
             _userActionTrackingRepository ??= new UserActionTrackingRepository(_dbContext);
-        public RecommandationUnitOfWork(RecommandationSvcDbContext context) : base(context)
+        public RecommendationUnitOfWork(RecommandationSvcDbContext context) : base(context)
         {
         }
     }

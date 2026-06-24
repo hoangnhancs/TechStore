@@ -10,8 +10,8 @@ namespace RecommendationService.Services.UserActionTracking
 {
     public class CreateUserActionTrackingHandler : IRequestHandler<CreateUserActionTrackingCommand, AppResult<int>>
     {
-        private readonly IRecommandationUnitOfWork _unitOfWork;
-        public CreateUserActionTrackingHandler(IRecommandationUnitOfWork unitOfWork)
+        private readonly IRecommendationUnitOfWork _unitOfWork;
+        public CreateUserActionTrackingHandler(IRecommendationUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
         }

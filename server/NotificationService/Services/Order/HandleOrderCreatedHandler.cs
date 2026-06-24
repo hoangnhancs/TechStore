@@ -84,8 +84,8 @@ namespace NotificationService.Services.Order
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
-                    Title = $"Đơn hàng COD mới: #{message.OrderId}",
-                    Message = $"Đơn hàng COD #{message.OrderId} vừa được đặt bởi {user?.DisplayName}. Vui lòng xác nhận.",
+                    Title = $"Đơn hàng mới: #{message.OrderId}",
+                    Message = $"Đơn hàng #{message.OrderId} vừa được đặt bởi {user?.DisplayName}.",
                     Category = "Order",
                     Type = "NewOrder",
                     ReferenceId = message.OrderId,

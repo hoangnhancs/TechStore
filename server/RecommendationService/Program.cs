@@ -1,7 +1,9 @@
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Polly.Extensions.Http;
 using ProductService.Grpc;
+using RecommendationService.Consumers;
 using RecommendationService.Data;
 using RecommendationService.Persistence;
 using RecommendationService.Services;
@@ -22,12 +24,37 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddDbContext<RecommandationSvcDbContext>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.AddMassTransit(x =>
+{
+    x.AddEntityFrameworkOutbox<RecommandationSvcDbContext>(o =>
+    {
+        o.QueryDelay = TimeSpan.FromSeconds(10);
+        o.UsePostgres();
+        o.UseBusOutbox();
+    }); // Configure outbox to use the existing DbContext and Postgres
+
+    x.AddConsumer<OrderCreatedConsumer>();
+
+    x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("recommendation", false)); // Use kebab-case for endpoint names, with "order" as the prefix
+
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        // cfg.Host(builder.Configuration["RabbitMQ:Host"] ?? "localhost", "/", h =>
+        // {
+        //     h.Username(builder.Configuration["RabbitMQ:Username"] ?? "guest");
+        //     h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
+        // });
+        cfg.Host(builder.Configuration["RabbitMq:ConnectionString"]);
+        cfg.ConfigureEndpoints(context);
+    });
+});
+
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
         ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
 
 builder.Services.AddScoped<GrpcProductClient>();
-builder.Services.AddScoped<IRecommandationUnitOfWork, RecommandationUnitOfWork>();
+builder.Services.AddScoped<IRecommendationUnitOfWork, RecommendationUnitOfWork>();
 
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
 

@@ -9,9 +9,9 @@ namespace RecommendationService.Services.ProductVectorEmbedding
 {
     public class GetSuggestionProductHandler : IRequestHandler<GetSuggestionProductQuery, AppResult<List<string>>>
     {
-        private readonly IRecommandationUnitOfWork _unitOfWork;
+        private readonly IRecommendationUnitOfWork _unitOfWork;
         private readonly GrpcProductClient _rpcProductClient;
-        public GetSuggestionProductHandler(IRecommandationUnitOfWork unitOfWork, GrpcProductClient rpcProductClient )
+        public GetSuggestionProductHandler(IRecommendationUnitOfWork unitOfWork, GrpcProductClient rpcProductClient )
         {
             _unitOfWork = unitOfWork;
             _rpcProductClient = rpcProductClient;
