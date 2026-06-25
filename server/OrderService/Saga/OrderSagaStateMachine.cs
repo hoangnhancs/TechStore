@@ -166,8 +166,7 @@ namespace OrderService.Saga
                             {
                                 OrderId = ctx.Saga.OrderId,
                                 UserId = ctx.Saga.UserId,
-                                IsSuccess = false,
-                                ErrorMessage = ctx.Saga.FailureReason
+                                IsSuccess = true,
                             }))
                             .Schedule(CodPaymentExpirySchedule, ctx => ctx.Init<OrderCodPaymentExpired>(new
                             {
@@ -410,13 +409,27 @@ namespace OrderService.Saga
                         OrderId = ctx.Saga.OrderId,
                         Items = ctx.Saga.Items
                     }))
-                    .PublishAsync(ctx => ctx.Init<OrderNotification>(new
-                    {
-                        OrderId = ctx.Saga.OrderId,
-                        UserId = ctx.Saga.UserId,
-                        IsSuccess = true
-                    }))
+                    .IfElse(
+                        ctx => ctx.Saga.PaymentMethod == PaymentMethod.CashOnDelivery.ToString(),
+                        // COD: payment creation failed → notify admin, allow retry by re-confirming
+                        cod => cod.TransitionTo(Completed),
+                        // Online: no retry — cancel immediately and release stock
+                        online => online
+                            .PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                            {
+                                OrderId = ctx.Saga.OrderId,
+                                UserId = ctx.Saga.UserId,
+                                IsSuccess = true
+                            }))
                     .TransitionTo(Completed)
+                    )
+                    //.PublishAsync(ctx => ctx.Init<OrderNotification>(new
+                    //{
+                    //    OrderId = ctx.Saga.OrderId,
+                    //    UserId = ctx.Saga.UserId,
+                    //    IsSuccess = true
+                    //}))
+                    //.TransitionTo(Completed)
             );
 
             // Mark saga as finalized when completed or cancelled

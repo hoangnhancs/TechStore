@@ -71,8 +71,8 @@ namespace CommentService.Services.Comment
                     {
                         CommentId = comment.Id,
                         //Title = comment.,
-                        //ReferenceId = comment.ReferenceId,
-                        //ReferenceType = comment.ReferenceType,
+                        ReferenceId = comment.ReferenceId,
+                        ReferenceType = comment.ReferenceType,
                         UserId = comment.UserId,
                         Content = comment.Content,
                         CreatedAt = comment.CreatedAt,

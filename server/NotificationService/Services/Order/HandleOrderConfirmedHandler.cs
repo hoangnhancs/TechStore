@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using static NotificationService.Entities.Notification;
 
 namespace NotificationService.Services.Order
 {
@@ -23,12 +24,14 @@ namespace NotificationService.Services.Order
         private readonly IMediator _mediator;
         private readonly INotificationServiceSender _notificationSender;
         private readonly INotificationUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
         public HandleOrderConfirmedHandler(IEmailService emailService, 
             IEmailTemplateBuilder templateBuilder, 
             GrpcIdentityClient grpcIdentityClient, 
             IMediator mediator, 
             INotificationServiceSender notificationSender,
-            INotificationUnitOfWork unitOfWork)
+            INotificationUnitOfWork unitOfWork,
+            IConfiguration configuration)
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
@@ -36,29 +39,31 @@ namespace NotificationService.Services.Order
             _mediator = mediator;
             _notificationSender = notificationSender;
             _unitOfWork = unitOfWork;
+            _configuration = configuration;
         }
         public async Task<AppResult<Unit>> Handle(HandleOrderConfirmedCommand request, CancellationToken cancellationToken)
         {
-            //send email to user
-            string userOrderUrl = $"http://localhost:3000/my-orders/{request.Message.OrderId}";
-            string adminOrderUrl = $"http://localhost:3000/admin/orders/{request.Message.OrderId}";
             var message = request.Message;
+            string userOrderUrl = $"{_configuration.GetValue<string>("ClientUrl") ?? throw new ArgumentNullException("ClientUrl configuration is missing")}/my-orders/{message.OrderId}";
+
             var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
+
+            bool isCod = message.PaymentMethod.Equals("CashOnDelivery", StringComparison.OrdinalIgnoreCase);
+            string paymentMethodDisplay = isCod ? "Thanh toán khi nhận hàng (COD)" : "Thẻ tín dụng / Thanh toán online";
+
             var body = await _templateBuilder.BuildAsync("OrderConfirmation", new
             {
                 OrderNo = message.OrderNo,
                 CustomerName = user?.DisplayName,
-
                 OrderDate = message.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 Address = message.Address ?? "N/A",
-
+                PaymentMethod = paymentMethodDisplay,
+                IsCod = isCod,
                 SubTotal = message.SubTotal.ToString("N0") + "₫",
-                ShippingFee =message.ShippingCost.ToString("N0") + "₫",
+                ShippingFee = message.ShippingCost.ToString("N0") + "₫",
                 Discount = message.Discount.ToString("N0") + "₫",
                 TotalPrice = message.Total.ToString("N0") + "₫",
-
                 OrderUrl = userOrderUrl,
-
                 Items = message.Items.Select(i => new
                 {
                     Name = i.ProductName,
@@ -68,73 +73,69 @@ namespace NotificationService.Services.Order
                     ImageUrl = i.ProductImageUrl
                 })
             });
+
             try
             {
-                var recipientEmail = user?.UserEmail ?? throw new ArgumentNullException(nameof(user.UserEmail));
-                await _emailService.SendEmailAsync(recipientEmail, "Xác nhận đơn hàng", body);
+                var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
+                string emailSubject = isCod
+                    ? $"Đơn hàng #{message.OrderNo} đã được xác nhận"
+                    : $"Thanh toán thành công - Đơn hàng #{message.OrderNo}";
+                await _emailService.SendEmailAsync(recipientEmail, emailSubject, body);
             }
             catch (Exception ex)
             {
-                // Log lỗi gửi email nhưng không trả về lỗi để tránh ảnh hưởng đến trải nghiệm người dùng
                 throw new Exception($"Failed to send order confirmation email: {ex.Message}");
             }
-            //publish signalR notification to admin and user
-            // Admin notification
+
             var systemUser = await _grpcIdentityClient.GetSystemUser();
             var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName })).Value;
             if (adminGroup == null)
-            {
                 throw new ArgumentNullException(nameof(adminGroup), "Admin notification group not found");
-            }
+
+            string adminMessage = isCod
+                ? $"Đơn hàng COD #{message.OrderNo} của {user?.DisplayName} đã được xác nhận và đang xử lý."
+                : $"Đơn hàng online #{message.OrderNo} của {user?.DisplayName} đã thanh toán thành công.";
+
+            string userMessage = isCod
+                ? $"Đơn hàng #{message.OrderNo} của bạn đã được xác nhận và đang được chuẩn bị."
+                : $"Thanh toán thành công! Đơn hàng #{message.OrderNo} của bạn đang được xử lý.";
 
             var adminNotificationCommand = new CreateNotificationCommand
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
-                    Title = $"Đơn hàng mới: {message.OrderNo}",
-                    Message = $"Đơn hàng {message.OrderNo} vừa được đặt bởi {user?.DisplayName}.",
-                    Category = "Order",
-                    Type = "NewOrder",
+                    Title = isCod ? $"Đã xác nhận đơn hàng: #{message.OrderNo}" : $"Đơn hàng đã được đặt: #{message.OrderNo}",
+                    Message = adminMessage,
+                    Category = NotificationCategory.Order.ToString(),
+                    Type = NotificationType.OrderConfirmed.ToString(),
                     ReferenceId = message.OrderId,
-                    ReferenceType = "Order",
-                    GroupId = adminGroup.Id, // Gửi đến nhóm admin
-                    SenderId = systemUser?.UserId ?? throw new ArgumentNullException(nameof(systemUser)),
+                    ReferenceType = NotificationReferenceType.Order.ToString(),
+                    GroupId = adminGroup.Id,
+                    SenderId = systemUser?.UserId ?? throw new InvalidOperationException("System user not found"),
                     SenderName = systemUser?.UserName ?? "System",
                     SenderImageUrl = systemUser?.ImageUrl,
                 }
             };
+            await _mediator.Send(adminNotificationCommand, cancellationToken);
+
+
             var userNotificationCommand = new CreateNotificationCommand
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
-                    Title = $"Đơn hàng của bạn đã được xác nhận: {message.OrderNo}",
-                    Message = $"Cảm ơn bạn đã đặt hàng! Đơn hàng {message.OrderNo} của bạn đã được xác nhận và đang được xử lý.",
+                    Title = isCod ? $"Đơn hàng đã được xác nhận: #{message.OrderNo}" : $"Đơn hàng đã được đặt: #{message.OrderNo}",
+                    Message = userMessage,
                     Category = "Order",
                     Type = "OrderPlaced",
                     ReferenceId = message.OrderId,
                     ReferenceType = "Order",
-                    ReceiverId = message.UserId, // Gửi trực tiếp đến user
-                    SenderId = systemUser?.UserId ?? throw new ArgumentNullException(nameof(systemUser)),
+                    ReceiverId = message.UserId,
+                    SenderId = systemUser?.UserId ?? throw new InvalidOperationException("System user not found"),
                     SenderName = systemUser?.UserName ?? "System",
                     SenderImageUrl = systemUser?.ImageUrl,
                 }
             };
-
-            //send notification email will be implemented in create notification handler, here we just create notification
-      
-            var adminNotiResult = await _mediator.Send(adminNotificationCommand, cancellationToken);
-            
-
-            //if (adminNotiResult.IsSuccess && adminNotiResult.Value != null)
-            //{
-            //    await _notificationSender.SendToGroupAsync(adminGroup.Name, adminNotiResult.Value);
-            //}
-
-            var userNotiResult = await _mediator.Send(userNotificationCommand, cancellationToken);
-            //if (userNotiResult.IsSuccess && userNotiResult.Value != null)
-            //{
-            //    await _notificationSender.SendToUserAsync(message.UserId, userNotiResult.Value);
-            //}
+            await _mediator.Send(userNotificationCommand, cancellationToken);
 
             return AppResult<Unit>.Success(Unit.Value);
         }

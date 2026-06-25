@@ -22,5 +22,6 @@ namespace Contract.Order
         public decimal ShippingCost { get; set; }
         public decimal Discount { get; set; }
         public decimal Total { get; set; }
+        public required string PaymentMethod { get; set; }
     }
 }

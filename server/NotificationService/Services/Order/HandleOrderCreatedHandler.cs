@@ -1,6 +1,7 @@
 using EmailService.Interfaces;
 using EmailService.Services.Interface;
 using MediatR;
+using Microsoft.Extensions.Configuration;
 using NotificationService.DTOs;
 using NotificationService.Persistence;
 using NotificationService.RequestHelpers;
@@ -17,17 +18,21 @@ namespace NotificationService.Services.Order
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
         private readonly INotificationUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
         public HandleOrderCreatedHandler(IEmailService emailService,
             IEmailTemplateBuilder templateBuilder,
             GrpcIdentityClient grpcIdentityClient,
             IMediator mediator,
-            INotificationUnitOfWork unitOfWork)
+            INotificationUnitOfWork unitOfWork,
+            IConfiguration configuration    )
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
             _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
             _unitOfWork = unitOfWork;
+            _configuration = configuration;
+
         }
 
         public async Task<AppResult<Unit>> Handle(HandleOrderCreatedCommand request, CancellationToken cancellationToken)
@@ -42,7 +47,7 @@ namespace NotificationService.Services.Order
                 return AppResult<Unit>.Success(Unit.Value);
 
             var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
-            string userOrderUrl = $"http://localhost:3000/my-orders/{message.OrderId}";
+            string userOrderUrl = $"{_configuration.GetValue<string>("ClientUrl") ?? throw new ArgumentNullException("ClientUrl configuration is missing")}/my-orders/{message.OrderId}";
 
             var body = await _templateBuilder.BuildAsync("OrderCreated", new
             {

@@ -18,19 +18,23 @@ namespace NotificationService.Services.Order
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
         private readonly INotificationUnitOfWork _unitOfWork;
+        private readonly IConfiguration _configuration;
 
         public HandleOrderCancelledHandler(
             IEmailService emailService,
             IEmailTemplateBuilder templateBuilder,
             GrpcIdentityClient grpcIdentityClient,
             IMediator mediator,
-            INotificationUnitOfWork unitOfWork)
+            INotificationUnitOfWork unitOfWork,
+            IConfiguration configuration)
         {
             _emailService = emailService;
             _templateBuilder = templateBuilder;
             _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
             _unitOfWork = unitOfWork;
+            _configuration = configuration;
+
         }
 
         public async Task<AppResult<Unit>> Handle(HandleOrderCancelledCommand request, CancellationToken cancellationToken)
@@ -58,7 +62,7 @@ namespace NotificationService.Services.Order
                 message.Reason,
                 CancelledAt = message.CancelledAt.ToString("dd/MM/yyyy HH:mm:ss"),
                 PaymentMethod = paymentMethodDisplay,
-                ShopUrl = "http://localhost:3000"
+                ShopUrl = _configuration.GetValue<string>("ClientUrl") ?? throw new ArgumentNullException("ClientUrl configuration is missing")
             });
 
             try

@@ -65,8 +65,8 @@ namespace NotificationService.Consumers
                     Type = string.IsNullOrEmpty(parentCommentUserId) ? NotificationType.NewComment.ToString() : NotificationType.CommentReply.ToString(),
                     ReferenceId = message.CommentId,
                     ReferenceType = NotificationReferenceType.Comment.ToString(),
-                    ParentReferenceId = message.ParentCommentId,
-                    ParentReferenceType = string.IsNullOrEmpty(message.ParantCommentUserId) ? null : NotificationReferenceType.Comment.ToString(),
+                    ParentReferenceId = message.ReferenceId, //parentrefid sẽ là cái id trỏ đến cái trang chứa comment, ví dụ comment trong product
+                    ParentReferenceType = message.ReferenceType,
                     SenderId = message.UserId,
                     SenderName = user.UserName,
                     SenderDisplayName = user.DisplayName,
