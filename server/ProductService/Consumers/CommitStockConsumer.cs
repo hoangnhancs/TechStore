@@ -40,7 +40,8 @@ namespace ProductService.Consumers
                             $"""
                                 UPDATE "Products"
                                 SET "ReservedQuantity" = "ReservedQuantity" - {item.Quantity},
-                                    "QuantityInStock"  = "QuantityInStock"  - {item.Quantity}
+                                    "QuantityInStock"  = "QuantityInStock"  - {item.Quantity},
+                                    "UnitSold" = "UnitSold" + {item.Quantity}
                                 WHERE "Id" = {item.ProductId}
                                 AND "ReservedQuantity" >= {item.Quantity}
                             """);

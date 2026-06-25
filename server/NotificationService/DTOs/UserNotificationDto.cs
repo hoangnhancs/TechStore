@@ -24,5 +24,6 @@
         public bool IsRead { get; set; } = false;
         public DateTime? ReadAt { get; set; }
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
     }
 }

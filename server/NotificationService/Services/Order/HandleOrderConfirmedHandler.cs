@@ -6,12 +6,7 @@ using NotificationService.Persistence;
 using NotificationService.RequestHelpers;
 using NotificationService.Services.Notification;
 using NotificationService.Services.NotificationGroup;
-using NotificationService.Services.Sender;
 using Shared.Core.EF.Application;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using static NotificationService.Entities.Notification;
 
 namespace NotificationService.Services.Order
@@ -22,14 +17,13 @@ namespace NotificationService.Services.Order
         private readonly IEmailTemplateBuilder _templateBuilder;
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMediator _mediator;
-        private readonly INotificationServiceSender _notificationSender;
         private readonly INotificationUnitOfWork _unitOfWork;
         private readonly IConfiguration _configuration;
-        public HandleOrderConfirmedHandler(IEmailService emailService, 
-            IEmailTemplateBuilder templateBuilder, 
-            GrpcIdentityClient grpcIdentityClient, 
-            IMediator mediator, 
-            INotificationServiceSender notificationSender,
+
+        public HandleOrderConfirmedHandler(IEmailService emailService,
+            IEmailTemplateBuilder templateBuilder,
+            GrpcIdentityClient grpcIdentityClient,
+            IMediator mediator,
             INotificationUnitOfWork unitOfWork,
             IConfiguration configuration)
         {
@@ -37,23 +31,29 @@ namespace NotificationService.Services.Order
             _templateBuilder = templateBuilder;
             _grpcIdentityClient = grpcIdentityClient;
             _mediator = mediator;
-            _notificationSender = notificationSender;
             _unitOfWork = unitOfWork;
             _configuration = configuration;
         }
+
         public async Task<AppResult<Unit>> Handle(HandleOrderConfirmedCommand request, CancellationToken cancellationToken)
         {
             var message = request.Message;
-            string userOrderUrl = $"{_configuration.GetValue<string>("ClientUrl") ?? throw new ArgumentNullException("ClientUrl configuration is missing")}/my-orders/{message.OrderId}";
-
-            var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
+            var clientUrl = _configuration.GetValue<string>("ClientUrl") ?? throw new InvalidOperationException("ClientUrl configuration is missing");
+            string userOrderUrl = $"{clientUrl}/my-orders/{message.OrderId}";
 
             bool isCod = message.PaymentMethod.Equals("CashOnDelivery", StringComparison.OrdinalIgnoreCase);
             string paymentMethodDisplay = isCod ? "Thanh toán khi nhận hàng (COD)" : "Thẻ tín dụng / Thanh toán online";
 
-            var body = await _templateBuilder.BuildAsync("OrderConfirmation", new
+            // Fetch user, systemUser, adminGroup in parallel
+            var userListTask = _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId);
+            var systemUserTask = _grpcIdentityClient.GetSystemUser();
+            var adminGroupTask = _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName }, cancellationToken);
+
+            var user = (await userListTask).FirstOrDefault();
+
+            var bodyTask = _templateBuilder.BuildAsync("OrderConfirmation", new
             {
-                OrderNo = message.OrderNo,
+                message.OrderNo,
                 CustomerName = user?.DisplayName,
                 OrderDate = message.CreatedDate.ToString("dd/MM/yyyy HH:mm:ss"),
                 Address = message.Address ?? "N/A",
@@ -67,30 +67,23 @@ namespace NotificationService.Services.Order
                 Items = message.Items.Select(i => new
                 {
                     Name = i.ProductName,
-                    Quantity = i.Quantity,
+                    i.Quantity,
                     Price = i.UnitPrice.ToString("N0") + "₫",
                     Total = (i.UnitPrice * i.Quantity).ToString("N0") + "₫",
                     ImageUrl = i.ProductImageUrl
                 })
             });
 
-            try
-            {
-                var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
-                string emailSubject = isCod
-                    ? $"Đơn hàng #{message.OrderNo} đã được xác nhận"
-                    : $"Thanh toán thành công - Đơn hàng #{message.OrderNo}";
-                await _emailService.SendEmailAsync(recipientEmail, emailSubject, body);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to send order confirmation email: {ex.Message}");
-            }
+            await Task.WhenAll(bodyTask, systemUserTask, adminGroupTask);
 
-            var systemUser = await _grpcIdentityClient.GetSystemUser();
-            var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName })).Value;
-            if (adminGroup == null)
-                throw new ArgumentNullException(nameof(adminGroup), "Admin notification group not found");
+            var body = bodyTask.Result;
+            var systemUser = systemUserTask.Result ?? throw new InvalidOperationException("System user not found");
+            var adminGroup = adminGroupTask.Result.Value ?? throw new InvalidOperationException("Admin notification group not found");
+            var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
+
+            string emailSubject = isCod
+                ? $"Đơn hàng #{message.OrderNo} đã được xác nhận"
+                : $"Thanh toán thành công - Đơn hàng #{message.OrderNo}";
 
             string adminMessage = isCod
                 ? $"Đơn hàng COD #{message.OrderNo} của {user?.DisplayName} đã được xác nhận và đang xử lý."
@@ -111,13 +104,11 @@ namespace NotificationService.Services.Order
                     ReferenceId = message.OrderId,
                     ReferenceType = NotificationReferenceType.Order.ToString(),
                     GroupId = adminGroup.Id,
-                    SenderId = systemUser?.UserId ?? throw new InvalidOperationException("System user not found"),
-                    SenderName = systemUser?.UserName ?? "System",
-                    SenderImageUrl = systemUser?.ImageUrl,
+                    SenderId = systemUser.UserId,
+                    SenderName = systemUser.UserName ?? "System",
+                    SenderImageUrl = systemUser.ImageUrl,
                 }
             };
-            await _mediator.Send(adminNotificationCommand, cancellationToken);
-
 
             var userNotificationCommand = new CreateNotificationCommand
             {
@@ -130,12 +121,18 @@ namespace NotificationService.Services.Order
                     ReferenceId = message.OrderId,
                     ReferenceType = "Order",
                     ReceiverId = message.UserId,
-                    SenderId = systemUser?.UserId ?? throw new InvalidOperationException("System user not found"),
-                    SenderName = systemUser?.UserName ?? "System",
-                    SenderImageUrl = systemUser?.ImageUrl,
+                    SenderId = systemUser.UserId,
+                    SenderName = systemUser.UserName ?? "System",
+                    SenderImageUrl = systemUser.ImageUrl,
                 }
             };
-            await _mediator.Send(userNotificationCommand, cancellationToken);
+
+            // Send email and both notifications in parallel
+            await Task.WhenAll(
+                _emailService.SendEmailAsync(recipientEmail, emailSubject, body),
+                _mediator.Send(adminNotificationCommand, cancellationToken),
+                _mediator.Send(userNotificationCommand, cancellationToken)
+            );
 
             return AppResult<Unit>.Success(Unit.Value);
         }

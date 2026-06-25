@@ -65,7 +65,9 @@ namespace NotificationService.Services.Notification
                     SenderImageUrl = sender?.ImageUrl,
                     Type = n.Type.ToString(),
                     IsRead = recipient.IsRead,
-                    ReadAt = recipient.ReadAt
+                    ReadAt = recipient.ReadAt,
+                    SentAt = recipient.SentAt,
+                    CreatedAt = n.CreatedAt
                 };
             }).ToList();
 

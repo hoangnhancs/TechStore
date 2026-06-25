@@ -24,31 +24,50 @@ namespace CommentService.Services.Comment
         }
         public async Task<AppResult<List<CommentDto>>> Handle(GetListCommentsByProductIdQuery request, CancellationToken cancellationToken)
         {
-            var comments = (await _unitOfWork.CommentRepository.GetListAsync(
-                predicate: c => c.ReferenceId == request.ProductId && c.ReferenceType == CommentEntity.ReferenceTypes.Product.ToString(),
+            // Load all comments flat (parents + replies at all levels) in one query
+            var allComments = (await _unitOfWork.CommentRepository.GetListAsync(
+                predicate: c => c.ReferenceId == request.ProductId
+                    && c.ReferenceType == CommentEntity.ReferenceTypes.Product.ToString(),
                 cancellationToken: cancellationToken
-            )).OrderByDescending(c => c.CreatedAt).ToList();
+            )).ToList();
 
-            if (comments == null || !comments.Any())
-            {
-                return AppResult<List<CommentDto>>.Success(new List<CommentDto>());
-            }
+            if (allComments.Count == 0)
+                return AppResult<List<CommentDto>>.Success([]);
 
-            var commentDtos = _mapper.Map<List<CommentDto>>(comments);
+            var allDtos = _mapper.Map<List<CommentDto>>(allComments);
 
-            var userIds = comments.Select(c => c.UserId).Distinct().ToList();
+            var userIds = allDtos.Select(c => c.UserId).Distinct().ToList();
             var usersInfo = await _grpcIdentityClient.GetUsersByIds(userIds);
             var userInfoDict = usersInfo.ToDictionary(u => u.UserId, u => u);
 
-            foreach (var commentDto in commentDtos)
+            foreach (var dto in allDtos)
             {
-                if (userInfoDict.TryGetValue(commentDto.UserId, out var userInfo))
+                if (userInfoDict.TryGetValue(dto.UserId, out var info))
                 {
-                    commentDto.UserDisplayName = userInfo.DisplayName;
-                    commentDto.UserImageUrl = userInfo.ImageUrl;
+                    dto.UserDisplayName = info.DisplayName;
+                    dto.UserImageUrl = info.ImageUrl;
                 }
             }
-            return AppResult<List<CommentDto>>.Success(commentDtos);
+
+            // Build tree in memory — handles unlimited nesting depth.
+            // Must clear Replies first: EF relationship fixup auto-links navigation
+            // properties for tracked entities fetched in the same query, and AutoMapper
+            // recursively maps them → duplicates if we don't reset before re-building.
+            var dtoDict = allDtos.ToDictionary(d => d.Id);
+            foreach (var dto in allDtos)
+                dto.Replies.Clear();
+
+            var roots = new List<CommentDto>();
+            foreach (var dto in allDtos)
+            {
+                if (dto.ParentCommentId == null)
+                    roots.Add(dto);
+                else if (dtoDict.TryGetValue(dto.ParentCommentId, out var parent))
+                    parent.Replies.Add(dto);
+            }
+
+            roots = [.. roots.OrderByDescending(c => c.CreatedAt)];
+            return AppResult<List<CommentDto>>.Success(roots);
         }
     }
 }

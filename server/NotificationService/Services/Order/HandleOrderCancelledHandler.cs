@@ -34,7 +34,6 @@ namespace NotificationService.Services.Order
             _mediator = mediator;
             _unitOfWork = unitOfWork;
             _configuration = configuration;
-
         }
 
         public async Task<AppResult<Unit>> Handle(HandleOrderCancelledCommand request, CancellationToken cancellationToken)
@@ -43,7 +42,13 @@ namespace NotificationService.Services.Order
                 return AppResult<Unit>.Failure("Message is null", 400);
 
             var message = request.Message;
-            var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
+
+            // Fetch user, systemUser, adminGroup in parallel
+            var userListTask = _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId);
+            var systemUserTask = _grpcIdentityClient.GetSystemUser();
+            var adminGroupTask = _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName });
+
+            var user = (await userListTask).FirstOrDefault();
 
             var paymentMethodDisplay = message.PaymentMethod.ToLower() switch
             {
@@ -55,30 +60,23 @@ namespace NotificationService.Services.Order
                 _                => message.PaymentMethod
             };
 
-            var body = await _templateBuilder.BuildAsync("OrderCancelled", new
+            var shopUrl = _configuration.GetValue<string>("ClientUrl") ?? throw new InvalidOperationException("ClientUrl configuration is missing");
+            var bodyTask = _templateBuilder.BuildAsync("OrderCancelled", new
             {
                 message.OrderNo,
                 CustomerName = user?.DisplayName,
                 message.Reason,
                 CancelledAt = message.CancelledAt.ToString("dd/MM/yyyy HH:mm:ss"),
                 PaymentMethod = paymentMethodDisplay,
-                ShopUrl = _configuration.GetValue<string>("ClientUrl") ?? throw new ArgumentNullException("ClientUrl configuration is missing")
+                ShopUrl = shopUrl
             });
 
-            try
-            {
-                var recipientEmail = user?.UserEmail ?? throw new ArgumentNullException(nameof(user));
-                await _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Failed to send order cancelled email: {ex.Message}");
-            }
+            await Task.WhenAll(bodyTask, systemUserTask, adminGroupTask);
 
-            var systemUser = await _grpcIdentityClient.GetSystemUser();
-            var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName })).Value;
-            if (adminGroup == null)
-                throw new ArgumentNullException(nameof(adminGroup), "Admin notification group not found");
+            var body = bodyTask.Result;
+            var systemUser = systemUserTask.Result ?? throw new InvalidOperationException("System user not found");
+            var adminGroup = adminGroupTask.Result.Value ?? throw new InvalidOperationException("Admin notification group not found");
+            var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
 
             var adminNotificationCommand = new CreateNotificationCommand
             {
@@ -91,9 +89,9 @@ namespace NotificationService.Services.Order
                     ReferenceId = message.OrderId,
                     ReferenceType = NotificationReferenceType.Order.ToString(),
                     GroupId = adminGroup.Id,
-                    SenderId = systemUser?.UserId ?? throw new ArgumentNullException(nameof(systemUser)),
-                    SenderName = systemUser?.UserName ?? "System",
-                    SenderImageUrl = systemUser?.ImageUrl,
+                    SenderId = systemUser.UserId,
+                    SenderName = systemUser.UserName ?? "System",
+                    SenderImageUrl = systemUser.ImageUrl,
                 }
             };
 
@@ -108,14 +106,18 @@ namespace NotificationService.Services.Order
                     ReferenceId = message.OrderId,
                     ReferenceType = "Order",
                     ReceiverId = message.UserId,
-                    SenderId = systemUser?.UserId ?? throw new ArgumentNullException(nameof(systemUser)),
-                    SenderName = systemUser?.UserName ?? "System",
-                    SenderImageUrl = systemUser?.ImageUrl,
+                    SenderId = systemUser.UserId,
+                    SenderName = systemUser.UserName ?? "System",
+                    SenderImageUrl = systemUser.ImageUrl,
                 }
             };
 
-            await _mediator.Send(adminNotificationCommand, cancellationToken);
-            await _mediator.Send(userNotificationCommand, cancellationToken);
+            // Send email and both notifications in parallel
+            await Task.WhenAll(
+                _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body),
+                _mediator.Send(adminNotificationCommand, cancellationToken),
+                _mediator.Send(userNotificationCommand, cancellationToken)
+            );
 
             return AppResult<Unit>.Success(Unit.Value);
         }
