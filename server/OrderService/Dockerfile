@@ -5,21 +5,19 @@ COPY server/BuildingBlocks/Shared.Core.EF/Shared.Core.EF.csproj server/BuildingB
 COPY server/BuildingBlocks/Infrastructure.EF/Infrastructure.EF.csproj server/BuildingBlocks/Infrastructure.EF/
 COPY server/BuildingBlocks/Shared.Web/Shared.Web.csproj server/BuildingBlocks/Shared.Web/
 COPY server/Contract/Contract.csproj server/Contract/
-COPY server/PhotoService/PhotoService.csproj server/PhotoService/
-COPY server/ProductService/ProductService.csproj server/ProductService/
+COPY server/OrderService/OrderService.csproj server/OrderService/
 
-RUN dotnet restore server/ProductService/ProductService.csproj
+RUN dotnet restore server/OrderService/OrderService.csproj
 
 COPY server/BuildingBlocks/Shared.Core.EF/ server/BuildingBlocks/Shared.Core.EF/
 COPY server/BuildingBlocks/Infrastructure.EF/ server/BuildingBlocks/Infrastructure.EF/
 COPY server/BuildingBlocks/Shared.Web/ server/BuildingBlocks/Shared.Web/
 COPY server/Contract/ server/Contract/
-COPY server/PhotoService/ server/PhotoService/
-COPY server/ProductService/ server/ProductService/
+COPY server/OrderService/ server/OrderService/
 
-RUN dotnet publish server/ProductService/ProductService.csproj -c Release -o /app/out
+RUN dotnet publish server/OrderService/OrderService.csproj -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0
 WORKDIR /app
 COPY --from=build /app/out .
-ENTRYPOINT ["dotnet", "ProductService.dll"]
+ENTRYPOINT ["dotnet", "OrderService.dll"]

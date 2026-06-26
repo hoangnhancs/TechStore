@@ -1,47 +1,368 @@
 services:
-  # postgres:
-  #   image: postgres:latest
-  #   environment:
-  #     - POSTGRES_USER=postgres
-  #     - POSTGRES_PASSWORD=postgrespw
-  #     - POSTGRES_DB=products
-  #   ports:
-  #     - 5432:5432
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql
-  #     # - /var/lib/postgresql
-  # mongodb:
-  #   image: mongo:latest
-  #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: mongopw
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - mongodata:/data/db
-  # rabbitmq:
-  #   image: rabbitmq:3-management-alpine
-  #   ports:
-  #     - 5672:5672
-  #     - 15672:15672 
+
+  # ─── Infrastructure ───────────────────────────────────────────────────────────
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongopw
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   redis:
     image: redis:alpine
     container_name: redis
     ports:
       - "6379:6379"
     restart: unless-stopped
+
   mailpit:
     image: axllent/mailpit
     container_name: mailpit
     ports:
-      - "1025:1025"  # SMTP
-      - "8025:8025"  # UI
+      - "1025:1025"
+      - "8025:8025"
     restart: unless-stopped
-  # product-svc:
-  #   image: thaihoangnhantk/product-svc:latest
-  #   build:
-  #     context: .
-  #     dockerfile: server/ProductService
-# volumes:
-  # pgdata:
-  # mongodata:
+
+  # ─── Python ML Service ────────────────────────────────────────────────────────
+
+  vector-svc:
+    build:
+      context: .
+      dockerfile: server/VectorService/Dockerfile
+    container_name: vector-svc
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  # ─── .NET Microservices ───────────────────────────────────────────────────────
+
+  identity-svc:
+    build:
+      context: .
+      dockerfile: server/IdentityService/Dockerfile
+    container_name: identity-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=identity;Username=postgres;Password=postgrespw
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
+      - Kestrel__Endpoints__Grpc__Url=http://+:7778
+      - Kestrel__Endpoints__WebApi__Protocols=Http1
+      - Kestrel__Endpoints__WebApi__Url=http://+:5003
+      - GHN__ApiToken=${GHN_API_TOKEN}
+    ports:
+      - "5003:5003"
+      - "7778:7778"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  product-svc:
+    build:
+      context: .
+      dockerfile: server/ProductService/Dockerfile
+    container_name: product-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=product;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
+      - Kestrel__Endpoints__Grpc__Url=http://+:7777
+      - Kestrel__Endpoints__WebApi__Protocols=Http1
+      - Kestrel__Endpoints__WebApi__Url=http://+:5001
+      - CloudinarySettings__CloudName=${CLOUDINARY_CLOUD_NAME}
+      - CloudinarySettings__ApiKey=${CLOUDINARY_API_KEY}
+      - CloudinarySettings__ApiSecret=${CLOUDINARY_API_SECRET}
+    ports:
+      - "5001:5001"
+      - "7777:7777"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  order-svc:
+    build:
+      context: .
+      dockerfile: server/OrderService/Dockerfile
+    container_name: order-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=order;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcProduct=http://product-svc:7777
+      - GrpcIdentity=http://identity-svc:7778
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5005
+    ports:
+      - "5005:5005"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  payment-svc:
+    build:
+      context: .
+      dockerfile: server/PaymentService/Dockerfile
+    container_name: payment-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=payment;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5006
+      - StripeSettings__SecretKey=${STRIPE_SECRET_KEY}
+      - StripeSettings__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "5006:5006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cart-svc:
+    build:
+      context: .
+      dockerfile: server/CartService/Dockerfile
+    container_name: cart-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=cart;Username=postgres;Password=postgrespw
+      - GrpcProduct=http://product-svc:7777
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5004
+    ports:
+      - "5004:5004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  search-svc:
+    build:
+      context: .
+      dockerfile: server/SearchService/Dockerfile
+    container_name: search-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__MongoDbConnection=mongodb://root:mongopw@mongodb:27017
+      - ConnectionStrings__Redis=redis:6379
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcProduct=http://product-svc:7777
+      - GrpcRecommendation=http://recommendation-svc:7779
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5002
+    ports:
+      - "5002:5002"
+    depends_on:
+      mongodb:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  recommendation-svc:
+    build:
+      context: .
+      dockerfile: server/RecommendationService/Dockerfile
+    container_name: recommendation-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=recommendation;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcProduct=http://product-svc:7777
+      - VectorServiceUrl=http://vector-svc:8000
+      - ProductServiceUrl=http://product-svc:5001
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
+      - Kestrel__Endpoints__Grpc__Url=http://+:7779
+      - Kestrel__Endpoints__WebApi__Protocols=Http1
+      - Kestrel__Endpoints__WebApi__Url=http://+:5010
+    ports:
+      - "5010:5010"
+      - "7779:7779"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      vector-svc:
+        condition: service_started
+    restart: unless-stopped
+
+  notification-svc:
+    build:
+      context: .
+      dockerfile: server/NotificationService/Dockerfile
+    container_name: notification-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=notification;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcIdentity=http://identity-svc:7778
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - EmailSettings__Provider=Mailpit
+      - EmailSettings__Mailpit__Host=mailpit
+      - EmailSettings__Mailpit__Port=1025
+      - ClientUrl=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5009
+    ports:
+      - "5009:5009"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  review-svc:
+    build:
+      context: .
+      dockerfile: server/ReviewService/Dockerfile
+    container_name: review-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=review;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcIdentity=http://identity-svc:7778
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5008
+    ports:
+      - "5008:5008"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  comment-svc:
+    build:
+      context: .
+      dockerfile: server/CommentService/Dockerfile
+    container_name: comment-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=comment;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - GrpcIdentity=http://identity-svc:7778
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ASPNETCORE_URLS=http://+:5007
+    ports:
+      - "5007:5007"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  gateway-svc:
+    build:
+      context: .
+      dockerfile: server/GatewayService/Dockerfile
+    container_name: gateway-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ClientApp=http://localhost:3000
+      - IdentityServerUrl=http://identity-svc:5003
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - ReverseProxy__Clusters__product__Destinations__productApi__Address=http://product-svc:5001/
+      - ReverseProxy__Clusters__search__Destinations__searchApi__Address=http://search-svc:5002/
+      - ReverseProxy__Clusters__identity__Destinations__identityApi__Address=http://identity-svc:5003/
+      - ReverseProxy__Clusters__cart__Destinations__cartApi__Address=http://cart-svc:5004/
+      - ReverseProxy__Clusters__order__Destinations__orderApi__Address=http://order-svc:5005/
+      - ReverseProxy__Clusters__payment__Destinations__paymentApi__Address=http://payment-svc:5006/
+      - ReverseProxy__Clusters__comment__Destinations__commentApi__Address=http://comment-svc:5007/
+      - ReverseProxy__Clusters__review__Destinations__reviewApi__Address=http://review-svc:5008/
+      - ReverseProxy__Clusters__notification__Destinations__notificationApi__Address=http://notification-svc:5009/
+      - ReverseProxy__Clusters__recommendation__Destinations__recommendationApi__Address=http://recommendation-svc:5010/
+      - ASPNETCORE_URLS=http://+:6001
+    ports:
+      - "6001:6001"
+    depends_on:
+      - identity-svc
+      - product-svc
+      - order-svc
+      - payment-svc
+      - cart-svc
+      - search-svc
+      - recommendation-svc
+      - notification-svc
+      - review-svc
+      - comment-svc
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  mongodata:
