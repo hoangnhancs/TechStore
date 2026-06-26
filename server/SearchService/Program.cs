@@ -9,6 +9,7 @@ using SearchService.Consumers;
 using SearchService.Data;
 using SearchService.Services;
 using Shared.Web.Extensions;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,12 @@ builder.Services.AddSharedControllers();
 builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
+
+var redisConnection = builder.Configuration.GetConnectionString("Redis")
+    ?? throw new InvalidOperationException("'Redis' connection string is not configured.");
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+    ConnectionMultiplexer.Connect(ParseRedisConnectionString(redisConnection)));
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 
 builder.Services.AddMassTransit(x =>
 {
@@ -46,23 +53,6 @@ builder.Services.AddScoped<GrpcRecommendationClient>();
 
 var app = builder.Build();
 
-// Initialize MongoDB BEFORE any other operations
-//await DB.InitAsync("SearchDb", MongoClientSettings
-//    .FromConnectionString(app.Configuration.GetConnectionString("MongoDbConnection")));
-
-//app.Lifetime.ApplicationStarted.Register(async () =>
-//{
-//    try
-//    {
-//        await DbInitializer.SeedData(app);
-//    }
-//    catch (Exception ex)
-//    {
-//        var logger = app.Services.GetRequiredService<ILogger<Program>>();
-//        logger.LogError(ex, "An error occurred while seeding the search database.");
-//    }
-//});
-
 using (var scope = app.Services.CreateScope())
 {
     await DbInitializer.SeedData(app);
@@ -72,8 +62,6 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 
 app.UseSharedMiddleware();
-
-
 
 app.MapControllers();
 
@@ -85,3 +73,23 @@ static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         .OrResult(msg => msg.StatusCode == System.Net.HttpStatusCode.NotFound)
         .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(3));
 
+// Supports both Railway's redis://user:pass@host:port URI and plain host:port format
+static ConfigurationOptions ParseRedisConnectionString(string connectionString)
+{
+    if (!connectionString.StartsWith("redis://") && !connectionString.StartsWith("rediss://"))
+        return ConfigurationOptions.Parse(connectionString);
+
+    var uri = new Uri(connectionString);
+    var options = new ConfigurationOptions
+    {
+        EndPoints = { { uri.Host, uri.Port } },
+        AbortOnConnectFail = false,
+        Ssl = uri.Scheme == "rediss",
+    };
+    if (!string.IsNullOrEmpty(uri.UserInfo))
+    {
+        var parts = uri.UserInfo.Split(':', 2);
+        if (parts.Length == 2) options.Password = Uri.UnescapeDataString(parts[1]);
+    }
+    return options;
+}
