@@ -1,9 +1,7 @@
-﻿using MassTransit.Initializers;
 using MediatR;
 using RecommendationService.Persistence;
 using Shared.Core.EF.Application;
 using RecommendationService.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace RecommendationService.Services.ProductVectorEmbedding
 {
@@ -11,7 +9,8 @@ namespace RecommendationService.Services.ProductVectorEmbedding
     {
         private readonly IRecommendationUnitOfWork _unitOfWork;
         private readonly GrpcProductClient _rpcProductClient;
-        public GetSuggestionProductHandler(IRecommendationUnitOfWork unitOfWork, GrpcProductClient rpcProductClient )
+
+        public GetSuggestionProductHandler(IRecommendationUnitOfWork unitOfWork, GrpcProductClient rpcProductClient)
         {
             _unitOfWork = unitOfWork;
             _rpcProductClient = rpcProductClient;
@@ -26,15 +25,16 @@ namespace RecommendationService.Services.ProductVectorEmbedding
             }
 
             var userTracking = await _unitOfWork.UserActionTrackingRepository.GetUserActionTrackingByUserId(request.UserId, cancellationToken);
-            
+
             if (!userTracking.Any())
             {
                 var products = await _rpcProductClient.GetTop10SoldProduct();
                 return AppResult<List<string>>.Success(products.Select(x => x.Id).ToList());
             }
 
-            var productTrackingWeight = new Dictionary<string, float>();//weight of each product in the user tracking list
+            var productTrackingWeight = new Dictionary<string, float>();
             var hashSetProductId = new HashSet<string>();
+
             foreach (var item in userTracking)
             {
                 float weight = item.ActionType switch
@@ -45,59 +45,51 @@ namespace RecommendationService.Services.ProductVectorEmbedding
                     _ => 0f
                 };
                 if (weight == 0f) continue;
+
                 if (productTrackingWeight.ContainsKey(item.ProductId))
-                {
                     productTrackingWeight[item.ProductId] += weight;
-                }
                 else
-                {
                     productTrackingWeight.Add(item.ProductId, weight);
-                }
+
                 hashSetProductId.Add(item.ProductId);
             }
 
-            var productEmbedVectors = await _unitOfWork.ProductVectorEmbeddingRepository.GetProductVectorEmbeddingsByProductIds(hashSetProductId, cancellationToken);
-            var inputVectors = new List<List<float>>();
+            var productEmbedVectors = await _unitOfWork.ProductVectorEmbeddingRepository
+                .GetProductVectorEmbeddingsByProductIds(hashSetProductId, cancellationToken);
+
+            var inputVectors = new List<float[]>();
             foreach (var item in productEmbedVectors)
             {
-                var tmpVector = MultiplyWithWeight(item.Embedding, productTrackingWeight[item.ProductId]);
-                inputVectors.Add(tmpVector);
+                var raw = item.Embedding.Memory.ToArray();
+                var weighted = MultiplyWithWeight(raw, productTrackingWeight[item.ProductId]);
+                inputVectors.Add(weighted);
             }
+
             var avgEmbedVector = ComputeAverageVector(inputVectors);
-            var topSimilarProducts = await _unitOfWork.ProductVectorEmbeddingRepository.GetTopSimilarProductsAsync(avgEmbedVector, request.NumberTopProduct, cancellationToken);
+            var topSimilarProducts = await _unitOfWork.ProductVectorEmbeddingRepository
+                .GetTopSimilarProductsAsync(avgEmbedVector, request.NumberTopProduct, cancellationToken);
 
             return AppResult<List<string>>.Success(topSimilarProducts);
         }
 
-        #region Helpers
-        public List<float> MultiplyWithWeight(List<float> values, float weight)
-        {
-            return values.Select(v => v * weight).ToList();
-        }
+        private static float[] MultiplyWithWeight(float[] values, float weight)
+            => values.Select(v => v * weight).ToArray();
 
-        public List<float> ComputeAverageVector(List<List<float>> vectors)
+        private static List<float> ComputeAverageVector(List<float[]> vectors)
         {
-            if (vectors == null || vectors.Count == 0)
-                return new List<float>();
+            if (vectors.Count == 0) return [];
 
-            int dimension = vectors[0].Count;
+            int dimension = vectors[0].Length;
             var result = new float[dimension];
 
             foreach (var vec in vectors)
-            {
                 for (int i = 0; i < dimension; i++)
-                {
                     result[i] += vec[i];
-                }
-            }
 
             for (int i = 0; i < dimension; i++)
-            {
                 result[i] /= vectors.Count;
-            }
 
-            return result.ToList();
+            return [.. result];
         }
-        #endregion
     }
 }

@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using Pgvector;
 using RecommendationService.DTOs;
 using RecommendationService.Entities;
 using RecommendationService.Services;
@@ -84,7 +80,7 @@ namespace RecommendationService.Data
                             {
                                 ProductId = response.ProductId,
                                 IsProductDeleted = product.IsDeleted,
-                                Embedding = response.Embedding
+                                Embedding = new Vector(response.Embedding.ToArray())
                                 
                             });
 

@@ -1,11 +1,10 @@
-using Contract;
 using Contract.Product;
 using MassTransit;
+using Pgvector;
 using RecommendationService.DTOs;
 using RecommendationService.Entities;
 using RecommendationService.Persistence;
 using RecommendationService.Services;
-using System.Text.Json;
 
 namespace RecommendationService.Consumers
 {
@@ -59,18 +58,16 @@ namespace RecommendationService.Consumers
 
             if (existing != null)
             {
-                var embeddingJson = JsonSerializer.Serialize(embeddingResponse.Embedding);
                 await _unitOfWork.ProductVectorEmbeddingRepository
-                    .UpdateProductVectorEmbedding(product.Id, embeddingJson);
+                    .UpdateProductVectorEmbedding(product.Id, embeddingResponse.Embedding);
             }
             else
             {
-                // Product chưa có embedding (ví dụ bị miss lúc seed), tạo mới
                 await _unitOfWork.ProductVectorEmbeddingRepository.AddAsync(new ProductVectorEmbedding
                 {
                     ProductId = product.Id,
                     IsProductDeleted = false,
-                    Embedding = embeddingResponse.Embedding
+                    Embedding = new Vector(embeddingResponse.Embedding.ToArray())
                 });
             }
 

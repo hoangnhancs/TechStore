@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
+using Pgvector;
 using RecommendationService.Data;
 
 #nullable disable
@@ -12,8 +13,8 @@ using RecommendationService.Data;
 namespace RecommendationService.Migrations
 {
     [DbContext(typeof(RecommandationSvcDbContext))]
-    [Migration("20260626015139_AddInboxOutbox")]
-    partial class AddInboxOutbox
+    [Migration("20260626084832_InitDb")]
+    partial class InitDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +24,7 @@ namespace RecommendationService.Migrations
                 .HasAnnotation("ProductVersion", "9.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "vector");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("MassTransit.EntityFrameworkCoreIntegration.InboxState", b =>
@@ -207,9 +209,9 @@ namespace RecommendationService.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("text");
 
-                    b.Property<string>("EmbeddingJson")
+                    b.Property<Vector>("Embedding")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("vector");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");

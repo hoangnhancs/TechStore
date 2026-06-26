@@ -10,8 +10,8 @@ namespace ProductService.DTOs
         public string? Id { get; set; }
         public required string Name { get; set; }
         public string Description { get; set; } = string.Empty;
-        public required long OldPrice { get; set; }
-        public required long Price { get; set; }
+        public required decimal OldPrice { get; set; }
+        public required decimal Price { get; set; }
         public required long DiscountPercentage { get; set; }
         public required int CategoryId { get; set; }
         public string? CategoryName { get; set; }

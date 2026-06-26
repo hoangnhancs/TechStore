@@ -1,5 +1,6 @@
 using Contract;
 using MassTransit;
+using Pgvector;
 using RecommendationService.DTOs;
 using RecommendationService.Entities;
 using RecommendationService.Persistence;
@@ -56,7 +57,7 @@ namespace RecommendationService.Consumers
             {
                 ProductId = product.Id,
                 IsProductDeleted = false,
-                Embedding = embeddingResponse.Embedding
+                Embedding = new Vector(embeddingResponse.Embedding.ToArray())
             });
 
             await _unitOfWork.CommitAsync();

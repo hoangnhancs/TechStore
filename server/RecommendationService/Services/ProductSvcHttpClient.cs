@@ -21,7 +21,7 @@ namespace RecommendationService.Services
                 $"{_configuration["ProductServiceUrl"]}/api/products/all"
             ) ?? new List<ProductItem>();
 
-            items.Select(i => { i.UpdateAttributeText(); return i; }).ToList();
+            items.ForEach(i => i.UpdateAttributeText());
             return items;
         }
     }

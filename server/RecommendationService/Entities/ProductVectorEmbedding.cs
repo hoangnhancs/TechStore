@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Pgvector;
 using Shared.Core.EF.Domain.Entities;
 
 namespace RecommendationService.Entities
@@ -12,17 +7,6 @@ namespace RecommendationService.Entities
     {
         public required string ProductId { get; set; }
         public required bool IsProductDeleted { get; set; }
-
-        [NotMapped]
-        public List<float> Embedding { get; set; } = new();
-
-        // Property thực tế được lưu trong DB
-        public string EmbeddingJson
-        {
-            get => JsonSerializer.Serialize(Embedding);
-            set => Embedding = string.IsNullOrWhiteSpace(value)
-                ? new List<float>()
-                : JsonSerializer.Deserialize<List<float>>(value) ?? new List<float>();
-        }
+        public Vector Embedding { get; set; } = null!;
     }
 }

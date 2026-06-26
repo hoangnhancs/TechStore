@@ -2,10 +2,6 @@ using Infrastructure.EF.Data;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using RecommendationService.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace RecommendationService.Data
 {
@@ -14,11 +10,15 @@ namespace RecommendationService.Data
         public RecommandationSvcDbContext(DbContextOptions options) : base(options)
         {
         }
+
         public DbSet<ProductVectorEmbedding> ProductVectorEmbeddings { get; set; }
         public DbSet<UserActionTracking> UserActionTrackings { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.HasPostgresExtension("vector");
 
             modelBuilder.AddInboxStateEntity();
             modelBuilder.AddOutboxMessageEntity();

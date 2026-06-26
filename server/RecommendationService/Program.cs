@@ -22,7 +22,8 @@ builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 // Add DbContext for storing embeddings
 builder.Services.AddDbContext<RecommandationSvcDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        o => o.UseVector()));
 
 builder.Services.AddMassTransit(x =>
 {
@@ -58,7 +59,10 @@ builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
 builder.Services.AddScoped<GrpcProductClient>();
 builder.Services.AddScoped<IRecommendationUnitOfWork, RecommendationUnitOfWork>();
 
-builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
+builder.Services.AddHttpClient<ProductSvcHttpClient>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(5);
+}).AddPolicyHandler(GetRetryPolicy());
 
 // VectorService client for ML embeddings
 builder.Services.AddHttpClient<VectorServiceClient>()
