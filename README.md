@@ -1,7 +1,5 @@
 # TechStore — Microservices E-Commerce Backend
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=vercel)](https://your-live-demo-link.com)
-[![Swagger API Docs](https://img.shields.io/badge/API-Swagger%20UI-blue?style=for-the-badge&logo=swagger)](https://your-swagger-link.com)
 [![.NET 9](https://img.shields.io/badge/.NET-9.0-blueviolet?style=for-the-badge&logo=dotnet)](https://dotnet.microsoft.com/)
 [![RabbitMQ](https://img.shields.io/badge/RabbitMQ-%20-orange?style=for-the-badge&logo=rabbitmq)](https://www.rabbitmq.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-%20-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -13,36 +11,39 @@ A production-grade, highly scalable e-commerce backend built with a **.NET 9 mic
 ## Architecture Overview
 
 ```
-                        ┌──────────────────────────────────────┐
-                        │           Client (Browser)           │
-                        └──────────────────┬───────────────────┘
-                                           │ HTTP / WebSocket
-                        ┌──────────────────▼───────────────────┐
-                        │           Gateway Service            │
-                        │     (YARP Reverse Proxy + JWT)       │
-                        └──────┬──────────────────────┬────────┘
-                               │ REST                 │ REST
-           ┌───────────────────▼──────┐   ┌───────────▼──────────────┐
-           │     Identity Service     │   │      Product Service     │
-           │  (Auth, JWT, gRPC Server)│   │  (Catalog, Stock, gRPC)  │
-           └──────────────────────────┘   └──────────────────────────┘
-                               │
-                               │ REST / gRPC
-           ┌────────────────────────────────────────────────────────────┐
-           │                    Order Service                           │
-           │          (Saga State Machine + Quartz Scheduler)           │
-           └──────────┬─────────────────────────────────┬──────────────┘
-                      │ Publish Events                   │
-           ┌──────────▼───────────┐        ┌────────────▼─────────────┐
-           │     RabbitMQ Bus     │        │      Payment Service     │
-           │    (MassTransit)     │        │ (Stripe / Momo / VNPay)  │
-           └──┬────────┬─────────┘        └──────────────────────────┘
-              │        │
-  ┌───────────▼──┐  ┌──▼────────────┐  ┌─────────────┐  ┌───────────────┐
-  │Notification  │  │  Search Svc   │  │ Review Svc  │  │ Comment Svc   │
-  │Svc (Email +  │  │  (MongoDB)    │  │ (SignalR)   │  │ (SignalR)     │
-  │  SignalR)    │  └───────────────┘  └─────────────┘  └───────────────┘
-  └──────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                          Client (Browser)                             │
+└──────────────────────────────────┬────────────────────────────────────┘
+                                   │ HTTP / WebSocket
+┌──────────────────────────────────▼────────────────────────────────────┐
+│                  GatewayService  (YARP · JWT verification)            │
+└───┬──────────┬──────────┬──────────┬──────────┬──────────┬────────────┘
+    │          │          │          │          │          │
+    ▼          ▼          ▼          ▼          ▼          ▼
+Identity   Product     Order     Payment    Search    Notification
+ Service   Service    Service    Service   Service     Service
+(Auth/JWT) (Catalog)  (Saga +  (Stripe /  (MongoDB   (Email +
+ gRPC srv  gRPC srv   Quartz)  Momo/VNPay  + Redis)   SignalR)
+    │          │          │          └── SignalR ──► Client
+    │          │          │                         (payment intent)
+    │          │          │
+    ·          ·          ·  ·············· (routes to all services below too)
+
+  Cart      Review    Comment   Recommendation    Photo
+ Service   Service    Service     Service        Service
+           (SignalR)  (SignalR)  (pgvector +    (Cloudinary)
+                                 VectorSvc)
+
+
+── Synchronous · gRPC ──────────────────────────────────────────────────
+  OrderSvc / CartSvc        ──► IdentitySvc  (user info)
+  CartSvc  / SearchSvc      ──► ProductSvc   (live price & stock)
+  SearchSvc                 ──► RecommendSvc (suggestion products)
+
+── Asynchronous · RabbitMQ + MassTransit (Outbox) ──────────────────────
+  OrderSvc   ──► PaymentSvc · NotificationSvc · RecommendationSvc
+  PaymentSvc ──► OrderSvc      (PaymentCompleted / PaymentFailed)
+  ProductSvc ──► SearchSvc · RecommendationSvc
 ```
 
 ---
@@ -90,7 +91,7 @@ A production-grade, highly scalable e-commerce backend built with a **.NET 9 mic
 
 ### Real-Time
 - **SignalR** — WebSocket-based live updates (orders, payments, reviews, comments)
-- **Redis (StackExchange)** — SignalR scale-out backplane
+- **Redis (StackExchange)** — query result caching for SearchService (category browse, top-10 listings)
 
 ### Scheduling
 - **Quartz.NET** — persistent job scheduling for payment expiry timeouts
@@ -120,9 +121,7 @@ A production-grade, highly scalable e-commerce backend built with a **.NET 9 mic
 
 ### Libraries
 - **AutoMapper 14** — entity/DTO mapping
-- **FluentValidation 12** — request validation
 - **Handlebars.NET** — HTML email template rendering
-- **Newtonsoft.Json** — JSON serialization
 
 ---
 
@@ -204,7 +203,7 @@ All business logic is separated into Commands (writes) and Queries (reads) handl
 
 ```
 Controller → IRequest<T> (Command/Query)
-  → MediatR Pipeline (validation, logging)
+  → MediatR Pipeline
   → IRequestHandler<TRequest, TResponse>
   → Repository/UnitOfWork
 ```
@@ -328,16 +327,14 @@ For complex distributed transactions like order fulfillment, **Saga Orchestratio
 
 - **PostgreSQL (Transactional Data)**: Used by most .NET services. Provides strong ACID guarantees and handles vector math at scale with the `pgvector` extension for `RecommendationService`.
 - **MongoDB (Search Index)**: Catalog data is denormalized and synchronized to MongoDB. MongoDB's document-store model and high-speed retrieval index power full-text search in `SearchService` without burdening SQL databases.
-- **Redis (Real-Time scale-out)**: Acts as the backplane for **SignalR**. Since clients connect to different instances of the `NotificationService` and `CommentService` behind the gateway, Redis acts as a distributed pub/sub to route live updates (notifications, comments) to the correct client websocket.
+- **Redis (Search Caching)**: Caches high-frequency read queries in `SearchService` — category browse results and top-10 product listings. Cache keys are invalidated via MassTransit consumers when products are created or updated, preventing stale data.
 
 ---
 
 ## Live Demo & Local Quickstart
 
-### Deployment & Live Demo
-This microservices backend is deployed to a cloud environment:
-* **API Gateway & Swagger Docs**: [https://your-swagger-link.com](https://your-swagger-link.com)
-* **Live Client Application**: [https://your-live-demo-link.com](https://your-live-demo-link.com)
+### Deployment
+This microservices backend is deployed to **Railway** (each service as an independent deployment). Infrastructure services (PostgreSQL via Neon, MongoDB Atlas, RabbitMQ via CloudAMQP, Redis) are managed as external cloud services.
 
 ### Local Development Quickstart
 If you wish to run this project locally, ensure you have the following prerequisites installed:
