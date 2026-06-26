@@ -17,20 +17,32 @@ namespace OrderService.Repositories
         {
         }
 
-        public async Task<List<Order>> GetListOrdersInDateRangeWithUserInfor(DateTime startDate, DateTime endDate)
+        public async Task<List<Order>> GetListOrdersInDateRangeWithUserInfor(DateTime startDate, DateTime endDate, Order.OrderStatus? status = null)
         {
-            var orders = await _dbContext.Orders
-                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
-                .Include(x=>x.User)
-                .Include(x=>x.Items)
+            var query = _dbContext.Orders
+                .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate);
+
+            if (status.HasValue)
+                query = query.Where(o => o.Status == status.Value);
+
+            return await query
+                .Include(x => x.User)
+                .Include(x => x.Items)
                 .ToListAsync();
-            return orders;
         }
 
-        public async Task<List<Order>> GetListOrdersWaitingForConfirmation()
+        public async Task<List<Order>> GetListOrdersWaitingForConfirmation(DateTime? startDate = null, DateTime? endDate = null)
         {
-            return await _dbContext.Orders
-                .Where(o => o.Status == Order.OrderStatus.WaitingForConfirmation)
+            var query = _dbContext.Orders
+                .Where(o => o.Status == Order.OrderStatus.WaitingForConfirmation);
+
+            if (startDate.HasValue)
+                query = query.Where(o => o.CreatedAt >= startDate.Value);
+
+            if (endDate.HasValue)
+                query = query.Where(o => o.CreatedAt <= endDate.Value);
+
+            return await query
                 .Include(x => x.User)
                 .Include(x => x.Items)
                 .ToListAsync();

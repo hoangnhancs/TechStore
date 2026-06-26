@@ -18,7 +18,7 @@ namespace OrderService.Services.Order
 
         public async Task<AppResult<List<OrderWithUserInforDto>>> Handle(GetListOrdersWaitingForConfirmationQuery request, CancellationToken cancellationToken)
         {
-            var orders = await _unitOfWork.OrderRepository.GetListOrdersWaitingForConfirmation();
+            var orders = await _unitOfWork.OrderRepository.GetListOrdersWaitingForConfirmation(request.StartDate, request.EndDate);
             var orderDtos = _mapper.Map<List<OrderWithUserInforDto>>(orders);
             return AppResult<List<OrderWithUserInforDto>>.Success(orderDtos);
         }

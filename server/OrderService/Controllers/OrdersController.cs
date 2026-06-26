@@ -116,12 +116,13 @@ public class OrdersController : BaseApiController
 
     [HttpGet("range")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetOrdersInRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    public async Task<IActionResult> GetOrdersInRange([FromQuery] DateTime startDate, [FromQuery] DateTime endDate, [FromQuery] string? status)
     {
         var query = new GetListOrdersInRangeDateQuery 
         { 
             StartDate = startDate, 
-            EndDate = endDate 
+            EndDate = endDate,
+            Status = status
         };
         return HandleAppResult(await Mediator.Send(query));
     }
@@ -147,9 +148,9 @@ public class OrdersController : BaseApiController
 
     [HttpGet("wait-confirm-order")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> GetOrdersWaitingForConfirmation()
+    public async Task<IActionResult> GetOrdersWaitingForConfirmation([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate)
     {
-        var query = new GetListOrdersWaitingForConfirmationQuery();
+        var query = new GetListOrdersWaitingForConfirmationQuery { StartDate = startDate, EndDate = endDate };
         return HandleAppResult(await Mediator.Send(query));
     }
 

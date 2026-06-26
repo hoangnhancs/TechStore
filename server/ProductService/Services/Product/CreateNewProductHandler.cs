@@ -97,6 +97,7 @@ namespace ProductService.Services.Product
                 {
                     var productCreated = _mapper.Map<ProductCreated>(savedProduct);
                     await _publishEndpoint.Publish(productCreated, cancellationToken);
+                    await _unitOfWork.CommitAsync();
                 }
 
                 var productDtoResult = _mapper.Map<ProductDto>(product);

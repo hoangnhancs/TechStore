@@ -38,17 +38,15 @@ namespace NotificationService.Services.Order
 
         public async Task<AppResult<Unit>> Handle(HandleOrderCancelledCommand request, CancellationToken cancellationToken)
         {
-            if (request.Message == null)
+           if (request.Message == null)
                 return AppResult<Unit>.Failure("Message is null", 400);
 
             var message = request.Message;
 
-            // Fetch user, systemUser, adminGroup in parallel
-            var userListTask = _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId);
-            var systemUserTask = _grpcIdentityClient.GetSystemUser();
-            var adminGroupTask = _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName });
-
-            var user = (await userListTask).FirstOrDefault();
+            var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
+            var systemUser = await _grpcIdentityClient.GetSystemUser() ?? throw new InvalidOperationException("System user not found");
+            var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName }, cancellationToken)).Value
+                ?? throw new InvalidOperationException("Admin notification group not found");
 
             var paymentMethodDisplay = message.PaymentMethod.ToLower() switch
             {
@@ -61,7 +59,7 @@ namespace NotificationService.Services.Order
             };
 
             var shopUrl = _configuration.GetValue<string>("ClientUrl") ?? throw new InvalidOperationException("ClientUrl configuration is missing");
-            var bodyTask = _templateBuilder.BuildAsync("OrderCancelled", new
+            var body = await _templateBuilder.BuildAsync("OrderCancelled", new
             {
                 message.OrderNo,
                 CustomerName = user?.DisplayName,
@@ -71,14 +69,11 @@ namespace NotificationService.Services.Order
                 ShopUrl = shopUrl
             });
 
-            await Task.WhenAll(bodyTask, systemUserTask, adminGroupTask);
-
-            var body = bodyTask.Result;
-            var systemUser = systemUserTask.Result ?? throw new InvalidOperationException("System user not found");
-            var adminGroup = adminGroupTask.Result.Value ?? throw new InvalidOperationException("Admin notification group not found");
             var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
 
-            var adminNotificationCommand = new CreateNotificationCommand
+            await _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body);
+
+            await _mediator.Send(new CreateNotificationCommand
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
@@ -93,9 +88,9 @@ namespace NotificationService.Services.Order
                     SenderName = systemUser.UserName ?? "System",
                     SenderImageUrl = systemUser.ImageUrl,
                 }
-            };
+            }, cancellationToken);
 
-            var userNotificationCommand = new CreateNotificationCommand
+            await _mediator.Send(new CreateNotificationCommand
             {
                 CreateNotificationDto = new CreateNotificationDto
                 {
@@ -110,14 +105,7 @@ namespace NotificationService.Services.Order
                     SenderName = systemUser.UserName ?? "System",
                     SenderImageUrl = systemUser.ImageUrl,
                 }
-            };
-
-            // Send email and both notifications in parallel
-            await Task.WhenAll(
-                _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body),
-                _mediator.Send(adminNotificationCommand, cancellationToken),
-                _mediator.Send(userNotificationCommand, cancellationToken)
-            );
+            }, cancellationToken);
 
             return AppResult<Unit>.Success(Unit.Value);
         }

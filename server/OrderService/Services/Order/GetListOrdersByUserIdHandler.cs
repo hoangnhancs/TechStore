@@ -21,12 +21,12 @@ public class GetListOrdersByUserIdHandler : IRequestHandler<GetListOrdersByUserI
 
     public async Task<AppResult<List<OrderDto>>> Handle(GetListOrdersByUserIdQuery request, CancellationToken cancellationToken)
     {
-        var order = await _unitOfWork.OrderRepository.GetListAsync(
+        var order = (await _unitOfWork.OrderRepository.GetListAsync(
             p => p.UserId == request.UserId,
             q => q.Include(o => o.Items),
             cancellationToken
-        );
-        if (order == null || order.ToList().Count == 0)
+        )).OrderByDescending(o => o.CreatedAt).ToList();
+        if (order == null || order.Count == 0)
         {
             return AppResult<List<OrderDto>>.Success([]);
         }
