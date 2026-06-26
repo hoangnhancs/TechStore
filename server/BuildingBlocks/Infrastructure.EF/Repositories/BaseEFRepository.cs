@@ -1,12 +1,9 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Shared.Core.EF.Domain.Entities;
 using Shared.Core.EF.Domain.Repositories;
-
 
 namespace Infrastructure.EF.Repositories
 {
@@ -25,54 +22,22 @@ namespace Infrastructure.EF.Repositories
 
         public virtual async Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
         {
-            // return await DbSet.FindAsync(id, cancellationToken);
             return await DbSet.FindAsync(new object?[] { id }, cancellationToken);
         }
 
-        public virtual async Task<T?> GetByIdAsync(
-            TId id,
-            Func<IQueryable<T>, IQueryable<T>>? include,
-            CancellationToken cancellationToken = default)
+        public virtual async Task<IReadOnlyList<T>> GetListAsync(CancellationToken cancellationToken = default)
         {
-            IQueryable<T> query = DbSet;
-
-            if (include != null)
-                query = include(query);
-
-            return await query.FirstOrDefaultAsync(e => e.Id!.Equals(id), cancellationToken);
+            return await DbSet.Where(x => x.IsDeleted == false).ToListAsync(cancellationToken);
         }
 
-        public virtual async Task<IEnumerable<T>> GetListAsync(
-            Expression<Func<T, bool>>? predicate = null,
-            Func<IQueryable<T>, IQueryable<T>>? query = null,
-            CancellationToken cancellationToken = default)
+        public virtual async Task<bool> AnyAsync(CancellationToken cancellationToken = default)
         {
-            IQueryable<T> dbQuery = DbSet.AsQueryable();
-
-            if (predicate != null)
-                dbQuery = dbQuery.Where(predicate);
-
-            if (query != null)
-                dbQuery = query(dbQuery);
-
-            return await dbQuery.ToListAsync(cancellationToken);
+            return await DbSet.Where(x => x.IsDeleted == false).AnyAsync(cancellationToken);
         }
 
-        public virtual async Task<bool> AnyAsync(
-            Expression<Func<T, bool>> predicate,
-            CancellationToken cancellationToken = default)
+        public virtual async Task<int> CountAsync(CancellationToken cancellationToken = default)
         {
-            return await DbSet.AnyAsync(predicate, cancellationToken);
-        }
-
-        public virtual async Task<int> CountAsync(
-            Expression<Func<T, bool>>? predicate = null,
-            CancellationToken cancellationToken = default)
-        {
-            if (predicate == null)
-                return await DbSet.CountAsync(cancellationToken);
-
-            return await DbSet.CountAsync(predicate, cancellationToken);
+            return await DbSet.Where(x => x.IsDeleted == false).CountAsync(cancellationToken);
         }
 
         public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
@@ -89,11 +54,6 @@ namespace Infrastructure.EF.Repositories
         {
             entity.MarkAsDeleted();
             DbSet.Update(entity);
-        }
-
-        public virtual IQueryable<T> GetAll()
-        {
-            return DbSet.AsQueryable();
         }
 
         public virtual async Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default)

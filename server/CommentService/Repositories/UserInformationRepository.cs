@@ -2,6 +2,7 @@
 using CommentService.Entities;
 using CommentService.Repositories.Interface;
 using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace CommentService.Repositories
 {
@@ -9,6 +10,11 @@ namespace CommentService.Repositories
     {
         public UserInformationRepository(CommentSvcDbContext dbContext) : base(dbContext)
         {
+        }
+
+        public async Task<List<UserInformation>> GetByUserIdsAsync(IEnumerable<string> userIds, CancellationToken cancellationToken = default)
+        {
+            return await DbSet.Where(u => userIds.Contains(u.UserId)).ToListAsync(cancellationToken);
         }
     }
 }

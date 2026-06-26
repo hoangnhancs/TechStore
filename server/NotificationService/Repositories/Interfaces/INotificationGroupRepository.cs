@@ -9,6 +9,8 @@ namespace NotificationService.Repositories.Interfaces
 {
     public interface INotificationGroupRepository : IBaseEFRepository<NotificationGroup, string>
     {
-        
+        Task<NotificationGroup?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+        Task<NotificationGroup?> GetByIdWithMembersAsync(string id, CancellationToken cancellationToken = default);
+        Task<List<NotificationGroup>> GetByUserIdAsync(string userId, CancellationToken cancellationToken = default);
     }
 }

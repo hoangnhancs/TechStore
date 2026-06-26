@@ -1,8 +1,6 @@
-using System;
 using AutoMapper;
 using CartService.DTOs;
 using CartService.Persistence;
-using CartService.Services.Basket;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,12 +13,11 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
     private readonly ICartUnitOfWork _unitOfWork;
     private readonly GrpcProductClient _grpcProductClient;
     private readonly ILogger<AddItemToBasketHandler> _logger;
-    // private readonly IUserActionTrackingRepository _userActionTrackingRepository;
     private readonly IMapper _mapper;
 
     public AddItemToBasketHandler(
-        ICartUnitOfWork unitOfWork, 
-        GrpcProductClient grpcProductClient, 
+        ICartUnitOfWork unitOfWork,
+        GrpcProductClient grpcProductClient,
         ILogger<AddItemToBasketHandler> logger,
         IMapper mapper)
     {
@@ -28,21 +25,14 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
         _grpcProductClient = grpcProductClient;
         _logger = logger;
         _mapper = mapper;
-        // _userActionTrackingRepository = userActionTrackingRepository;
     }
 
     public async Task<AppResult<BasketDto>> Handle(AddItemToBasketCommand request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(request.UserId))
-        {
             return AppResult<BasketDto>.Failure("User ID cannot be null or empty", 400);
-        }
 
-        var basket = (await _unitOfWork.BasketRepository.GetListAsync(
-            p => p.UserId == request.UserId,
-            q => q.Include(b => b.Items),
-            cancellationToken: cancellationToken
-        )).FirstOrDefault();
+        var basket = await _unitOfWork.BasketRepository.GetByUserIdWithItemsAsync(request.UserId, cancellationToken);
 
         var isNewBasket = false;
         if (basket == null)
@@ -55,21 +45,15 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             isNewBasket = true;
         }
 
-        // Validate product exists via gRPC
         try
         {
             var product = await _grpcProductClient.GetProduct(request.ProductId, cancellationToken);
-            
-            if (product == null)
-            {
-                return AppResult<BasketDto>.Failure("Product not found", 404);
-            }
 
-            // Optional: Validate product stock if needed
+            if (product == null)
+                return AppResult<BasketDto>.Failure("Product not found", 404);
+
             if (product.QuantityInStock < request.Quantity)
-            {
                 return AppResult<BasketDto>.Failure("Insufficient stock", 400);
-            }
         }
         catch (TimeoutException ex)
         {
@@ -82,20 +66,11 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             return AppResult<BasketDto>.Failure("Error validating product. Please try again.", 500);
         }
 
-
         basket.AddItem(request.ProductId, request.Quantity);
 
         if (isNewBasket)
-        {
             await _unitOfWork.BasketRepository.AddAsync(basket, cancellationToken);
-        }
 
-        // await _userActionTrackingRepository.AddUserActionTracking(new UserActionTracking
-        // {
-        //     UserId = request.UserId,
-        //     ProductId = request.ProductId,
-        //     ActionType = UserActionTracking.UserActionType.AddToCart
-        // }, cancellationToken);
         try
         {
             var result = await _unitOfWork.CommitAsync(cancellationToken);
@@ -103,9 +78,7 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
             {
                 _logger.LogWarning(
                     "CommitAsync returned false while adding product {ProductId} to basket for user {UserId}. IsNewBasket: {IsNewBasket}",
-                    request.ProductId,
-                    request.UserId,
-                    isNewBasket);
+                    request.ProductId, request.UserId, isNewBasket);
                 return AppResult<BasketDto>.Failure("No changes were saved to basket.", 400);
             }
 
@@ -123,5 +96,3 @@ public class AddItemToBasketHandler : IRequestHandler<AddItemToBasketCommand, Ap
         }
     }
 }
-
-

@@ -44,7 +44,7 @@ namespace NotificationService.Services.Order
             bool isCod = message.PaymentMethod.Equals("CashOnDelivery", StringComparison.OrdinalIgnoreCase);
             string paymentMethodDisplay = isCod ? "Thanh toán khi nhận hàng (COD)" : "Thẻ tín dụng / Thanh toán online";
 
-            var user = (await _unitOfWork.UserInformationRepository.GetListAsync(x => x.UserId == message.UserId)).FirstOrDefault();
+            var user = (await _unitOfWork.UserInformationRepository.GetByUserIdsAsync([message.UserId], cancellationToken)).FirstOrDefault();
             var systemUser = await _grpcIdentityClient.GetSystemUser() ?? throw new InvalidOperationException("System user not found");
             var adminGroup = (await _mediator.Send(new GetNotificationGroupByNameQuery { Name = NotificationGroups.AllAdminsNotiGroupName }, cancellationToken)).Value
                 ?? throw new InvalidOperationException("Admin notification group not found");

@@ -1,8 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
 using NotificationService.Data;
 using NotificationService.Entities;
 using NotificationService.Repositories.Interfaces;
@@ -13,6 +10,11 @@ namespace NotificationService.Repositories
     {
         public UserInformationRepository(NotificationSvcDbContext dbContext) : base(dbContext)
         {
+        }
+
+        public async Task<List<UserInformation>> GetByUserIdsAsync(IEnumerable<string> userIds, CancellationToken cancellationToken = default)
+        {
+            return await DbSet.Where(u => userIds.Contains(u.UserId)).ToListAsync(cancellationToken);
         }
     }
 }

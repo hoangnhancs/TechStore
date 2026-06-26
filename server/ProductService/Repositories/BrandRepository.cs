@@ -1,31 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
 using ProductService.Entities;
 using ProductService.Repositories.Interface;
 
 namespace ProductService.Repositories
 {
-    /// <summary>
-    /// Repository implementation cho Brand entity
-    /// Chỉ sử dụng base CRUD operations từ BaseRepository
-    /// </summary>
     public class BrandRepository : BaseEFRepository<Brand, int, ProductSvcDbContext>, IBrandRepository
     {
         public BrandRepository(ProductSvcDbContext context) : base(context)
         {
         }
 
-        // Không có custom methods - sử dụng methods từ BaseRepository:
-        // - GetByIdAsync()
-        // - GetListAsync()
-        // - AddAsync()
-        // - Update()
-        // - Delete()
-        // - AnyAsync()
-        // - CountAsync()
+        public async Task<List<Brand>> GetByCategoryAsync(int? categoryId, CancellationToken cancellationToken = default)
+        {
+            var query = DbSet.AsQueryable();
+            if (categoryId.HasValue)
+                query = query.Where(b => b.CategoryId == categoryId.Value);
+            return await query.ToListAsync(cancellationToken);
+        }
     }
 }

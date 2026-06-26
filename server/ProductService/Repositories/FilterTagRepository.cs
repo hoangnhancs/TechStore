@@ -1,24 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
 using ProductService.Data;
 using ProductService.Entities;
 using ProductService.Repositories.Interface;
 
 namespace ProductService.Repositories
 {
-    /// <summary>
-    /// Repository implementation cho FilterTag entity
-    /// Chỉ sử dụng base CRUD operations từ BaseRepository
-    /// </summary>
     public class FilterTagRepository : BaseEFRepository<FilterTag, int, ProductSvcDbContext>, IFilterTagRepository
     {
         public FilterTagRepository(ProductSvcDbContext context) : base(context)
         {
         }
 
-        // Không có custom methods - sử dụng methods từ BaseRepository
+        public async Task<List<FilterTag>> GetByCategoryWithValuesAsync(int? categoryId, CancellationToken cancellationToken = default)
+        {
+            var query = DbSet.Include(ft => ft.Values).AsQueryable();
+            if (categoryId.HasValue)
+                query = query.Where(ft => ft.CategoryId == categoryId.Value);
+            return await query.ToListAsync(cancellationToken);
+        }
     }
 }

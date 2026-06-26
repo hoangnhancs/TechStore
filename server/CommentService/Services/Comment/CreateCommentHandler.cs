@@ -4,12 +4,7 @@ using CommentService.Persistence;
 using Contract.Comment;
 using MassTransit;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Shared.Core.EF.Application;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace CommentService.Services.Comment
 {
@@ -23,6 +18,7 @@ namespace CommentService.Services.Comment
         private readonly IMapper _mapper;
         private readonly IPublishEndpoint _publishEndpoint;
         private readonly IHttpContextAccessor _httpContextAccessor;
+
         public CreateCommentHandler(ICommentUnitOfWork unitOfWork, IMapper mapper, IPublishEndpoint publishEndpoint, IHttpContextAccessor httpContextAccessor)
         {
             _unitOfWork = unitOfWork;
@@ -30,6 +26,7 @@ namespace CommentService.Services.Comment
             _publishEndpoint = publishEndpoint;
             _httpContextAccessor = httpContextAccessor;
         }
+
         public async Task<AppResult<CommentDto>> Handle(CreateCommentCommand request, CancellationToken cancellationToken)
         {
             var comment = new Entities.Comment
@@ -45,7 +42,6 @@ namespace CommentService.Services.Comment
             await _unitOfWork.CommentRepository.AddAsync(comment);
 
             var isReply = !string.IsNullOrWhiteSpace(comment.ParentCommentId);
-
             var user = _httpContextAccessor.HttpContext?.User;
             var isAdminNewComment = comment.ParentCommentId == null && (_httpContextAccessor.HttpContext?.User.IsInRole("Admin") ?? false);
 
@@ -54,23 +50,20 @@ namespace CommentService.Services.Comment
             if (isReply)
             {
                 parentCommentUserId = await _unitOfWork.CommentRepository
-                    .GetAll()
-                    .Where(x => x.Id == comment.ParentCommentId)
-                    .Select(x => x.UserId)
-                    .FirstOrDefaultAsync(cancellationToken);
+                    .GetUserIdByCommentIdAsync(comment.ParentCommentId!, cancellationToken);
             }
 
             var isSelfReply =
                 isReply &&
                 !string.IsNullOrEmpty(parentCommentUserId) &&
                 parentCommentUserId == comment.UserId;
+
             if (!isSelfReply && !isAdminNewComment)
             {
                 await _publishEndpoint.Publish(
                     new CommentCreated
                     {
                         CommentId = comment.Id,
-                        //Title = comment.,
                         ReferenceId = comment.ReferenceId,
                         ReferenceType = comment.ReferenceType,
                         UserId = comment.UserId,
@@ -85,14 +78,9 @@ namespace CommentService.Services.Comment
             var success = await _unitOfWork.CommitAsync();
 
             if (!success)
-            {
-                return AppResult<CommentDto>.Failure(
-                    "Failed to create comment",
-                    400);
-            }
+                return AppResult<CommentDto>.Failure("Failed to create comment", 400);
 
             var dto = _mapper.Map<CommentDto>(comment);
-
             dto.UserDisplayName = user?.FindFirst("display_name")?.Value ?? request.UserName;
             dto.UserImageUrl = user?.FindFirst("image_url")?.Value ?? request.UserImageUrl;
 

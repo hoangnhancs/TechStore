@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using CommentService.DTOs;
-using CommentEntity = CommentService.Entities.Comment;
 using CommentService.Persistence;
 using MediatR;
 using Shared.Core.EF.Application;
@@ -16,20 +11,17 @@ namespace CommentService.Services.Comment
         private readonly ICommentUnitOfWork _unitOfWork;
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMapper _mapper;
+
         public GetListCommentsByProductIdHandler(ICommentUnitOfWork unitOfWork, GrpcIdentityClient grpcIdentityClient, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _grpcIdentityClient = grpcIdentityClient;
             _mapper = mapper;
         }
+
         public async Task<AppResult<List<CommentDto>>> Handle(GetListCommentsByProductIdQuery request, CancellationToken cancellationToken)
         {
-            // Load all comments flat (parents + replies at all levels) in one query
-            var allComments = (await _unitOfWork.CommentRepository.GetListAsync(
-                predicate: c => c.ReferenceId == request.ProductId
-                    && c.ReferenceType == CommentEntity.ReferenceTypes.Product.ToString(),
-                cancellationToken: cancellationToken
-            )).ToList();
+            var allComments = await _unitOfWork.CommentRepository.GetByProductIdAsync(request.ProductId, cancellationToken);
 
             if (allComments.Count == 0)
                 return AppResult<List<CommentDto>>.Success([]);

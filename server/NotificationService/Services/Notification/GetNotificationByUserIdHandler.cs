@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using NotificationService.DTOs;
 using NotificationService.Persistence;
 using Shared.Core.EF.Application;
@@ -16,37 +11,39 @@ namespace NotificationService.Services.Notification
         private readonly INotificationUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
         private readonly GrpcIdentityClient _grpcIdentityClient;
-        public GetNotificationByUserIdHandler(INotificationUnitOfWork unitOfWork, IMapper mapper, GrpcIdentityClient grpcIdentityClient )
+
+        public GetNotificationByUserIdHandler(INotificationUnitOfWork unitOfWork, IMapper mapper, GrpcIdentityClient grpcIdentityClient)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
             _grpcIdentityClient = grpcIdentityClient;
         }
+
         public async Task<AppResult<List<UserNotificationDto>>> Handle(GetNotificationByUserIdQuery request, CancellationToken cancellationToken)
         {
-            var notifications = (await _unitOfWork.NotificationRepository.GetListAsync(
-                predicate: n => n.Recipients.Any(r => r.UserId == request.UserId),
-                query: q => q.Include(n => n.Recipients),
-                cancellationToken: cancellationToken
-            )).OrderByDescending(n => n.CreatedAt);
+            var notifications = await _unitOfWork.NotificationRepository
+                .GetByUserIdWithRecipientsAsync(request.UserId, cancellationToken);
 
             if (!notifications.Any())
-            {
-                return AppResult<List<UserNotificationDto>>.Success(new List<UserNotificationDto>()); // Return empty list if no notifications found
-            }
+                return AppResult<List<UserNotificationDto>>.Success([]);
 
-            var allSenderIds = _grpcIdentityClient.GetUsersByIds(notifications.Select(n => n.SenderId ?? string.Empty).Where(id => !string.IsNullOrEmpty(id)).Distinct().ToList()).Result
+            var senderIds = notifications
+                .Where(n => !string.IsNullOrEmpty(n.SenderId))
+                .Select(n => n.SenderId!)
+                .Distinct()
+                .ToList();
+
+            var allSenderIds = (await _grpcIdentityClient.GetUsersByIds(senderIds))
                 .ToDictionary(x => x.UserId, x => x);
             var systemUser = await _grpcIdentityClient.GetSystemUser();
 
             var notificationsDto = notifications.Select(n =>
             {
-                var recipient = n.Recipients
-                    .First(r => r.UserId == request.UserId);
+                var recipient = n.Recipients.First(r => r.UserId == request.UserId);
 
                 var sender = (string.IsNullOrEmpty(n.SenderId) || n.SenderId == systemUser?.UserId)
-                    ? systemUser 
-                    : (allSenderIds.ContainsKey(n.SenderId) ? allSenderIds[n.SenderId] : systemUser);
+                    ? systemUser
+                    : (allSenderIds.TryGetValue(n.SenderId, out var s) ? s : systemUser);
 
                 return new UserNotificationDto
                 {
@@ -71,7 +68,6 @@ namespace NotificationService.Services.Notification
                 };
             }).ToList();
 
-            //var notificationDtos = _mapper.Map<List<UserNotificationsDto>>(notifications);
             return AppResult<List<UserNotificationDto>>.Success(notificationsDto);
         }
     }

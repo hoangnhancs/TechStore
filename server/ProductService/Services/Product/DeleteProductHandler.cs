@@ -18,7 +18,7 @@ public class DeleteProductHandler : IRequestHandler<DeleteProductCommand, AppRes
     }
     public async Task<AppResult<Unit>> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
     {
-        var product = await _unitOfWork.ProductRepository.GetByIdAsync(request.ProductId, null, cancellationToken);
+        var product = await _unitOfWork.ProductRepository.GetByIdAsync(request.ProductId, cancellationToken);
         if (product == null) return AppResult<Unit>.Failure("Product not found", 404);
         product.IsActive = false;
         product.MarkAsDeleted();    

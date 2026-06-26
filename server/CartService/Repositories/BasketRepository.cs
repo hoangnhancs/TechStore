@@ -1,21 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using CartService.Data;
 using CartService.Entities;
+using CartService.Repositories.Interface;
 using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace CartService.Repositories.Interface
 {
-    /// <summary>
-    /// Repository implementation cho Basket entity
-    /// Kế thừa BaseRepository để tái sử dụng CRUD operations
-    /// </summary>
     public class BasketRepository : BaseEFRepository<Basket, string, CartSvcDbContext>, IBasketRepository
     {
         public BasketRepository(CartSvcDbContext context) : base(context)
         {
-        }       
+        }
+
+        public async Task<Basket?> GetByUserIdWithItemsAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Where(x => x.IsDeleted == false)
+                .Include(b => b.Items)
+                .OrderByDescending(b => b.CreatedAt)
+                .FirstOrDefaultAsync(b => b.UserId == userId, cancellationToken);
+        }
     }
 }

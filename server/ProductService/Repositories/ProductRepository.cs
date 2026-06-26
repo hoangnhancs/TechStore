@@ -59,13 +59,59 @@ namespace ProductService.Repositories
             return result;
         }
 
-        // Các methods khác trong IProductRepository (đang comment) có thể implement ở đây
-        // Ví dụ:
-        // public async Task<Product?> GetProductByIdWithDetailFilterTagsAsync(string productId, CancellationToken ct)
-        // {
-        //     return await DbSet
-        //         .Include(p => p.FilterTags)
-        //         .FirstOrDefaultAsync(p => p.Id == productId, ct);
-        // }
+        public async Task<Product?> GetProductWithDetailsAsync(string productId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(p => p.DetailImages)
+                .Include(p => p.Attributes)
+                .Include(p => p.ProductFilterTagValues)
+                    .ThenInclude(pftv => pftv.FilterTagValue)
+                        .ThenInclude(ftv => ftv!.FilterTag)
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        }
+
+        public async Task<Product?> GetProductForDisplayAsync(string productId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.DisplayTags)
+                .Include(p => p.DetailImages)
+                .Include(p => p.Attributes)
+                .Include(p => p.ProductFilterTagValues)
+                    .ThenInclude(pftv => pftv.FilterTagValue)
+                .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        }
+
+        public async Task<List<Product>> GetActiveProductsAsync(DateTime? updatedAfter, CancellationToken cancellationToken = default)
+        {
+            var query = DbSet
+                .Where(p => p.IsActive && !p.IsDeleted);
+
+            if (updatedAfter.HasValue)
+                query = query.Where(p => p.UpdatedAt > updatedAfter.Value);
+
+            return await query
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.Attributes)
+                .Include(p => p.ProductFilterTagValues)
+                    .ThenInclude(pftv => pftv.FilterTagValue)
+                .Include(p => p.DisplayTags)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<List<Product>> GetActiveByCategoryOrBrandAsync(int? categoryId, int? brandId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Where(p => p.IsActive
+                    && (categoryId == null || p.CategoryId == categoryId)
+                    && (brandId == null || p.BrandId == brandId))
+                .Include(p => p.Category)
+                .Include(p => p.Brand)
+                .Include(p => p.DisplayTags)
+                .Include(p => p.ProductFilterTagValues)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

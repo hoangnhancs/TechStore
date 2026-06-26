@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using ProductService.DTOs;
@@ -14,18 +10,17 @@ namespace ProductService.Services.Brand
     {
         private readonly IMapper _mapper;
         private readonly IProductUnitOfWork _unitOfWork;
+
         public GetAllBrandsHandler(IMapper mapper, IProductUnitOfWork unitOfWork)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
         }
+
         public async Task<AppResult<List<BrandDto>>> Handle(GetAllBrandsQuery request, CancellationToken cancellationToken)
         {
-            var brands = await _unitOfWork.BrandRepository.GetListAsync(
-                predicate: request.CategoryId.HasValue ? b => b.CategoryId == request.CategoryId.Value  : null
-            );
-            var brandDtos = _mapper.Map<List<BrandDto>>(brands);
-            return AppResult<List<BrandDto>>.Success(brandDtos);
+            var brands = await _unitOfWork.BrandRepository.GetByCategoryAsync(request.CategoryId, cancellationToken);
+            return AppResult<List<BrandDto>>.Success(_mapper.Map<List<BrandDto>>(brands));
         }
     }
 }

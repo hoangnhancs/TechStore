@@ -1,13 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Linq;
-using System.Threading.Tasks;
 using CommentService.Entities;
 using CommentService.Persistence;
-using Grpc.Net.Client;
 using IdentityService.Grpc;
-using Microsoft.EntityFrameworkCore;
 
 namespace CommentService.Services
 {
@@ -15,11 +8,13 @@ namespace CommentService.Services
     {
         private readonly GrpcIdentity.GrpcIdentityClient _client;
         private readonly ICommentUnitOfWork _unitOfWork;
+
         public GrpcIdentityClient(GrpcIdentity.GrpcIdentityClient client, ICommentUnitOfWork unitOfWork)
         {
             _client = client;
             _unitOfWork = unitOfWork;
         }
+
         public async Task<List<UserInfo>> GetUsersByIds(List<string> userIds)
         {
             var request = new GetUsersByIdsRequest();
@@ -32,48 +27,27 @@ namespace CommentService.Services
         {
             var request = new GetUserByLastUpdatedRequest
             {
-                LastUpdated = Google.Protobuf.WellKnownTypes.Timestamp
-                    .FromDateTime(lastUpdated.ToUniversalTime())
+                LastUpdated = Google.Protobuf.WellKnownTypes.Timestamp.FromDateTime(lastUpdated.ToUniversalTime())
             };
-
             var response = await _client.GetUserByLastUpdatedAsync(request);
-
             return response.Users.ToList();
         }
 
         public async Task SyncUserInformation()
         {
-            var lastUpdated =
-                (await _unitOfWork.UserInformationRepository
-                    .GetAll()
-                    .OrderByDescending(u => u.UpdatedAt)
-                    .Select(u => (DateTime?)u.UpdatedAt)
-                    .FirstOrDefaultAsync())
-                ?? DateTime.MinValue;
+            var users = (await GetUserByLastUpdated(DateTime.MinValue)).ToDictionary(u => u.UserId);
 
-            var users = (await GetUserByLastUpdated(lastUpdated))
-                .ToDictionary(u => u.UserId);
+            if (users.Count == 0) return;
 
-            if (users.Count == 0)
-            {
-                return;
-            }
-
-            var existingUsers = await _unitOfWork.UserInformationRepository
-                .GetAll()
-                .Where(u => users.Keys.Contains(u.UserId))
-                .ToListAsync();
-
-            var existingUserIds = existingUsers
-                .Select(u => u.UserId)
-                .ToHashSet();
+            var existingUsers = await _unitOfWork.UserInformationRepository.GetByUserIdsAsync(users.Keys);
+            var existingUserIds = existingUsers.Select(u => u.UserId).ToHashSet();
 
             foreach (var existingUser in existingUsers)
             {
                 var sourceUser = users[existingUser.UserId];
-
                 existingUser.DisplayName = sourceUser.DisplayName;
                 existingUser.ImageUrl = sourceUser.ImageUrl;
+                existingUser.PhoneNumber = sourceUser.PhoneNumber;
                 existingUser.UpdatedAt = DateTime.UtcNow;
             }
 
@@ -84,14 +58,13 @@ namespace CommentService.Services
                     UserId = u.UserId,
                     DisplayName = u.DisplayName,
                     ImageUrl = u.ImageUrl,
+                    PhoneNumber = u.PhoneNumber,
                     CreatedAt = DateTime.UtcNow
                 })
                 .ToList();
 
             if (newUsers.Count > 0)
-            {
                 await _unitOfWork.UserInformationRepository.AddRangeAsync(newUsers);
-            }
 
             await _unitOfWork.CommitAsync();
         }

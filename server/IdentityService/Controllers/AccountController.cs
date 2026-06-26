@@ -246,9 +246,7 @@ namespace IdentityService.Controllers
             if (string.IsNullOrEmpty(refreshToken)) return Unauthorized();
 
             //b2: kiem tra rf token co hop le khong, neu co thi revoke and replace by token moi
-            var tokenInDb = await _unitOfWork.RefreshTokenRepository.GetListAsync(
-                predicate: p => p.Token == refreshToken
-            ).ContinueWith(t => t.Result.FirstOrDefault());
+            var tokenInDb = await _unitOfWork.RefreshTokenRepository.GetActiveByTokenAsync(refreshToken);
             if (tokenInDb == null || !tokenInDb.IsActive) return Unauthorized();
 
             var user = await _signInManager.UserManager.FindByIdAsync(tokenInDb.UserId);

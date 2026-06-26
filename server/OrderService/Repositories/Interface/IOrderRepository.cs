@@ -13,5 +13,7 @@ namespace OrderService.Repositories.Interface
     {
         Task<List<Order>> GetListOrdersInDateRangeWithUserInfor(DateTime startDate, DateTime endDate, Order.OrderStatus? status = null);
         Task<List<Order>> GetListOrdersWaitingForConfirmation(DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<Order>> GetByUserIdWithItemsAsync(string userId, CancellationToken cancellationToken = default);
+        Task<Order?> GetByIdWithHistoriesAndShipmentAsync(string orderId, CancellationToken cancellationToken = default);
     }
 }

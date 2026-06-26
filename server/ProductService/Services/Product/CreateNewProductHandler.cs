@@ -84,14 +84,7 @@ namespace ProductService.Services.Product
             if (result)
             {
                 // Reload product with navigation properties for event publishing
-                var savedProduct = await _unitOfWork.ProductRepository.GetByIdAsync(
-                    newProductId,
-                    q => q.Include(p => p.DetailImages)
-                        .Include(p => p.Attributes)
-                        .Include(p => p.ProductFilterTagValues)
-                            .ThenInclude(pftv => pftv.FilterTagValue)
-                                .ThenInclude(ftv => ftv!.FilterTag)
-                );
+                var savedProduct = await _unitOfWork.ProductRepository.GetProductWithDetailsAsync(newProductId, cancellationToken);
 
                 if (savedProduct != null)
                 {

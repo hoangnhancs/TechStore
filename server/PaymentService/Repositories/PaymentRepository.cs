@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+using Infrastructure.EF.Repositories;
+using Microsoft.EntityFrameworkCore;
+using PaymentService.Data;
 using PaymentService.Entities;
 using PaymentService.Repositories.Interface;
-using Infrastructure.EF.Repositories;
-using PaymentService.Data;
 
 namespace PaymentService.Repositories
 {
@@ -14,6 +10,11 @@ namespace PaymentService.Repositories
     {
         public PaymentRepository(PaymentSvcDbContext dbContext) : base(dbContext)
         {
+        }
+
+        public async Task<Payment?> GetByOrderIdAsync(string orderId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet.FirstOrDefaultAsync(p => p.OrderId == orderId, cancellationToken);
         }
     }
 }

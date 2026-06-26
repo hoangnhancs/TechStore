@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using NotificationService.DTOs;
@@ -14,25 +10,22 @@ namespace NotificationService.Services.NotificationGroup
     {
         private readonly INotificationUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+
         public GetNotificationGroupByNameHandler(INotificationUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
         public async Task<AppResult<NotificationGroupDto>> Handle(GetNotificationGroupByNameQuery request, CancellationToken cancellationToken)
         {
-            var adminGroup = await _unitOfWork.NotificationGroupRepository.GetListAsync(
-                q => q.Name == request.Name,
-                cancellationToken: cancellationToken
-            );
+            var group = await _unitOfWork.NotificationGroupRepository
+                .GetByNameAsync(request.Name, cancellationToken);
 
-            if (adminGroup == null || !adminGroup.Any())
-            {
+            if (group == null)
                 return AppResult<NotificationGroupDto>.Failure("Notification group not found", 404);
-            }
 
-            var adminGroupDto = _mapper.Map<NotificationGroupDto>(adminGroup.FirstOrDefault());
-            return AppResult<NotificationGroupDto>.Success(adminGroupDto);
+            return AppResult<NotificationGroupDto>.Success(_mapper.Map<NotificationGroupDto>(group));
         }
     }
 }

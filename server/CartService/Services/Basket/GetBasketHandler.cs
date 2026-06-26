@@ -1,10 +1,7 @@
-using System;
 using AutoMapper;
 using CartService.DTOs;
 using CartService.Persistence;
-using CartService.Repositories.Interface;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Shared.Core.EF.Application;
 
 namespace CartService.Services.Basket;
@@ -24,11 +21,7 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
 
     public async Task<AppResult<BasketDto>> Handle(GetBasketQuery request, CancellationToken cancellationToken)
     {
-        var basket = (await _unitOfWork.BasketRepository.GetListAsync(
-            p => p.UserId == request.UserId,
-            q => q.Include(b => b.Items).OrderByDescending(i => i.CreatedAt),
-            cancellationToken: cancellationToken
-        )).FirstOrDefault();
+        var basket = await _unitOfWork.BasketRepository.GetByUserIdWithItemsAsync(request.UserId, cancellationToken);
 
         if (basket == null)
         {
@@ -57,8 +50,8 @@ public class GetBasketHandler : IRequestHandler<GetBasketQuery, AppResult<Basket
             item.BrandId = product.BrandId;
             item.BrandName = product.BrandName;
             item.CategoryId = product.CategoryId;
-            item.CategoryName = product.CategoryName;  
-            item.CategoryDisplayName = product.CategoryDisplayName;   
+            item.CategoryName = product.CategoryName;
+            item.CategoryDisplayName = product.CategoryDisplayName;
         }
 
         return AppResult<BasketDto>.Success(dto);

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using MediatR;
 using ReviewService.DTOs;
@@ -15,23 +11,20 @@ namespace ReviewService.Services.Review
         private readonly IReviewUnitOfWork _unitOfWork;
         private readonly GrpcIdentityClient _grpcIdentityClient;
         private readonly IMapper _mapper;
+
         public GetListReviewByProductIdHandler(IReviewUnitOfWork unitOfWork, GrpcIdentityClient grpcIdentityClient, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _grpcIdentityClient = grpcIdentityClient;
             _mapper = mapper;
         }
+
         public async Task<AppResult<List<ReviewDto>>> Handle(GetListReviewsByProductIdQuery request, CancellationToken cancellationToken)
         {
-            var reviews = (await _unitOfWork.ReviewRepository.GetListAsync(
-                predicate: r => r.ProductId == request.ProductId,
-                cancellationToken: cancellationToken
-            )).OrderByDescending(r => r.CreatedAt).ToList();
+            var reviews = await _unitOfWork.ReviewRepository.GetByProductIdAsync(request.ProductId, cancellationToken);
 
-            if (reviews == null || !reviews.Any())
-            {
-                return AppResult<List<ReviewDto>>.Success(new List<ReviewDto>());
-            }
+            if (!reviews.Any())
+                return AppResult<List<ReviewDto>>.Success([]);
 
             var reviewDtos = _mapper.Map<List<ReviewDto>>(reviews);
 
@@ -48,8 +41,8 @@ namespace ReviewService.Services.Review
                     reviewDto.UserImageUrl = userInfo.ImageUrl;
                 }
             }
-            return AppResult<List<ReviewDto>>.Success(reviewDtos);
 
+            return AppResult<List<ReviewDto>>.Success(reviewDtos);
         }
     }
 }

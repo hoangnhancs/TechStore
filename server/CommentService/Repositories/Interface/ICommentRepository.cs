@@ -9,6 +9,7 @@ namespace CommentService.Repositories.Interface
 {
     public interface ICommentRepository : IBaseEFRepository<Comment, string>
     {
-        
+        Task<string?> GetUserIdByCommentIdAsync(string commentId, CancellationToken cancellationToken = default);
+        Task<List<Comment>> GetByProductIdAsync(string productId, CancellationToken cancellationToken = default);
     }
 }

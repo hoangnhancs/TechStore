@@ -47,5 +47,23 @@ namespace OrderService.Repositories
                 .Include(x => x.Items)
                 .ToListAsync();
         }
+
+        public async Task<List<Order>> GetByUserIdWithItemsAsync(string userId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(o => o.Items)
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToListAsync(cancellationToken);
+        }
+
+        public async Task<Order?> GetByIdWithHistoriesAndShipmentAsync(string orderId, CancellationToken cancellationToken = default)
+        {
+            return await DbSet
+                .Include(o => o.StatusHistories)
+                .Include(o => o.Shipment)
+                .Include(o => o.Items)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+        }
     }
 }
