@@ -14,10 +14,13 @@ namespace IdentityService.Persistence
     {
         private IRefreshTokenRepository? _refreshTokenRepository;
         private IAddressRepository? _addressRepository;
+        private IUserImageRepository? _userImageRepository;
         public IRefreshTokenRepository RefreshTokenRepository => 
             _refreshTokenRepository ??= new RefreshTokenRepository(_dbContext);
         public IAddressRepository AddressRepository => 
             _addressRepository ??= new AddressRepository(_dbContext);   
+        public IUserImageRepository UserImageRepository =>
+            _userImageRepository ??= new UserImageRepository(_dbContext);
         public IdentityUnitOfWork(IdentitySvcDbContext context) : base(context)
         {
         }

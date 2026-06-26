@@ -13,5 +13,6 @@ namespace IdentityService.Persistence
     {
         IRefreshTokenRepository RefreshTokenRepository { get; }
         IAddressRepository AddressRepository { get; }
+        IUserImageRepository UserImageRepository { get; }
     }
 }

@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Threading.Tasks;
 using IdentityService.DTOs;
 using IdentityService.Entities;
 using IdentityService.Persistence;
+using IdentityService.Services.Account;
 using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -308,6 +310,24 @@ namespace IdentityService.Controllers
                 accessTokenExpiration = newAccessToken.Expires
             };
             return Ok(response);
+        }
+
+        [HttpPut("update-photo")]
+        public async Task<IActionResult> UpdateImage(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("No file uploaded.");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized("User is not authenticated.");
+            }
+
+            return HandleAppResult(await Mediator.Send(new UpdateUserImageCommand { UserId = userId, NewImage = file }));
+            
         }
     }
 }
