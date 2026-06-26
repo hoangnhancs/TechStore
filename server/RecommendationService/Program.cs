@@ -34,6 +34,8 @@ builder.Services.AddMassTransit(x =>
     }); // Configure outbox to use the existing DbContext and Postgres
 
     x.AddConsumer<OrderCreatedConsumer>();
+    x.AddConsumer<ProductCreatedConsumer>();
+    x.AddConsumer<ProductUpdatedConsumer>();
 
     x.SetEndpointNameFormatter(new KebabCaseEndpointNameFormatter("recommendation", false)); // Use kebab-case for endpoint names, with "order" as the prefix
 

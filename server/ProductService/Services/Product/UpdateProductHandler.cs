@@ -198,6 +198,7 @@ namespace ProductService.Services.Product
                 }
                 var productUpdated = _mapper.Map<ProductUpdated>(existingProduct);
                 await _publishEndpoint.Publish(productUpdated, cancellationToken);
+                await _unitOfWork.CommitAsync();
                 return AppResult<ProductDto>.Success(_mapper.Map<ProductDto>(existingProduct));
             }
             catch (Exception ex)

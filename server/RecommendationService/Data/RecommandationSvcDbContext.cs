@@ -1,10 +1,11 @@
+using Infrastructure.EF.Data;
+using MassTransit;
+using Microsoft.EntityFrameworkCore;
+using RecommendationService.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Infrastructure.EF.Data;
-using Microsoft.EntityFrameworkCore;
-using RecommendationService.Entities;
 
 namespace RecommendationService.Data
 {
@@ -18,6 +19,10 @@ namespace RecommendationService.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.AddInboxStateEntity();
+            modelBuilder.AddOutboxMessageEntity();
+            modelBuilder.AddOutboxStateEntity();
         }
     }
 }

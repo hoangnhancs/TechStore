@@ -42,47 +42,53 @@ class EmbeddingService:
         embeddings = self.model.encode(texts, convert_to_numpy=True, batch_size=32)
         return [emb.tolist() for emb in embeddings]
 
+    # Max chars for description — keeps token budget for specs/tags
+    _MAX_DESC_CHARS = 200
+
     @staticmethod
     def product_to_text(product: ProductData) -> str:
-        """Convert product data to searchable text"""
+        """Convert product data to searchable text.
+
+        Order: name → category → brand → specs/tags → price → description (truncated).
+        Specs come before description so they are never truncated by the model's
+        256-token limit even when description is long.
+        """
         # Normalize tags
         tags_text = []
         for tag in product.tags:
             if tag.get('name') and tag.get('value'):
                 tags_text.append(f"{tag['name']}: {tag['value']}")
-        
-        # Build comprehensive description
-        parts = [
-            f"Name: {product.name}",
-        ]
-        
+
+        parts = []
+
+        if tags_text:
+            parts.append(f"Specifications: {', '.join(tags_text)}")
+
+        parts.append(f"Name: {product.name}")
+
+        if product.category_name:
+            parts.append(f"Category: {product.category_name}")
+
+        if product.brand_name:
+            parts.append(f"Brand: {product.brand_name}")
+
+        parts.append(f"Price: {product.old_price:,.0f} VND")
+
+        if product.discount_percentage > 0:
+            final_price = product.old_price * (1 - product.discount_percentage / 100)
+            parts.append(f"Discount: {product.discount_percentage}% (Final: {final_price:,.0f} VND)")
+
         if product.description:
-            # Clean description from array format if needed
             desc = product.description
             if isinstance(desc, list):
                 desc = ". ".join(desc)
             elif isinstance(desc, str):
-                # Remove curly braces and quotes if present
                 desc = desc.strip("{}").replace('"', '')
+            # Truncate so description never eats the token budget reserved for specs
+            if len(desc) > EmbeddingService._MAX_DESC_CHARS:
+                desc = desc[:EmbeddingService._MAX_DESC_CHARS] + "..."
             parts.append(f"Description: {desc}")
-        
-        parts.extend([
-            f"Price: {product.old_price:,.0f} VND",
-        ])
-        
-        if product.discount_percentage > 0:
-            final_price = product.old_price * (1 - product.discount_percentage / 100)
-            parts.append(f"Discount: {product.discount_percentage}% (Final: {final_price:,.0f} VND)")
-        
-        if product.category_name:
-            parts.append(f"Category: {product.category_name}")
-        
-        if product.brand_name:
-            parts.append(f"Brand: {product.brand_name}")
-        
-        if tags_text:
-            parts.append(f"Specifications: {', '.join(tags_text)}")
-        
+
         return ". ".join(parts)
 
 
