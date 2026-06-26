@@ -24,6 +24,12 @@ services:
   #   ports:
   #     - 5672:5672
   #     - 15672:15672 
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
   mailpit:
     image: axllent/mailpit
     container_name: mailpit
