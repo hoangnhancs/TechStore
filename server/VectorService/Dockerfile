@@ -10,14 +10,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY requirements.txt .
+COPY server/VectorService/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download model during build (optional, for faster startup)
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
 # Copy application code
-COPY . .
+COPY server/VectorService/ .
 
 # Expose port
 EXPOSE 8000
