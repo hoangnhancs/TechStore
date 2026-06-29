@@ -40,13 +40,24 @@ builder.Services.AddMassTransit(x =>
     });
 });
 
+var grpcChannelOptions = new Action<Grpc.Net.ClientFactory.GrpcClientFactoryOptions>(_ => { });
+var grpcKeepAlive = new SocketsHttpHandler
+{
+    PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+    KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+    KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+    EnableMultipleHttp2Connections = true
+};
+
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
-        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")))
+    .ConfigureChannel(o => o.HttpHandler = grpcKeepAlive);
 
 builder.Services.AddGrpcClient<GrpcRecommendation.GrpcRecommendationClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcRecommendation"]
-        ?? throw new InvalidOperationException("'GrpcRecommendation' address is not configured.")));
+        ?? throw new InvalidOperationException("'GrpcRecommendation' address is not configured.")))
+    .ConfigureChannel(o => o.HttpHandler = grpcKeepAlive);
 
 builder.Services.AddScoped<GrpcProductClient>();
 builder.Services.AddScoped<GrpcRecommendationClient>();

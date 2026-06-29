@@ -1,3 +1,4 @@
+using System.Net;
 using CartService.Data;
 using CartService.Persistence;
 using CartService.RequestHelpers;
@@ -21,7 +22,17 @@ builder.Services.AddMediatR(cfg =>
 
 builder.Services.AddGrpcClient<GrpcProduct.GrpcProductClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcProduct"]
-        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")));
+        ?? throw new InvalidOperationException("'GrpcProduct' address is not configured.")))
+    .ConfigureChannel(o =>
+    {
+        o.HttpHandler = new SocketsHttpHandler
+        {
+            PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+            KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+            KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+            EnableMultipleHttp2Connections = true
+        };
+    });
 
 builder.Services.AddScoped<GrpcProductClient>();
 builder.Services.AddScoped<ICartUnitOfWork, CartUnitOfWork>();

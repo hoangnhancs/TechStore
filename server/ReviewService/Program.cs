@@ -47,7 +47,14 @@ builder.Services.AddMassTransit(x =>
 
 builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
     o.Address = new Uri(builder.Configuration["GrpcIdentity"]
-        ?? throw new InvalidOperationException("'GrpcIdentity' address is not configured.")));
+        ?? throw new InvalidOperationException("'GrpcIdentity' address is not configured.")))
+    .ConfigureChannel(o => o.HttpHandler = new SocketsHttpHandler
+    {
+        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+        EnableMultipleHttp2Connections = true
+    });
 
 builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();
 // builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
