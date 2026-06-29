@@ -48,11 +48,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("customPolicy", policy =>
     {
+        var clientApp = builder.Configuration["ClientApp"]
+            ?? throw new InvalidOperationException("'ClientApp' configuration is missing.");
+
         policy.AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials()
-              .WithOrigins(builder.Configuration["ClientApp"]
-                  ?? throw new InvalidOperationException("'ClientApp' configuration is missing."));
+              .SetIsOriginAllowed(origin =>
+              {
+                  // Exact match (production URL)
+                  if (origin.Equals(clientApp, StringComparison.OrdinalIgnoreCase))
+                      return true;
+
+                  // Allow all Vercel preview deployments (*.vercel.app)
+                  var uri = new Uri(origin);
+                  return uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
+              });
     });
 });
 
