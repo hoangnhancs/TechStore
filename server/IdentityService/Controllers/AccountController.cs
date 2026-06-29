@@ -201,9 +201,10 @@ namespace IdentityService.Controllers
                 // }
                 await _unitOfWork.CommitAsync();
             }
-            Response.Cookies.Delete("access_token");
-            Response.Cookies.Delete("refresh_token");
-            Response.Cookies.Delete("user");
+            var clearOptions = new CookieOptions { SameSite = SameSiteMode.None, Secure = true };
+            Response.Cookies.Delete("access_token", clearOptions);
+            Response.Cookies.Delete("refresh_token", clearOptions);
+            Response.Cookies.Delete("user", clearOptions);
             await _signInManager.SignOutAsync();
             return NoContent();
         }
@@ -227,9 +228,10 @@ namespace IdentityService.Controllers
             await _unitOfWork.CommitAsync();
 
             //b4: xoa cookies
-            Response.Cookies.Delete("access_token");
-            Response.Cookies.Delete("refresh_token");
-            Response.Cookies.Delete("user");
+            var clearOptions = new CookieOptions { SameSite = SameSiteMode.None, Secure = true };
+            Response.Cookies.Delete("access_token", clearOptions);
+            Response.Cookies.Delete("refresh_token", clearOptions);
+            Response.Cookies.Delete("user", clearOptions);
 
             //b5: logout
             await _signInManager.SignOutAsync();
