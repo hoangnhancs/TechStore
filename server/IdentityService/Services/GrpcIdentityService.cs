@@ -27,22 +27,7 @@ namespace IdentityService.Services
                 .Include(u => u.Image).ToListAsync();
             foreach (var user in users)
             {
-                var userInfo = new UserInfo
-                {
-                    UserId = user.Id,
-                    UserName = user.UserName,
-                    UserEmail = user.Email,
-                    IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName,
-                    PhoneNumber = user.PhoneNumber 
-                };
-
-                if (user.Image?.Url != null)
-                {
-                    userInfo.ImageUrl = user.Image.Url;
-                }
-
-                response.Users.Add(userInfo);
+                response.Users.Add(MapToUserInfo(user));
             }
             return response;
         }
@@ -53,77 +38,51 @@ namespace IdentityService.Services
             var users = await _dbContext.Users.ToListAsync();
             foreach (var user in users)
             {
-                var userInfo = new UserInfo
-                {
-                    UserId = user.Id,
-                    UserName = user.UserName,
-                    UserEmail = user.Email,
-                    IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName,
-                    PhoneNumber = user.PhoneNumber
-                };
-
-                if (user.Image?.Url != null)
-                {
-                    userInfo.ImageUrl = user.Image.Url;
-                }
-
-                response.Users.Add(userInfo);
+                response.Users.Add(MapToUserInfo(user));
             }
             return response;
         }
 
         public override async Task<UserInfo> GetSystemUser(Empty request, ServerCallContext context)
         {
-            var systemUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.UserName == "system");
+            var systemUser = await _dbContext.Users
+                .Include(u => u.Image)
+                .FirstOrDefaultAsync(u => u.UserName == "system");
+
             if (systemUser == null)
-            {
                 throw new RpcException(new Status(StatusCode.NotFound, "System user not found"));
-            }
 
-            var userInfo = new UserInfo
-            {
-                UserId = systemUser.Id,
-                UserName = systemUser.UserName,
-                UserEmail = systemUser.Email,
-                IsAdmin = systemUser.IsAdmin,
-                DisplayName = systemUser.DisplayName,
-                PhoneNumber = systemUser.PhoneNumber
-            };
-
-            if (systemUser.Image?.Url != null)
-            {
-                userInfo.ImageUrl = systemUser.Image.Url;
-            }
-
-            return userInfo;
+            return MapToUserInfo(systemUser);
         }
 
         public override async Task<GetUserByLastUpdatedResponse> GetUserByLastUpdated(GetUserByLastUpdatedRequest request, ServerCallContext context)
         {
             var response = new GetUserByLastUpdatedResponse();
-            var users = await _dbContext.Users.Where(u => u.UpdatedAt > request.LastUpdated.ToDateTime())
-                .Include(u => u.Image).ToListAsync();
+            var users = await _dbContext.Users
+                .Where(u => u.UpdatedAt > request.LastUpdated.ToDateTime())
+                .Include(u => u.Image)
+                .ToListAsync();
             foreach (var user in users)
             {
-                var userInfo = new UserInfo
-                {
-                    UserId = user.Id,
-                    UserName = user.UserName,
-                    UserEmail = user.Email,
-                    IsAdmin = user.IsAdmin,
-                    DisplayName = user.DisplayName,
-                    PhoneNumber = user.PhoneNumber
-                };
-
-                if (user.Image?.Url != null)
-                {
-                    userInfo.ImageUrl = user.Image.Url;
-                }
-
-                response.Users.Add(userInfo);
+                response.Users.Add(MapToUserInfo(user));
             }
             return response;
+        }
+
+        private static UserInfo MapToUserInfo(Entities.User user)
+        {
+            var info = new UserInfo
+            {
+                UserId = user.Id ?? string.Empty,
+                UserName = user.UserName ?? string.Empty,
+                UserEmail = user.Email ?? string.Empty,
+                IsAdmin = user.IsAdmin,
+                DisplayName = user.DisplayName ?? string.Empty,
+                PhoneNumber = user.PhoneNumber ?? string.Empty
+            };
+            if (user.Image?.Url != null)
+                info.ImageUrl = user.Image.Url;
+            return info;
         }
     }
 }
