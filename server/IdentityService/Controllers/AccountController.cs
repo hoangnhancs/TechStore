@@ -170,7 +170,7 @@ namespace IdentityService.Controllers
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors)
-                    ModelState.AddModelError("error", error.Description);
+                    ModelState.AddModelError("errors", error.Description);
                 return BadRequest(ModelState);
             }
 
@@ -370,7 +370,7 @@ namespace IdentityService.Controllers
                 var resetCode = await _signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
                 var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
                 var clientUrl = _configuration["clientUrl"] ?? "https://shop.ec.io.vn";
-                var resetLink = $"{clientUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}&resetCode={encodedCode}";
+                var resetLink = $"{clientUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}&code={encodedCode}";
 
                 var body = $"""
                     <p>Xin chào <b>{user.DisplayName}</b>,</p>
@@ -379,8 +379,12 @@ namespace IdentityService.Controllers
                     <p>Liên kết có hiệu lực trong 1 giờ. Nếu bạn không yêu cầu điều này, hãy bỏ qua email này.</p>
                     """;
                 await _emailService.SendEmailAsync(user.Email!, "Đặt lại mật khẩu - TechStore", body);
+                return Ok(new { message = "Email đặt lại mật khẩu đã được gửi, vui lòng kiểm tra hộp thư." });
             }
-            return Ok(new { message = "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu." });
+            else
+            {
+                return BadRequest(new { message = "Tài khoản chưa được xác nhận email, không thể đặt lại mật khẩu." });
+            }    
         }
 
         [AllowAnonymous]

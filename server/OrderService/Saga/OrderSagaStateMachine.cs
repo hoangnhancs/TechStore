@@ -220,10 +220,7 @@ namespace OrderService.Saga
                         _logger.LogInformation("[SAGA] COD Order Confirmed for OrderId: {OrderId}", ctx.Saga.OrderId);
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                     })
-                    //.PublishAsync(ctx => ctx.Init<ConfirmOrder>(new
-                    //{
-                    //    OrderId = ctx.Saga.OrderId
-                    //}))
+                    .Unschedule(CodPaymentExpirySchedule)
                     .PublishAsync(ctx => ctx.Init<CreatePayment>(new
                     {
                         UserId = ctx.Saga.UserId,
@@ -431,6 +428,12 @@ namespace OrderService.Saga
                     //}))
                     //.TransitionTo(Completed)
             );
+
+            // Safety net: ignore stale CodPaymentExpiry if order already ended
+            During(Completed,
+                Ignore(CodPaymentExpirySchedule!.Received));
+            During(Cancelled,
+                Ignore(CodPaymentExpirySchedule!.Received));
 
             // Mark saga as finalized when completed or cancelled
             SetCompletedWhenFinalized();

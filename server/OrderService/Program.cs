@@ -1,6 +1,7 @@
 using IdentityService.Grpc;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using OrderService.Consumers;
 using OrderService.Data;
 using OrderService.Persistence;
@@ -45,7 +46,8 @@ builder.Services.AddMassTransit(x =>
         {
             r.ExistingDbContext<OrderSvcDbContext>();
             r.UsePostgres();
-        }); // Configure saga persistence with the existing DbContext
+            r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
+        });
 
     x.AddConsumer<ConfirmOrderConsumer>();
     x.AddConsumer<CancelOrderConsumer>();
@@ -66,6 +68,13 @@ builder.Services.AddMassTransit(x =>
         //     h.Password(builder.Configuration["RabbitMQ:Password"] ?? "guest");
         // });
         cfg.Host(builder.Configuration["RabbitMq:ConnectionString"]);
+
+        // Retry on PostgreSQL serialization failures (40001) caused by concurrent saga updates
+        cfg.UseMessageRetry(r =>
+        {
+            r.Handle<PostgresException>(ex => ex.SqlState == "40001");
+            r.Intervals(50, 150, 500, 1000, 3000);
+        });
 
         // Option 1: RabbitMQ Delayed Plugin
         // Ưu: delay message trực tiếp trong RabbitMQ → survive app restart

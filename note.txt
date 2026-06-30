@@ -4,4 +4,24 @@ builder.Services.AddControllers()
 //allow convert string to enum
 
 
-stripe listen --forward-to http://localhost:5006/webhook/stripe 
+stripe listen --forward-to http://localhost:5006/webhook/stripe
+
+================================================================================
+ISSUE: OrderSaga 40001 PostgreSQL serialization failure
+================================================================================
+Triệu chứng:
+  - Lâu lâu create COD hoặc confirm COD bị kẹt ở WaitingForPaymentCreated
+  - CloudAMQP: messages vào order-order-saga-state_error
+  - Lỗi: "40001: could not serialize access due to concurrent update"
+
+Nguyên nhân:
+  - MassTransit EF saga mặc định dùng SERIALIZABLE isolation
+  - 2 messages cho cùng 1 orderId arrive gần nhau (vài ms) trên 2 thread khác nhau
+  - PostgreSQL detect serialization anomaly → throw 40001 → message vào _error queue
+
+Fix (OrderService/Program.cs):
+  1. ConcurrencyMode.Pessimistic → dùng SELECT FOR UPDATE, lock row trước,
+     loại bỏ hoàn toàn 40001
+  2. UseMessageRetry handle<PostgresException>(sqlState == "40001")
+     → safety net cho các lỗi transient khác
+================================================================================
