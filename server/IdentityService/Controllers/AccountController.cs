@@ -369,8 +369,8 @@ namespace IdentityService.Controllers
             {
                 var resetCode = await _signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
                 var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
-                var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
-                var resetLink = $"{clientApp}/reset-password?email={Uri.EscapeDataString(user.Email!)}&resetCode={encodedCode}";
+                var clientUrl = _configuration["clientUrl"] ?? "https://shop.ec.io.vn";
+                var resetLink = $"{clientUrl}/reset-password?email={Uri.EscapeDataString(user.Email!)}&resetCode={encodedCode}";
 
                 var body = $"""
                     <p>Xin chào <b>{user.DisplayName}</b>,</p>
@@ -401,8 +401,8 @@ namespace IdentityService.Controllers
         {
             var code = await _signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
             var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
-            var confirmLink = $"{clientApp}/verify-email?userId={user.Id}&code={encodedCode}";
+            var clientUrl = _configuration["clientUrl"] ?? "https://shop.ec.io.vn";
+            var confirmLink = $"{clientUrl}/verify-email?userId={user.Id}&code={encodedCode}";
 
             var body = $"""
                 <p>Xin chào <b>{user.DisplayName}</b>,</p>
