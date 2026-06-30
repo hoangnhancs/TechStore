@@ -53,18 +53,18 @@ namespace IdentityService.Data
                 await userManager.CreateAsync(admin1, "Pa$$w0rd");
                 await userManager.AddToRolesAsync(admin1, ["Member", "Admin"]);
 
-                var admin2 = new User
-                {
-                    DisplayName = "Hoàng Nhân",
-                    UserName = "thaihoangnhantk17lqd@gmail.com",
-                    Email = "thaihoangnhantk17lqd@gmail.com",
-                    PhoneNumber = GenerateVietnamPhoneNumber(),
-                    EmailConfirmed = true,
-                    IsAdmin = true  
-                };
+                // var admin2 = new User
+                // {
+                //     DisplayName = "Hoàng Nhân",
+                //     UserName = "thaihoangnhantk17lqd@gmail.com",
+                //     Email = "thaihoangnhantk17lqd@gmail.com",
+                //     PhoneNumber = GenerateVietnamPhoneNumber(),
+                //     EmailConfirmed = true,
+                //     IsAdmin = true  
+                // };
 
-                await userManager.CreateAsync(admin2, "Pa$$w0rd");
-                await userManager.AddToRolesAsync(admin2, ["Member", "Admin"]);
+                // await userManager.CreateAsync(admin2, "Pa$$w0rd");
+                // await userManager.AddToRolesAsync(admin2, ["Member", "Admin"]);
 
                 var system = new User
                 {
