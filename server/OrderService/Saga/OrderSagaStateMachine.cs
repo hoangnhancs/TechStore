@@ -237,7 +237,7 @@ namespace OrderService.Saga
                 When(CodPaymentExpirySchedule!.Received)
                     .Then(ctx =>
                     {
-                        ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
+                        ctx.Saga.FailureReason = "Đơn hàng không được xác nhận - Tự động hủy.";
                         ctx.Saga.UpdatedAt = DateTime.UtcNow;
                         _logger.LogWarning("[SAGA] COD PaymentExpired for OrderId: {OrderId}", ctx.Saga.OrderId);
                     })
@@ -372,7 +372,7 @@ namespace OrderService.Saga
                     // .If(ctx => ctx.Saga.PaymentMethod != PaymentMethod.CashOnDelivery.ToString(), x => x
                         .Then(ctx =>
                         {
-                            ctx.Saga.FailureReason = "Payment window expired — order auto-cancelled";
+                            ctx.Saga.FailureReason = "Hết hạn thời gian thanh toán - Tự động hủy";
                             ctx.Saga.UpdatedAt = DateTime.UtcNow;
                             _logger.LogWarning("[SAGA] PaymentExpired for OrderId: {OrderId}", ctx.Saga.OrderId);
                         })
