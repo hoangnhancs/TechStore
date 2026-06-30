@@ -71,7 +71,7 @@ namespace NotificationService.Services.Order
 
             var recipientEmail = user?.UserEmail ?? throw new InvalidOperationException("User email not found");
 
-            // await _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body);
+            await _emailService.SendEmailAsync(recipientEmail, $"Đơn hàng #{message.OrderNo} đã bị hủy", body);
 
             await _mediator.Send(new CreateNotificationCommand
             {

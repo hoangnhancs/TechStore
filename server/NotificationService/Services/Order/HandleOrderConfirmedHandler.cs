@@ -86,7 +86,7 @@ namespace NotificationService.Services.Order
                 ? $"Đơn hàng #{message.OrderNo} của bạn đã được xác nhận và đang được chuẩn bị."
                 : $"Thanh toán thành công! Đơn hàng #{message.OrderNo} của bạn đang được xử lý.";
 
-            // await _emailService.SendEmailAsync(recipientEmail, emailSubject, body);
+            await _emailService.SendEmailAsync(recipientEmail, emailSubject, body);
 
             await _mediator.Send(new CreateNotificationCommand
             {
