@@ -152,10 +152,6 @@ namespace PaymentService.Services
                 payment.ClientSecret = intent.ClientSecret;
 
                 await _unitOfWork.PaymentRepository.AddAsync(payment);
-                await _publishEndpoint.Publish(new Contract.Payment.PaymentCreated
-                {
-                    OrderId = createPaymentDto.OrderId
-                });
                 await _unitOfWork.CommitAsync();
 
                 return _mapper.Map<PaymentDto>(payment);
@@ -163,11 +159,6 @@ namespace PaymentService.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating payment for OrderId: {OrderId}", createPaymentDto.OrderId);
-                await _publishEndpoint.Publish(new Contract.Payment.PaymentFailed
-                {
-                    OrderId = createPaymentDto.OrderId,
-                    ErrorMessage = ex.Message
-                });
                 throw;
             }
         }

@@ -55,11 +55,16 @@ namespace PaymentService.Consumers
                     PaymentMethod = message.PaymentMethod
                 });
 
+                await context.Publish(new Contract.Payment.PaymentCreated
+                {
+                    OrderId = message.OrderId,
+                });
+
                 await _hubContext.Clients
                     .Group(message.OrderId)
                     .SendAsync("ReceivePayment", payment, context.CancellationToken);
 
-                _logger.LogInformation("Payment created successfully for OrderId: {OrderId}, waiting for user to complete payment", message.OrderId);
+                _logger.LogInformation("Payment created successfully for OrderId: {OrderId}", message.OrderId);
             }
             catch (Exception ex)
             {
