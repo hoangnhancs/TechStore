@@ -56,13 +56,21 @@ builder.Services.AddCors(options =>
               .AllowCredentials()
               .SetIsOriginAllowed(origin =>
               {
-                  // Exact match (production URL)
-                  if (origin.Equals(clientApp, StringComparison.OrdinalIgnoreCase))
+                  var uri = new Uri(origin);
+                  var host = uri.Host;
+
+                  // Exact match và www variant
+                  var clientUri = new Uri(clientApp);
+                  var clientHost = clientUri.Host;
+                  if (host.Equals(clientHost, StringComparison.OrdinalIgnoreCase))
+                      return true;
+                  if (host.Equals("www." + clientHost, StringComparison.OrdinalIgnoreCase))
+                      return true;
+                  if (clientHost.StartsWith("www.") && host.Equals(clientHost[4..], StringComparison.OrdinalIgnoreCase))
                       return true;
 
                   // Allow all Vercel preview deployments (*.vercel.app)
-                  var uri = new Uri(origin);
-                  return uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
+                  return host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase);
               });
     });
 });
