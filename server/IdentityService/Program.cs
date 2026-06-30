@@ -1,3 +1,4 @@
+using EmailService.Extensions;
 using IdentityService.Data;
 using IdentityService.Entities;
 using IdentityService.Persistence;
@@ -52,6 +53,7 @@ builder.Services.AddScoped<IHttpContextAccessorHelper, HttpContextAccessorHelper
 builder.Services.AddScoped<IUserAccessor, UserAccessor>();
 builder.Services.AddScoped<ITokenServices, TokenServices>();
 builder.Services.AddScoped<IIdentityUnitOfWork, IdentityUnitOfWork>();
+builder.Services.AddEmailServices(builder.Configuration);
 
 var app = builder.Build();
 

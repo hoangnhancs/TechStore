@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using EmailService.Services.Interface;
 using IdentityService.DTOs;
 using IdentityService.Entities;
 using IdentityService.Persistence;
@@ -13,6 +15,7 @@ using IdentityService.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Shared.Web.Controller;
 using Shared.Web.Helper.Interface;
@@ -28,18 +31,24 @@ namespace IdentityService.Controllers
         private readonly IUserAccessor _userAccessor;
         private readonly IHttpContextAccessorHelper _httpContextAccessorHelper;
         private readonly IIdentityUnitOfWork _unitOfWork;
+        private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
         public AccountController(
             SignInManager<User> signInManager,
             ITokenServices tokenServices,
             IUserAccessor userAccessor,
             IHttpContextAccessorHelper httpContextAccessorHelper,
-            IIdentityUnitOfWork unitOfWork)
+            IIdentityUnitOfWork unitOfWork,
+            IEmailService emailService,
+            IConfiguration configuration)
         {
             _signInManager = signInManager;
             _tokenServices = tokenServices;
             _userAccessor = userAccessor;
             _httpContextAccessorHelper = httpContextAccessorHelper;
             _unitOfWork = unitOfWork;
+            _emailService = emailService;
+            _configuration = configuration;
         }
         [AllowAnonymous]
         [HttpPost("login")]
@@ -48,10 +57,11 @@ namespace IdentityService.Controllers
             var result = await _signInManager.PasswordSignInAsync(
                 loginDto.Email,
                 loginDto.Password,
-                isPersistent: true,  // Set to true if you want "remember me" functionality
-                lockoutOnFailure: false);  // Set to true to enable account lockout on failed attempts
+                isPersistent: true,
+                lockoutOnFailure: false);
 
-            if (!result.Succeeded) return Unauthorized();
+            if (result.IsNotAllowed) return Unauthorized("Email chưa được xác nhận. Vui lòng kiểm tra hộp thư.");
+            if (!result.Succeeded) return Unauthorized("Email hoặc mật khẩu không đúng.");
 
             var user = await _userAccessor.GetUserAsync();
 
@@ -121,9 +131,9 @@ namespace IdentityService.Controllers
         {
             if (User.Identity?.IsAuthenticated == false) return NoContent();
 
-            var user = await _userAccessor.GetUserAsync();
-
-            if (user == null) return Unauthorized("User not found");
+            User user;
+            try { user = await _userAccessor.GetUserAsync(); }
+            catch (UnauthorizedAccessException) { return Unauthorized(); }
 
             var roles = await _signInManager.UserManager.GetRolesAsync(user);
             List<string> listRoles = new List<string>(roles);
@@ -160,30 +170,14 @@ namespace IdentityService.Controllers
             if (!result.Succeeded)
             {
                 foreach (var error in result.Errors)
-                {
                     ModelState.AddModelError("error", error.Description);
-                }
-                return BadRequest(ModelState); // lỗi tạo user
-            }
-            else
-            {
-                // await SendConfirmationEmailAsync(user, registerDto.Email);
+                return BadRequest(ModelState);
             }
 
-            // await Mediator.Send(new CreateBasketCommand { UserId = user.Id });
             await _signInManager.UserManager.AddToRoleAsync(user, "Member");
+            await SendConfirmationEmailAsync(user);
 
-
-            return Ok(new UserDto
-            {
-                DisplayName = user.DisplayName ?? string.Empty,
-                Email = user.Email ?? string.Empty,
-                Id = user.Id,
-                ImageUrl = user.Image?.Url ?? string.Empty,
-                TotalSpent = user.TotalSpent,
-                Roles = ["Member"],
-                // user.Photos,
-            });
+            return Ok(new { message = "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản." });
         }
 
         [HttpPost("logout")]
@@ -327,7 +321,75 @@ namespace IdentityService.Controllers
             }
 
             return HandleAppResult(await Mediator.Send(new UpdateUserImageCommand { UserId = userId, NewImage = file }));
-            
+        }
+
+        [AllowAnonymous]
+        [HttpGet("confirm-email")]
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            var user = await _signInManager.UserManager.FindByIdAsync(userId);
+            if (user == null) return BadRequest("Liên kết xác nhận không hợp lệ.");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
+            var result = await _signInManager.UserManager.ConfirmEmailAsync(user, decodedToken);
+            if (!result.Succeeded) return BadRequest("Xác nhận email thất bại. Liên kết có thể đã hết hạn.");
+
+            var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
+            return Redirect($"{clientApp}/login?emailConfirmed=true");
+        }
+
+        [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+        {
+            var user = await _signInManager.UserManager.FindByEmailAsync(dto.Email);
+            if (user != null && await _signInManager.UserManager.IsEmailConfirmedAsync(user))
+            {
+                var token = await _signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
+                var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
+                var resetLink = $"{clientApp}/reset-password?userId={user.Id}&token={encodedToken}";
+
+                var body = $"""
+                    <p>Xin chào <b>{user.DisplayName}</b>,</p>
+                    <p>Bạn vừa yêu cầu đặt lại mật khẩu. Nhấp vào liên kết bên dưới để tiếp tục:</p>
+                    <p><a href="{resetLink}">Đặt lại mật khẩu</a></p>
+                    <p>Liên kết có hiệu lực trong 1 giờ. Nếu bạn không yêu cầu điều này, hãy bỏ qua email này.</p>
+                    """;
+                await _emailService.SendEmailAsync(user.Email!, "Đặt lại mật khẩu - TechStore", body);
+            }
+            // Luôn trả về Ok để tránh lộ thông tin tài khoản
+            return Ok(new { message = "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu." });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+        {
+            var user = await _signInManager.UserManager.FindByIdAsync(dto.UserId);
+            if (user == null) return BadRequest("Yêu cầu không hợp lệ.");
+
+            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
+            var result = await _signInManager.UserManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+            if (!result.Succeeded) return BadRequest(result.Errors.First().Description);
+
+            return Ok(new { message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay bây giờ." });
+        }
+
+        private async Task SendConfirmationEmailAsync(User user)
+        {
+            var token = await _signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+            var apiBase = _configuration["ApiBaseUrl"] ?? "https://api.ec.io.vn";
+            var confirmLink = $"{apiBase}/api/account/confirm-email?userId={user.Id}&token={encodedToken}";
+
+            var body = $"""
+                <p>Xin chào <b>{user.DisplayName}</b>,</p>
+                <p>Cảm ơn bạn đã đăng ký tài khoản tại <b>TechStore</b>. Vui lòng xác nhận địa chỉ email của bạn bằng cách nhấp vào liên kết bên dưới:</p>
+                <p><a href="{confirmLink}">Xác nhận email</a></p>
+                <p>Liên kết có hiệu lực trong 24 giờ.</p>
+                """;
+            await _emailService.SendEmailAsync(user.Email!, "Xác nhận tài khoản - TechStore", body);
         }
     }
 }
