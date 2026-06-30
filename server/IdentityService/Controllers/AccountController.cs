@@ -331,7 +331,7 @@ namespace IdentityService.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("~/api/confirmEmail")]
+        [HttpGet("confirmEmail")]
         public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string code)
         {
             var user = await _signInManager.UserManager.FindByIdAsync(userId);
@@ -361,7 +361,7 @@ namespace IdentityService.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("~/api/forgotPassword")]
+        [HttpPost("forgotPassword")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
         {
             var user = await _signInManager.UserManager.FindByEmailAsync(dto.Email);
@@ -384,7 +384,7 @@ namespace IdentityService.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("~/api/resetPassword")]
+        [HttpPost("resetPassword")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
         {
             var user = await _signInManager.UserManager.FindByEmailAsync(dto.Email);
