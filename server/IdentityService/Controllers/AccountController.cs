@@ -63,7 +63,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = true, //httponly, k cho phep FE doc cookies
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = accessToken.Expires
             });
             var ipAddress = _httpContextAccessorHelper.GetClientIp();
@@ -75,7 +75,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = true, //httponly, k cho phep FE doc cookies
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = refreshToken.Expires
             });
 
@@ -98,7 +98,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = false, // cho phep FE doc cookies
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = accessToken.Expires,
                 IsEssential = true
             });
@@ -201,7 +201,7 @@ namespace IdentityService.Controllers
                 // }
                 await _unitOfWork.CommitAsync();
             }
-            var clearOptions = new CookieOptions { SameSite = SameSiteMode.None, Secure = true };
+            var clearOptions = new CookieOptions { SameSite = SameSiteMode.Lax, Secure = true };
             Response.Cookies.Delete("access_token", clearOptions);
             Response.Cookies.Delete("refresh_token", clearOptions);
             Response.Cookies.Delete("user", clearOptions);
@@ -228,7 +228,7 @@ namespace IdentityService.Controllers
             await _unitOfWork.CommitAsync();
 
             //b4: xoa cookies
-            var clearOptions = new CookieOptions { SameSite = SameSiteMode.None, Secure = true };
+            var clearOptions = new CookieOptions { SameSite = SameSiteMode.Lax, Secure = true };
             Response.Cookies.Delete("access_token", clearOptions);
             Response.Cookies.Delete("refresh_token", clearOptions);
             Response.Cookies.Delete("user", clearOptions);
@@ -269,7 +269,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = newAccessToken.Expires
             });
 
@@ -277,7 +277,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = newRefreshToken.Expires
             });
 
@@ -301,7 +301,7 @@ namespace IdentityService.Controllers
             {
                 HttpOnly = false, // cho phep FE doc cookies
                 Secure = true,
-                SameSite = SameSiteMode.None,
+                SameSite = SameSiteMode.Lax,
                 Expires = newAccessToken.Expires,
                 IsEssential = true
             });
