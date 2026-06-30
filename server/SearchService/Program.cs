@@ -20,11 +20,28 @@ builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetry
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 
-var redisConnection = builder.Configuration.GetConnectionString("Redis")
-    ?? throw new InvalidOperationException("'Redis' connection string is not configured.");
-builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
-    ConnectionMultiplexer.Connect(ParseRedisConnectionString(redisConnection)));
-builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+var redisConnection = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrEmpty(redisConnection))
+{
+    try
+    {
+        var options = ParseRedisConnectionString(redisConnection);
+        options.AbortOnConnectFail = false;
+        var mux = ConnectionMultiplexer.Connect(options);
+        builder.Services.AddSingleton<IConnectionMultiplexer>(mux);
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Redis] Failed to connect, cache disabled: {ex.Message}");
+        builder.Services.AddSingleton<ICacheService, NullCacheService>();
+    }
+}
+else
+{
+    Console.WriteLine("[Redis] Connection string not configured, cache disabled.");
+    builder.Services.AddSingleton<ICacheService, NullCacheService>();
+}
 
 builder.Services.AddMassTransit(x =>
 {
