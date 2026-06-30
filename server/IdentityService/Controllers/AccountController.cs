@@ -177,7 +177,14 @@ namespace IdentityService.Controllers
             await _signInManager.UserManager.AddToRoleAsync(user, "Member");
             await SendConfirmationEmailAsync(user);
 
-            return Ok(new { message = "Đăng ký thành công. Vui lòng kiểm tra email để xác nhận tài khoản." });
+            return Ok(new UserDto
+            {
+                Id = user.Id,
+                DisplayName = user.DisplayName ?? string.Empty,
+                ImageUrl = user.Image?.Url ?? string.Empty,
+                Roles = ["Member"],
+                IsAdmin = false
+            });
         }
 
         [HttpPost("logout")]
@@ -324,31 +331,46 @@ namespace IdentityService.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet("confirm-email")]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        [HttpGet("~/api/confirmEmail")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string userId, [FromQuery] string code)
         {
             var user = await _signInManager.UserManager.FindByIdAsync(userId);
             if (user == null) return BadRequest("Liên kết xác nhận không hợp lệ.");
 
-            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token));
-            var result = await _signInManager.UserManager.ConfirmEmailAsync(user, decodedToken);
+            var decodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+            var result = await _signInManager.UserManager.ConfirmEmailAsync(user, decodedCode);
             if (!result.Succeeded) return BadRequest("Xác nhận email thất bại. Liên kết có thể đã hết hạn.");
 
-            var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
-            return Redirect($"{clientApp}/login?emailConfirmed=true");
+            return Ok(new { message = "Email đã được xác nhận thành công." });
         }
 
         [AllowAnonymous]
-        [HttpPost("forgot-password")]
+        [HttpPost("resendConfirmEmail")]
+        public async Task<IActionResult> ResendConfirmationEmail(ResendConfirmationEmailDto dto)
+        {
+            var user = dto.UserId != null
+                ? await _signInManager.UserManager.FindByIdAsync(dto.UserId)
+                : dto.Email != null
+                    ? await _signInManager.UserManager.FindByEmailAsync(dto.Email)
+                    : null;
+
+            if (user != null && !await _signInManager.UserManager.IsEmailConfirmedAsync(user))
+                await SendConfirmationEmailAsync(user);
+
+            return Ok(new { message = "Nếu tài khoản tồn tại và chưa xác nhận, chúng tôi đã gửi lại email." });
+        }
+
+        [AllowAnonymous]
+        [HttpPost("~/api/forgotPassword")]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
         {
             var user = await _signInManager.UserManager.FindByEmailAsync(dto.Email);
             if (user != null && await _signInManager.UserManager.IsEmailConfirmedAsync(user))
             {
-                var token = await _signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
-                var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                var resetCode = await _signInManager.UserManager.GeneratePasswordResetTokenAsync(user);
+                var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetCode));
                 var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
-                var resetLink = $"{clientApp}/reset-password?userId={user.Id}&token={encodedToken}";
+                var resetLink = $"{clientApp}/reset-password?email={Uri.EscapeDataString(user.Email!)}&resetCode={encodedCode}";
 
                 var body = $"""
                     <p>Xin chào <b>{user.DisplayName}</b>,</p>
@@ -358,19 +380,18 @@ namespace IdentityService.Controllers
                     """;
                 await _emailService.SendEmailAsync(user.Email!, "Đặt lại mật khẩu - TechStore", body);
             }
-            // Luôn trả về Ok để tránh lộ thông tin tài khoản
             return Ok(new { message = "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu." });
         }
 
         [AllowAnonymous]
-        [HttpPost("reset-password")]
+        [HttpPost("~/api/resetPassword")]
         public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
         {
-            var user = await _signInManager.UserManager.FindByIdAsync(dto.UserId);
+            var user = await _signInManager.UserManager.FindByEmailAsync(dto.Email);
             if (user == null) return BadRequest("Yêu cầu không hợp lệ.");
 
-            var decodedToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token));
-            var result = await _signInManager.UserManager.ResetPasswordAsync(user, decodedToken, dto.NewPassword);
+            var decodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.ResetCode));
+            var result = await _signInManager.UserManager.ResetPasswordAsync(user, decodedCode, dto.NewPassword);
             if (!result.Succeeded) return BadRequest(result.Errors.First().Description);
 
             return Ok(new { message = "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập ngay bây giờ." });
@@ -378,10 +399,10 @@ namespace IdentityService.Controllers
 
         private async Task SendConfirmationEmailAsync(User user)
         {
-            var token = await _signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-            var apiBase = _configuration["ApiBaseUrl"] ?? "https://api.ec.io.vn";
-            var confirmLink = $"{apiBase}/api/account/confirm-email?userId={user.Id}&token={encodedToken}";
+            var code = await _signInManager.UserManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+            var clientApp = _configuration["ClientApp"] ?? "https://shop.ec.io.vn";
+            var confirmLink = $"{clientApp}/verify-email?userId={user.Id}&code={encodedCode}";
 
             var body = $"""
                 <p>Xin chào <b>{user.DisplayName}</b>,</p>
