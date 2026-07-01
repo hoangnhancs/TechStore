@@ -14,6 +14,8 @@ using Shared.Web.Helper.Interface;
 using SharedWeb.Middleware;
 using static IdentityService.Services.Address.CreateVirtualAddresses;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

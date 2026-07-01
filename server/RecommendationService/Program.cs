@@ -10,6 +10,8 @@ using RecommendationService.Services;
 using Shared.Web.Extensions;
 using SharedWeb.Middleware;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

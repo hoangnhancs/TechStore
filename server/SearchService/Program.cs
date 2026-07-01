@@ -11,6 +11,8 @@ using SearchService.Services;
 using Shared.Web.Extensions;
 using StackExchange.Redis;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

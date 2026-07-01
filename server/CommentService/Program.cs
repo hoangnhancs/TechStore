@@ -9,6 +9,8 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Shared.Web.Extensions;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

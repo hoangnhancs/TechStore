@@ -11,6 +11,8 @@ using NotificationService.SignalR;
 using NotificationService.Workers;
 using Shared.Web.Extensions;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();

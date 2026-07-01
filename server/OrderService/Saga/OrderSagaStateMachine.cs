@@ -429,11 +429,20 @@ namespace OrderService.Saga
                     //.TransitionTo(Completed)
             );
 
-            // Safety net: ignore stale CodPaymentExpiry if order already ended
+            // Safety net: ignore stale events if order already ended
             During(Completed,
-                Ignore(CodPaymentExpirySchedule!.Received));
+                Ignore(CodPaymentExpirySchedule!.Received),
+                Ignore(OnlinePaymentExpirySchedule!.Received),
+                Ignore(PaymentSucceededEvent!),
+                Ignore(PaymentFailedEvent!),
+                Ignore(PaymentCreatedEvent!),
+                Ignore(OrderConfirmedEvent!));
             During(Cancelled,
-                Ignore(CodPaymentExpirySchedule!.Received));
+                Ignore(CodPaymentExpirySchedule!.Received),
+                Ignore(OnlinePaymentExpirySchedule!.Received),
+                Ignore(PaymentSucceededEvent!),
+                Ignore(PaymentFailedEvent!),
+                Ignore(PaymentCreatedEvent!));
 
             // Mark saga as finalized when completed or cancelled
             SetCompletedWhenFinalized();

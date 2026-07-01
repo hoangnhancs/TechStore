@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using ProductService.Grpc;
 using Shared.Web.Extensions;
 
+DotNetEnv.Env.Load();
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
