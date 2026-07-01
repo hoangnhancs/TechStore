@@ -1,6 +1,7 @@
 using EmailService.Extensions;
 using EmailService.Services.Interface;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 
 DotNetEnv.Env.Load();
 
@@ -19,8 +20,35 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader();
     }));
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("contact", context =>
+    {
+        // Behind Cloudflare, real IP is in CF-Connecting-IP header
+        var ip = context.Request.Headers["CF-Connecting-IP"].FirstOrDefault()
+            ?? context.Connection.RemoteIpAddress?.ToString()
+            ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(ip,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromHours(1),
+                QueueLimit = 0
+            });
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (ctx, _) =>
+    {
+        ctx.HttpContext.Response.ContentType = "application/json";
+        await ctx.HttpContext.Response.WriteAsync(
+            """{"message":"Bạn đã gửi quá nhiều lần. Vui lòng thử lại sau 1 giờ."}""", _);
+    };
+});
+
 var app = builder.Build();
 app.UseCors("portfolio");
+app.UseRateLimiter();
 
 app.MapPost("/api/send-email", async (
     ContactRequest req,
@@ -57,7 +85,7 @@ app.MapPost("/api/send-email", async (
 
     await emailService.SendEmailAsync(recipient, subject, body);
     return Results.Ok(new { message = "Gửi thành công!" });
-});
+}).RequireRateLimiting("contact");
 
 app.Run();
 
