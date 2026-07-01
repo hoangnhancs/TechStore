@@ -333,6 +333,20 @@ For complex distributed transactions like order fulfillment, **Saga Orchestratio
 
 ## Live Demo & Local Quickstart
 
+### Live Demo
+**[Tech Store](https://shop.ec.io.vn/)**
+
+**Account demo:**
+
+- Admin account:
+  - Account: admin@gmail.com
+  - Password: Pa$$w0rd
+- User account:
+  - Account: bob@gmail.com
+  - Password: Pa$$w0rd
+
+_(for testing realtime comment/review and notification)_
+
 ### Deployment
 This microservices backend is deployed to **Railway** (each service as an independent deployment). Infrastructure services (PostgreSQL via Neon, MongoDB Atlas, RabbitMQ via CloudAMQP, Redis) are managed as external cloud services.
 
