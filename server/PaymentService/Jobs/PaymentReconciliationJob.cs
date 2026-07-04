@@ -9,7 +9,7 @@ namespace PaymentService.Jobs;
 public class PaymentReconciliationJob : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly IBus _bus;
+    // private readonly IBus _bus;
     private readonly IConfiguration _config;
     private readonly ILogger<PaymentReconciliationJob> _logger;
 
@@ -19,12 +19,12 @@ public class PaymentReconciliationJob : BackgroundService
 
     public PaymentReconciliationJob(
         IServiceScopeFactory scopeFactory,
-        IBus bus,
+        // IBus bus,
         IConfiguration config,
         ILogger<PaymentReconciliationJob> logger)
     {
         _scopeFactory = scopeFactory;
-        _bus = bus;
+        // _bus = bus;
         _config = config;
         _logger = logger;
     }
@@ -50,7 +50,7 @@ public class PaymentReconciliationJob : BackgroundService
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PaymentSvcDbContext>();
-
+        var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>(); 
         StripeConfiguration.ApiKey = _config["StripeSettings:SecretKey"];
         var stripeService = new PaymentIntentService();
 
@@ -83,12 +83,16 @@ public class PaymentReconciliationJob : BackgroundService
                         payment.Status = PaymentStatus.Succeeded;
                         payment.UpdatedAt = now;
                         db.Payments.Update(payment);
-                        await db.SaveChangesAsync(cancellationToken);
-
-                        await _bus.Publish(new Contract.Payment.PaymentCompleted
+                        await publishEndpoint.Publish(new Contract.Payment.PaymentCompleted
                         {
                             OrderId = payment.OrderId
                         }, cancellationToken);
+                        await db.SaveChangesAsync(cancellationToken);
+
+                        // await _bus.Publish(new Contract.Payment.PaymentCompleted
+                        // {
+                        //     OrderId = payment.OrderId
+                        // }, cancellationToken);
 
                         _logger.LogInformation("[Reconciliation] Recovered succeeded payment for OrderId: {OrderId}", payment.OrderId);
                         break;
@@ -98,13 +102,19 @@ public class PaymentReconciliationJob : BackgroundService
                         payment.Status = PaymentStatus.Failed;
                         payment.UpdatedAt = now;
                         db.Payments.Update(payment);
-                        await db.SaveChangesAsync(cancellationToken);
 
-                        await _bus.Publish(new Contract.Payment.PaymentFailed
+                        await publishEndpoint.Publish(new Contract.Payment.PaymentFailed
                         {
                             OrderId = payment.OrderId,
                             ErrorMessage = $"Payment {intent.Status} — recovered by reconciliation job"
                         }, cancellationToken);
+                        await db.SaveChangesAsync(cancellationToken);
+
+                        // await _bus.Publish(new Contract.Payment.PaymentFailed
+                        // {
+                        //     OrderId = payment.OrderId,
+                        //     ErrorMessage = $"Payment {intent.Status} — recovered by reconciliation job"
+                        // }, cancellationToken);
 
                         _logger.LogWarning("[Reconciliation] Recovered {Status} payment for OrderId: {OrderId}", intent.Status, payment.OrderId);
                         break;
