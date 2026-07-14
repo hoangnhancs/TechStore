@@ -122,6 +122,12 @@ builder.Services.AddQuartz(q =>
 //     options["quartz.serializer.type"] = "json";
 // });
 
+// Reduce how often Quartz polls Postgres for due triggers so Neon can auto-suspend
+builder.Services.Configure<QuartzOptions>(options =>
+{
+    options["quartz.scheduler.idleWaitTime"] = TimeSpan.FromHours(24).TotalMilliseconds.ToString("F0");
+});
+
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
 
 
