@@ -30,7 +30,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddEntityFrameworkOutbox<CommentSvcDbContext>(o =>
     {
-        o.QueryDelay = TimeSpan.FromSeconds(10);
+        o.QueryDelay = TimeSpan.FromHours(24);
         o.UsePostgres();
         o.UseBusOutbox();
     });
