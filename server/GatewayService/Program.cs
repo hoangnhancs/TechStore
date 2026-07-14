@@ -1,4 +1,5 @@
 using System.Text;
+using GatewayService.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -10,6 +11,14 @@ builder.Services.AddOpenApi();
 
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
+// builder.Services.AddMemoryCache();
+// builder.Services.AddHttpClient("IdentityService", client =>
+// {
+//     var identityServerUrl = builder.Configuration["IdentityServerUrl"]
+//         ?? throw new InvalidOperationException("'IdentityServerUrl' configuration is missing.");
+//     client.BaseAddress = new Uri(identityServerUrl);
+// });
 
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("'Jwt:Key' configuration is missing.");
@@ -84,6 +93,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors("customPolicy");
 app.UseWebSockets();
+// app.UseMiddleware<TokenRefreshMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
