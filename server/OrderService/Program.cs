@@ -152,7 +152,7 @@ builder.Services.Configure<PaymentOptions>(
 builder.Services.AddScoped<GrpcProductClient>();
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<IOrderUnitOfWork, OrderUnitOfWork>();
-builder.Services.AddHostedService<UserInforSyncWorker>();
+// builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();

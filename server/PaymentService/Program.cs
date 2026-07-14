@@ -64,7 +64,7 @@ builder.Services.AddScoped<VNPayPaymentService>();
 builder.Services.AddScoped<BankTransferPaymentService>();
 builder.Services.AddScoped<CODPaymentService>();
 
-builder.Services.AddHostedService<PaymentReconciliationJob>();
+// builder.Services.AddHostedService<PaymentReconciliationJob>();
 
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();

@@ -62,9 +62,9 @@ builder.Services.AddScoped<IReviewUnitOfWork, ReviewUnitOfWork>();
 // builder.Services.AddScoped<IReviewRepository, ReviewRepository>();
 builder.Services.AddScoped<GrpcIdentityClient>();
 // builder.Services.AddScoped<IUserInformationRepository, UserInformationRepository>();
-builder.Services.AddHostedService<UserInforSyncWorker>();
+// builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
-builder.Services.AddHostedService<UserInforSyncWorker>();
+// builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();

@@ -64,7 +64,7 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
 builder.Services.AddScoped<GrpcIdentityClient>();
 builder.Services.AddScoped<ICommentUnitOfWork, CommentUnitOfWork>();
 // builder.Services.AddScoped<IUserSyncService, UserSyncService>();
-builder.Services.AddHostedService<UserInforSyncWorker>();
+// // builder.Services.AddHostedService<UserInforSyncWorker>();
 builder.Services.AddSignalR();
 builder.Services.AddHttpContextAccessor();
 
