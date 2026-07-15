@@ -126,6 +126,8 @@ builder.Services.AddQuartz(q =>
 builder.Services.Configure<QuartzOptions>(options =>
 {
     options["quartz.scheduler.idleWaitTime"] = TimeSpan.FromHours(24).TotalMilliseconds.ToString("F0");
+    // MisfireHandler runs on its own thread and defaults to MisfireThreshold (60s) if not set separately
+    options["quartz.jobStore.misfireHandlerFrequency"] = TimeSpan.FromHours(24).TotalMilliseconds.ToString("F0");
 });
 
 builder.Services.AddQuartzHostedService(q => q.WaitForJobsToComplete = true);
