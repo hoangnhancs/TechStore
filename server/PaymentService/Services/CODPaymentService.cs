@@ -10,11 +10,13 @@ namespace PaymentService.Services
     {
         private readonly IPaymentUnitOfWork _unitOfWork;
         private readonly IMapper _mapper;
+        public PaymentMethodType Type => PaymentMethodType.CashOnDelivery;
         public CODPaymentService(IPaymentUnitOfWork unitOfWork, IMapper mapper)
         {
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
+
         public async Task<PaymentDto> CreatePayment(CreatePaymentDto createPaymentDto)
         {
             var payment = new Entities.Payment

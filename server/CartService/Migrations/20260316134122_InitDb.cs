@@ -15,7 +15,7 @@ namespace CartService.Migrations
             migrationBuilder.CreateTable(
                 name: "Baskets",
                 columns: table => new
-                {
+                { 
                     Id = table.Column<string>(type: "text", nullable: false),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),

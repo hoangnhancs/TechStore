@@ -20,6 +20,8 @@ namespace PaymentService.Services
         private readonly IMediator _mediator;
         private readonly ILogger<StripePaymentService> _logger;
 
+        public PaymentMethodType Type => PaymentMethodType.CreditCard;
+
         public StripePaymentService(
             IPaymentUnitOfWork unitOfWork,
             IConfiguration config,

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using PaymentService.Services.Interface;
 using static PaymentService.Entities.Payment;
 
@@ -9,22 +10,15 @@ namespace PaymentService.Services
 {
     public class PaymentServiceFactory : IPaymentServiceFactory
     {
-        private readonly IServiceProvider _serviceProvider;
-        public PaymentServiceFactory(IServiceProvider serviceProvider)
+        private readonly IEnumerable<IPaymentService> _serviceStrategies;
+        public PaymentServiceFactory(IEnumerable<IPaymentService> serviceStrategies)
         {
-            _serviceProvider = serviceProvider;
+            _serviceStrategies = serviceStrategies;
         }
         public IPaymentService GetPaymentService(PaymentMethodType paymentMethod)
         {
-            return paymentMethod switch
-            {
-                PaymentMethodType.CashOnDelivery => _serviceProvider.GetRequiredService<CODPaymentService>(),
-                PaymentMethodType.CreditCard    => _serviceProvider.GetRequiredService<StripePaymentService>(),
-                PaymentMethodType.Momo          => _serviceProvider.GetRequiredService<MomoPaymentService>(),
-                PaymentMethodType.VNPay         => _serviceProvider.GetRequiredService<VNPayPaymentService>(),
-                PaymentMethodType.BankTransfer  => _serviceProvider.GetRequiredService<BankTransferPaymentService>(),
-                _ => throw new NotSupportedException($"Payment method {paymentMethod} not supported")
-            };
+            var service = _serviceStrategies.FirstOrDefault(s => s.Type == paymentMethod) ?? throw new NotSupportedException($"Payment method {paymentMethod.ToString()} is not supported.");
+            return service;
         }
     }
 }

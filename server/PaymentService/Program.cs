@@ -58,11 +58,11 @@ builder.Services.AddMassTransit(x =>
 builder.Services.AddScoped<IPaymentUnitOfWork, PaymentUnitOfWork>();
 builder.Services.AddScoped<IPaymentServiceFactory, PaymentServiceFactory>();
 
-builder.Services.AddScoped<StripePaymentService>();
-builder.Services.AddScoped<MomoPaymentService>();
-builder.Services.AddScoped<VNPayPaymentService>();
-builder.Services.AddScoped<BankTransferPaymentService>();
-builder.Services.AddScoped<CODPaymentService>();
+builder.Services.AddScoped<IPaymentService, StripePaymentService>();
+builder.Services.AddScoped<IPaymentService, MomoPaymentService>();
+builder.Services.AddScoped<IPaymentService, VNPayPaymentService>();
+builder.Services.AddScoped<IPaymentService, BankTransferPaymentService>();
+builder.Services.AddScoped<IPaymentService, CODPaymentService>();
 
 // builder.Services.AddHostedService<PaymentReconciliationJob>();
 
