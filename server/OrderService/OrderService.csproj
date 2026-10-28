@@ -11,6 +11,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Embedded so it ships inside the DLL regardless of publish/Docker layout — Quartz needs this
+         script to bootstrap its own QRTZ_* schema on a fresh DB (not managed by EF Core migrations). -->
+    <EmbeddedResource Include="Data\tables_postgres.sql" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="DotNetEnv" Version="3.1.1" />
     <PackageReference Include="Google.Protobuf" Version="3.34.0" />
@@ -43,6 +49,7 @@
   <ItemGroup>
   <Protobuf Include="protos\orders.proto" GrpcServices="Server" />
     <Protobuf Include="protos\products.proto" GrpcServices="Client" />
+    <Protobuf Include="protos\vouchers.proto" GrpcServices="Client" />
     <Protobuf Include="protos\users.proto">
       <GrpcServices>Client</GrpcServices>
     </Protobuf>

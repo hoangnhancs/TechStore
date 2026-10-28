@@ -18,7 +18,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 builder.Services.AddSharedControllers();
 
-builder.Services.AddHttpClient<ProductSvcHttpClient>().AddPolicyHandler(GetRetryPolicy());
+builder.Services.AddHttpClient<ProductSvcHttpClient>()
+    .ConfigureHttpClient(client => client.BaseAddress = new Uri(builder.Configuration["ProductServiceUrl"]
+        ?? throw new InvalidOperationException("'ProductServiceUrl' is not configured.")))
+    .AddPolicyHandler(GetRetryPolicy());
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 builder.Services.AddJwtFromCookieAuthentication(builder.Configuration);
 

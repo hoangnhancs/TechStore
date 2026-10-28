@@ -14,6 +14,7 @@ using OrderService.Workers;
 using ProductService.Grpc;
 using Quartz;
 using Shared.Web.Extensions;
+using VoucherService.Grpc;
 
 
 DotNetEnv.Env.Load();
@@ -153,6 +154,16 @@ builder.Services.AddGrpcClient<GrpcIdentity.GrpcIdentityClient>(o =>
         KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
         EnableMultipleHttp2Connections = true
     });
+builder.Services.AddGrpcClient<GrpcVoucher.GrpcVoucherClient>(o =>
+    o.Address = new Uri(builder.Configuration["GrpcVoucher"]
+        ?? throw new InvalidOperationException("'GrpcVoucher' address is not configured.")))
+    .ConfigureChannel(o => o.HttpHandler = new SocketsHttpHandler
+    {
+        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(5),
+        KeepAlivePingDelay = TimeSpan.FromSeconds(60),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(30),
+        EnableMultipleHttp2Connections = true
+    });
 
 builder.Services.Configure<PaymentOptions>(
     builder.Configuration.GetSection("PaymentOptions"));
@@ -166,6 +177,39 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<OrderSvcDbContext>();
+    await context.Database.MigrateAsync();
+
+    // Quartz's persistent store needs its own QRTZ_* schema — not managed by EF Core migrations.
+    // Only bootstrap when missing: the script DROPs+recreates its tables, so running it on every
+    // startup would wipe any in-flight scheduled triggers (payment/COD expiry) on a normal restart.
+    var connectionString = builder.Configuration["ConnectionStrings:DefaultConnection"]
+        ?? throw new InvalidOperationException("'ConnectionStrings:DefaultConnection' is not configured.");
+    await using var conn = new NpgsqlConnection(connectionString);
+    await conn.OpenAsync();
+    // Cast to ::text — reading the raw 'regclass' OID type through ExecuteScalarAsync's object
+    // return throws InvalidCastException in Npgsql; text has an unambiguous CLR mapping (string).
+    var quartzTableExists = await new NpgsqlCommand("SELECT to_regclass('public.qrtz_job_details')::text", conn).ExecuteScalarAsync();
+    if (quartzTableExists is null or DBNull)
+    {
+        var assembly = typeof(Program).Assembly;
+        await using var resourceStream = assembly.GetManifestResourceStream("OrderService.Data.tables_postgres.sql")
+            ?? throw new InvalidOperationException("Embedded resource 'tables_postgres.sql' not found.");
+        using var reader = new StreamReader(resourceStream);
+        var script = await reader.ReadToEndAsync();
+        await using var cmd = new NpgsqlCommand(script, conn);
+        await cmd.ExecuteNonQueryAsync();
+    }
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
+}
 
 if (app.Environment.IsDevelopment())
     app.MapOpenApi();

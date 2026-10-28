@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+option csharp_namespace = "VoucherService.Grpc";
+
+service GrpcVoucher {
+    rpc ApplyVoucher (ApplyVoucherRequest) returns (ApplyVoucherResponse);
+    rpc ReleaseVoucher (ReleaseVoucherRequest) returns (ReleaseVoucherResponse);
+}
+
+message ApplyVoucherItem {
+    string product_id = 1;
+    int32 quantity = 2;
+    int64 unit_price = 3;
+}
+
+message ApplyVoucherRequest {
+    string code = 1;
+    string order_id = 2;
+    string user_id = 3;
+    int64 sub_total = 4;
+    int64 shipping_cost = 5;
+    repeated ApplyVoucherItem items = 6;
+}
+
+message ApplyVoucherResponse {
+    bool success = 1;
+    string error_message = 2;
+    int64 discount_amount = 3;
+    string voucher_id = 4;
+    string voucher_code = 5;
+}
+
+message ReleaseVoucherRequest {
+    string order_id = 1;
+}
+
+message ReleaseVoucherResponse {
+    bool success = 1;
+    string error_message = 2;
+}

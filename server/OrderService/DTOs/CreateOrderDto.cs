@@ -13,7 +13,7 @@ public class CreateOrderDto
     public string? BillingAddress { get; set; }
     public required List<CreateOrderItemDto> Items { get; set; }
     public long ShippingCost { get; set; } = 0;
-    public long Discount { get; set; } = 0;
+    public string? VoucherCode { get; set; }
     public required string PaymentMethod { get; set; }
 }
 

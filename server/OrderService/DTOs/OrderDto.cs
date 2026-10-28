@@ -17,6 +17,7 @@ public class OrderDto
     public long SubToTal { get; set; }
     public long ShippingCost { get; set; }
     public long Discount { get; set; }
+    public string? VoucherCode { get; set; }
     public long Total { get; set; }
     
     

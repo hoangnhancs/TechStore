@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5011",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "Kestrel__Endpoints__Grpc__Protocols": "Http2",
+        "Kestrel__Endpoints__Grpc__Url": "http://localhost:7780",
+        "Kestrel__Endpoints__WebApi__Protocols": "Http1",
+        "Kestrel__Endpoints__WebApi__Url": "http://localhost:5011"
+      }
+    }
+  }
+}

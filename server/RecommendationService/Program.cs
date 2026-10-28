@@ -88,6 +88,18 @@ app.UseAuthorization();
 app.MapGrpcService<GrpcRecommendationService>();
 app.MapControllers();
 
+try
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<RecommandationSvcDbContext>();
+    await context.Database.MigrateAsync();
+}
+catch (Exception ex)
+{
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    logger.LogError(ex, "An error occurred while migrating the database.");
+}
+
 await DbInitializer.SeedData(app);
 
 if (app.Environment.IsDevelopment())

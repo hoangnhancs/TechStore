@@ -7,3 +7,4 @@ CREATE DATABASE notification;
 CREATE DATABASE recommendation;
 CREATE DATABASE review;
 CREATE DATABASE comment;
+CREATE DATABASE voucher;

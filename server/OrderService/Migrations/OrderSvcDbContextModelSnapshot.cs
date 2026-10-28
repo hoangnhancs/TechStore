@@ -262,6 +262,9 @@ namespace OrderService.Migrations
                     b.Property<string>("UserImageUrl")
                         .HasColumnType("text");
 
+                    b.Property<string>("VoucherCode")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");

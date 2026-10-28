@@ -3,7 +3,7 @@ services:
   # ─── Infrastructure ───────────────────────────────────────────────────────────
 
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: postgres
     environment:
       POSTGRES_USER: postgres
@@ -89,6 +89,9 @@ services:
       - Kestrel__Endpoints__WebApi__Protocols=Http1
       - Kestrel__Endpoints__WebApi__Url=http://+:5003
       - GHN__ApiToken=${GHN_API_TOKEN}
+      - EmailSettings__Provider=Mailpit
+      - EmailSettings__Mailpit__Host=mailpit
+      - EmailSettings__Mailpit__Port=1025
     ports:
       - "5003:5003"
       - "7778:7778"
@@ -137,6 +140,7 @@ services:
       - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
       - GrpcProduct=http://product-svc:7777
       - GrpcIdentity=http://identity-svc:7778
+      - GrpcVoucher=http://voucher-svc:7780
       - Jwt__Key=${JWT_KEY}
       - Jwt__Issuer=http://localhost:6001
       - Jwt__Audience=http://localhost:3000
@@ -206,6 +210,7 @@ services:
       - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
       - GrpcProduct=http://product-svc:7777
       - GrpcRecommendation=http://recommendation-svc:7779
+      - ProductServiceUrl=http://product-svc:5001
       - Jwt__Key=${JWT_KEY}
       - Jwt__Issuer=http://localhost:6001
       - Jwt__Audience=http://localhost:3000
@@ -325,6 +330,32 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  voucher-svc:
+    build:
+      context: .
+      dockerfile: server/VoucherService/Dockerfile
+    container_name: voucher-svc
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=voucher;Username=postgres;Password=postgrespw
+      - RabbitMq__ConnectionString=amqp://guest:guest@rabbitmq/
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=http://localhost:6001
+      - Jwt__Audience=http://localhost:3000
+      - Kestrel__Endpoints__Grpc__Protocols=Http2
+      - Kestrel__Endpoints__Grpc__Url=http://+:7780
+      - Kestrel__Endpoints__WebApi__Protocols=Http1
+      - Kestrel__Endpoints__WebApi__Url=http://+:5011
+    ports:
+      - "5011:5011"
+      - "7780:7780"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
   gateway-svc:
     build:
       context: .
@@ -347,6 +378,7 @@ services:
       - ReverseProxy__Clusters__review__Destinations__reviewApi__Address=http://review-svc:5008/
       - ReverseProxy__Clusters__notification__Destinations__notificationApi__Address=http://notification-svc:5009/
       - ReverseProxy__Clusters__recommendation__Destinations__recommendationApi__Address=http://recommendation-svc:5010/
+      - ReverseProxy__Clusters__voucher__Destinations__voucherApi__Address=http://voucher-svc:5011/
       - ASPNETCORE_URLS=http://+:6001
     ports:
       - "6001:6001"
@@ -361,6 +393,7 @@ services:
       - notification-svc
       - review-svc
       - comment-svc
+      - voucher-svc
     restart: unless-stopped
 
 volumes:

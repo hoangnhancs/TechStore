@@ -489,3 +489,10 @@ $RECYCLE.BIN/
 *.lscache
 
 **/appsettings.Production.json
+
+# Artifact tạm của skill /ship (plan/report từng lần chạy agent pipeline)
+.claude/runs/
+# Azure deploy manifest chứa secret thật (giữ .example lại để track)
+azure/*.yaml
+!azure/*.example.yaml
+azure/*.ps1

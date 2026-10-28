@@ -1,0 +1,60 @@
+# Copy file này thành containerapp-product-svc.yaml (không commit — đã gitignore),
+# điền giá trị thật vào mọi chỗ <...>, rồi deploy bằng:
+#   az containerapp create --resource-group techstore-rg --yaml azure/containerapp-product-svc.yaml
+#
+# Lấy environmentId bằng:
+#   az containerapp env show --name techstore-env --resource-group techstore-rg --query id -o tsv
+#
+# Lấy username/password ACR bằng (cần bật admin user trước):
+#   az acr update -n techstoreacr --admin-enabled true
+#   az acr credential show --name techstoreacr
+
+location: southeastasia
+type: Microsoft.App/containerApps
+name: product-svc
+properties:
+  environmentId: <resourceId của techstore-env, dạng /subscriptions/.../managedEnvironments/techstore-env>
+  configuration:
+    ingress:
+      external: true
+      targetPort: 5001
+    registries:
+      - server: techstoreacr.azurecr.io
+        username: <acr username>
+        passwordSecretRef: acr-password
+    secrets:
+      - name: acr-password
+        value: <acr password>
+      - name: jwt-key
+        value: <JWT_KEY>
+      - name: cloudinary-secret
+        value: <CLOUDINARY_API_SECRET>
+      - name: rabbitmq-conn
+        value: <AMQPS URL từ CloudAMQP>
+      - name: db-conn
+        value: <connection string Neon hiện tại>
+  template:
+    containers:
+      - name: product-svc
+        image: techstoreacr.azurecr.io/product-svc:v1
+        env:
+          - name: ASPNETCORE_ENVIRONMENT
+            value: Docker
+          - name: ConnectionStrings__DefaultConnection
+            secretRef: db-conn
+          - name: RabbitMq__ConnectionString
+            secretRef: rabbitmq-conn
+          - name: Jwt__Key
+            secretRef: jwt-key
+          - name: Jwt__Issuer
+            value: http://localhost:6001
+          - name: Jwt__Audience
+            value: http://localhost:3000
+          - name: Kestrel__Endpoints__WebApi__Url
+            value: http://+:5001
+          - name: CloudinarySettings__CloudName
+            value: <CLOUDINARY_CLOUD_NAME>
+          - name: CloudinarySettings__ApiKey
+            value: <CLOUDINARY_API_KEY>
+          - name: CloudinarySettings__ApiSecret
+            secretRef: cloudinary-secret

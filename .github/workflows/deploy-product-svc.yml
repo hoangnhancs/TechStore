@@ -1,0 +1,58 @@
+name: Deploy ProductService to Azure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "server/ProductService/**"
+      - "server/BuildingBlocks/**"
+      - "server/Contract/**"
+      - ".github/workflows/deploy-product-svc.yml"
+  workflow_dispatch: # cho phép bấm chạy tay từ tab Actions trên GitHub, không cần push code
+
+permissions:
+  id-token: write # bắt buộc cho OIDC — xin token tạm từ GitHub để trao đổi với Azure AD
+  contents: read
+
+env:
+  ACR_NAME: techstoreacr
+  IMAGE_NAME: product-svc
+  RESOURCE_GROUP: techstore-rg
+  CONTAINER_APP_NAME: product-svc
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Đăng nhập Azure (OIDC, không cần secret dài hạn)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Đăng nhập ACR (dùng chung quyền Azure vừa login, không cần credential riêng)
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build + push Docker image (tag theo git sha để truy vết đúng commit nào đang chạy)
+        run: |
+          IMAGE_TAG=${{ env.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker build -f server/ProductService/Dockerfile -t "$IMAGE_TAG" .
+          docker push "$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+
+      - name: Cập nhật Container App sang image mới
+        run: |
+          az containerapp update \
+            --name ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --image "${{ env.IMAGE_TAG }}"
+
+      # Lưu ý: workflow này CHỈ cập nhật image, KHÔNG đụng tới secret/env-vars.
+      # Secret (JWT key, Cloudinary, RabbitMQ, DB connection) đã set 1 lần lúc deploy thủ công
+      # và tiếp tục giữ nguyên qua các lần update sau. Muốn đổi secret thì sửa tay
+      # azure/containerapp-product-svc.yaml rồi chạy `az containerapp update --yaml` cục bộ,
+      # không làm việc đó trong CI/CD.
