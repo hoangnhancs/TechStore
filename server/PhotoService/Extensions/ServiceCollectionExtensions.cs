@@ -17,10 +17,20 @@ namespace PhotoService.Extensions
             this IServiceCollection services,  // "this" = đây là extension method
             IConfiguration configuration)
         {
-            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings") ?? throw new InvalidOperationException("CloudinarySettings section is missing in configuration"));            
-            services.AddScoped<ICloudinaryServices, CloudinaryServices>();
-            services.AddScoped<IPhotoService, PhotoService>();
-            
+            var provider = configuration["PhotoStorage:Provider"] ?? "Cloudinary";
+
+            if (string.Equals(provider, "AzureBlob", StringComparison.OrdinalIgnoreCase))
+            {
+                services.Configure<AzureBlobSettings>(configuration.GetSection("AzureBlobSettings") ?? throw new InvalidOperationException("AzureBlobSettings section is missing in configuration"));
+                services.AddScoped<IPhotoService, AzureBlobPhotoService>();
+            }
+            else
+            {
+                services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings") ?? throw new InvalidOperationException("CloudinarySettings section is missing in configuration"));
+                services.AddScoped<ICloudinaryServices, CloudinaryServices>();
+                services.AddScoped<IPhotoService, PhotoService>();
+            }
+
             return services; // Return để có thể chain methods
         }
     }

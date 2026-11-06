@@ -1,3 +1,4 @@
+using Azure.Identity;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using PhotoService.Extensions;
@@ -12,6 +13,12 @@ using SharedWeb.Middleware;
 DotNetEnv.Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
+
+var keyVaultUri = builder.Configuration["KeyVaultUri"];
+if (!string.IsNullOrEmpty(keyVaultUri))
+{
+    builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+}
 
 builder.Services.AddOpenApi();
 builder.Services.AddSharedControllers();
