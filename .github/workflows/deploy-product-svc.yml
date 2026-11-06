@@ -54,5 +54,6 @@ jobs:
       # Lưu ý: workflow này CHỈ cập nhật image, KHÔNG đụng tới secret/env-vars.
       # Secret (JWT key, Cloudinary, RabbitMQ, DB connection) đã set 1 lần lúc deploy thủ công
       # và tiếp tục giữ nguyên qua các lần update sau. Muốn đổi secret thì sửa tay
-      # azure/containerapp-product-svc.yaml rồi chạy `az containerapp update --yaml` cục bộ,
-      # không làm việc đó trong CI/CD.
+      # azure/containerapp-product-svc.yaml rồi chạy cục bộ:
+      #   az containerapp update --name product-svc --resource-group techstore-rg --yaml azure/containerapp-product-svc.yaml
+      # (--name luôn bắt buộc, kể cả khi đã có --yaml) — không làm việc đó trong CI/CD.
