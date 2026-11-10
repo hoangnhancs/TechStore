@@ -61,7 +61,7 @@ jobs:
           REVISION=$(az containerapp revision list \
             --name ${{ env.CONTAINER_APP_NAME }} \
             --resource-group ${{ env.RESOURCE_GROUP }} \
-            --query "max_by([], &createdTime).name" -o tsv)
+            --query "max_by([], &properties.createdTime).name" -o tsv)
           echo "Revision mới nhất: $REVISION"
           for i in $(seq 1 10); do
             HEALTH=$(az containerapp revision show \
