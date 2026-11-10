@@ -22,7 +22,7 @@ namespace ProductService.Controllers
             return HandleAppResult(await Mediator.Send(new GetAllBannerImagesQuery()));
         }
         [HttpPost]
-        [AllowAnonymous] // TẠM THỜI để test upload qua ACA chưa deploy identity-svc — nhớ đổi lại [Authorize(Roles = "Admin")] sau khi test xong
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> CreateNewBannerImage([FromForm] List<IFormFile> files)
         {
             return HandleAppResult(await Mediator.Send(new CreateNewBannerImageCommand { NewImages = files }));
