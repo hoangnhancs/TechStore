@@ -51,6 +51,19 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image "${{ env.IMAGE_TAG }}"
 
+      - name: Verify deployment healthy
+        run: |
+          sleep 20
+          curl -f https://product-svc.jollycoast-d6b821c1.southeastasia.azurecontainerapps.io/api/products/all
+
+
+
+      #Để truyền giá trị IMAGE_TAG sang bước tiếp theo trong cùng workflow — vì mỗi step (mỗi khối run:) trong GitHub Actions chạy trong 1 process shell riêng biệt, độc lập, biến shell thường ($IMAGE_TAG) set ở step này sẽ mất khi qua step kế tiếp, giống như đóng terminal rồi mở terminal mới vậy.
+      # $GITHUB_ENV là 1 file đặc biệt do GitHub Actions runner tự tạo sẵn cho mỗi job — bất kỳ dòng KEY=VALUE nào bạn echo ... >> "$GITHUB_ENV" thì từ step tiếp theo trở đi (trong cùng job), biến đó sẽ tự có sẵn dưới dạng env.KEY ở ngữ cảnh ${{ }}, hoặc $KEY nếu dùng trong run: shell.
+
+      # Áp vào đúng đoạn này: IMAGE_TAG được tính động (ghép theo github.sha lúc runtime, không biết trước giá trị), tính xong ở step "Build + push Docker image" thì ghi vào $GITHUB_ENV — để step kế tiếp "Cập nhật Container App sang image mới" (deploy-product-svc.yml:47-52) dùng lại đúng giá trị đó qua ${{ env.IMAGE_TAG }}:
+
+
       # Lưu ý: workflow này CHỈ cập nhật image, KHÔNG đụng tới secret/env-vars.
       # Secret (JWT key, Cloudinary, RabbitMQ, DB connection) đã set 1 lần lúc deploy thủ công
       # và tiếp tục giữ nguyên qua các lần update sau. Muốn đổi secret thì sửa tay
